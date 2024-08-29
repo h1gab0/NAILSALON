@@ -1,0 +1,564 @@
+On weather app when clicking on desired suggestion item fron the menu, it loads the actual INFORNATION item, but does not hide the DISPLAYED suggestion menu
+Also, when hovering over suggestions it does change the color to green in the first instance but does not come back once cursor has leaved the object, it has to be an smooth SLIGHTLY fluid like animation 
+
+
+From below versions of code mix them for the best arrangement of style without loosing any 
+operational functionality i need the styling and animations of v1 and the projects present in version 2.
+
+v1:
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManager';
+import Calculator from '../projects/Calculator';
+import WeatherApp from '../projects/WeatherApp';
+import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+
+const ShowcaseContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+`;
+
+const ProjectView = styled(motion.div)`
+  width: 100%;
+  max-width: 800px;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const Title = styled(motion.h2)`
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const NavigationArrow = styled(motion.button)`
+  position: fixed;
+  top: 50%;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  z-index: 10;
+  &.left {
+    left: 1rem;
+  }
+  &.right {
+    right: 1rem;
+  }
+`;
+
+const CodeButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 1rem;
+`;
+
+const CodeIcon = styled(FaCode)`
+  margin-right: 0.5rem;
+`;
+
+const CodeCurtain = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+`;
+
+const CodeContent = styled.pre`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 1rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 800px;
+  overflow-x: auto;
+`;
+
+const CloseButton = styled(motion.button)`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+`;
+
+const projects = [
+  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
+  { id: 'calculator', component: Calculator, title: 'Calculator' },
+  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
+];
+
+function ProjectShowcase() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
+  const currentProject = projects[currentProjectIndex];
+  const [showCode, setShowCode] = useState(false);
+
+  const navigateProject = (direction) => {
+    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
+    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
+  };
+
+  const toggleCode = () => {
+    setShowCode(!showCode);
+  };
+
+  if (!currentProject) {
+    return <div>Project not found</div>;
+  }
+
+  const ProjectComponent = currentProject.component;
+
+  return (
+    <ShowcaseContainer
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <ProjectView>
+        <Title>{currentProject.title}</Title>
+        <ProjectComponent />
+        <CodeButton onClick={toggleCode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <CodeIcon /> View Code
+        </CodeButton>
+      </ProjectView>
+      <NavigationArrow
+        className="left"
+        onClick={() => navigateProject(-1)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <FaChevronLeft />
+      </NavigationArrow>
+      <NavigationArrow
+        className="right"
+        onClick={() => navigateProject(1)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <FaChevronRight />
+      </NavigationArrow>
+      <AnimatePresence>
+        {showCode && (
+          <CodeCurtain
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+          >
+            <CloseButton onClick={toggleCode} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              ✕
+            </CloseButton>
+            <CodeContent>
+              {/* Add the code content here */}
+              {`import React from 'react';
+// ... rest of the component code`}
+            </CodeContent>
+          </CodeCurtain>
+        )}
+      </AnimatePresence>
+    </ShowcaseContainer>
+  );
+}
+
+export default ProjectShowcase;
+
+
+v2: 
+
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManager';
+import Calculator from '../projects/Calculator';
+import WeatherApp from '../projects/WeatherApp';
+import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+
+const ShowcaseContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+`;
+
+const ProjectView = styled(motion.div)`
+  width: 100%;
+  max-width: 800px;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const Title = styled(motion.h2)`
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const NavigationArrow = styled(motion.button)`
+  position: fixed;
+  top: 50%;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  z-index: 10;
+  &.left {
+    left: 1rem;
+  }
+  &.right {
+    right: 1rem;
+  }
+`;
+
+const CodeButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 1rem;
+`;
+
+const CodeIcon = styled(FaCode)`
+  margin-right: 0.5rem;
+`;
+
+const CodeCurtain = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+`;
+
+const CodeContent = styled.pre`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 1rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 800px;
+  overflow-x: auto;
+`;
+
+const CloseButton = styled(motion.button)`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+`;
+
+const projects = [
+  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
+  { id: 'calculator', component: Calculator, title: 'Calculator' },
+  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
+];
+
+function ProjectShowcase() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
+  const currentProject = projects[currentProjectIndex];
+  const [showCode, setShowCode] = useState(false);
+
+  const navigateProject = (direction) => {
+    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
+    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
+  };
+
+  const toggleCode = () => {
+    setShowCode(!showCode);
+  };
+
+  if (!currentProject) {
+    return <div>Project not found</div>;
+  }
+
+  const ProjectComponent = currentProject.component;
+
+  return (
+    <ShowcaseContainer
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <ProjectView>
+        <Title>{currentProject.title}</Title>
+        <ProjectComponent />
+        <CodeButton onClick={toggleCode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <CodeIcon /> View Code
+        </CodeButton>
+      </ProjectView>
+      <NavigationArrow
+        className="left"
+        onClick={() => navigateProject(-1)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <FaChevronLeft />
+      </NavigationArrow>
+      <NavigationArrow
+        className="right"
+        onClick={() => navigateProject(1)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <FaChevronRight />
+      </NavigationArrow>
+      <AnimatePresence>
+        {showCode && (
+          <CodeCurtain
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+          >
+            <CloseButton onClick={toggleCode} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              ✕
+            </CloseButton>
+            <CodeContent>
+              {/* Add the code content here */}
+              {`import React from 'react';
+// ... rest of the component code`}
+            </CodeContent>
+          </CodeCurtain>
+        )}
+      </AnimatePresence>
+    </ShowcaseContainer>
+  );
+}
+
+export default ProjectShowcase;
+
+Fix it please and return fully merged ONLY as required. Ready to copy and paste.
+Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
+      No, as you are generating the code it gets changed again to wrong syntax.
+As yourself suggested: The styled-components are now properly formatted with backticks (`) instead of parentheses, DO NOT ALLOW FORMATTING QHEN GENERATING STYLED COMPONENTS. 
+
+You still doing the same, let me share with you a snippet where you have understood, DO NOT ALLOW FORMATTING WHEN GENERATING STYLED COMPONENTS : 
+
+I understand the issues you've pointed out. I'll address each of them and provide the updated files with the necessary fixes. I'll make sure to use the correct syntax for styled-components with backticks. Here are the updated files:
+File: components/ProjectShowcase.jsx
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManager';
+import Calculator from '../projects/Calculator';
+import WeatherApp from '../projects/WeatherApp';
+import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+const ShowcaseContainer = styled(motion.div)  display: flex;   flex-direction: column;   align-items: center;   min-height: calc(100vh - 60px);   padding: 2rem;;
+const ProjectView = styled(motion.div)  width: 100%;   max-width: 800px;   background-color: ${({ theme }) => theme.colors.cardBackground};   border-radius: 12px;   padding: 2rem;   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);;
+const Title = styled(motion.h2)  font-size: 2rem;   margin-bottom: 2rem;   text-align: center;;
+const NavigationArrow = styled(motion.button)  position: fixed;   top: 50%;   background: none;   border: none;   font-size: 2rem;   color: ${({ theme }) => theme.colors.primary};   cursor: pointer;   z-index: 10;   &.left {     left: 1rem;   }   &.right {     right: 1rem;   };
+const CodeButton = styled(motion.button)  display: flex;   align-items: center;   justify-content: center;   padding: 0.5rem 1rem;   background-color: ${({ theme }) => theme.colors.primary};   color: white;   border: none;   border-radius: 4px;   cursor: pointer;   font-weight: bold;   margin-top: 1rem;;
+const CodeIcon = styled(FaCode)  margin-right: 0.5rem;;
+const CodeCurtain = styled(motion.div)  position: fixed;   top: 0;   left: 0;   right: 0;   bottom: 0;   background-color: ${({ theme }) => theme.colors.background};   z-index: 100;   display: flex;   flex-direction: column;   align-items: center;   justify-content: center;   padding: 2rem;   overflow-y: auto;;
+const CodeContent = styled.pre  background-color: ${({ theme }) => theme.colors.cardBackground};   padding: 1rem;   border-radius: 8px;   width: 100%;   max-width: 800px;   overflow-x: auto;;
+const CloseButton = styled(motion.button)`
+position: absolute;
+top: 1rem;
+right: 1rem;
+background: none;
+border: none;
+font-size: 1.5rem;
+color CopyRetryEI understand the issues you've pointed out. I'll address each of them and provide the updated files with the necessary fixes. I'll make sure to use the correct syntax for styled-components with backticks. Here are the updated files:
+File: components/ProjectShowcase.jsx
+import React, { useState } from 'react'; import styled from 'styled-components'; import { motion, AnimatePresence } from 'framer-motion'; import { useParams, useNavigate } from 'react-router-dom'; import TaskManager from '../projects/TaskManager'; import Calculator from '../projects/Calculator'; import WeatherApp from '../projects/WeatherApp'; import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+const ShowcaseContainer = styled(motion.div) display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 60px); padding: 2rem;;
+const ProjectView = styled(motion.div) width: 100%; max-width: 800px; background-color: ${({ theme }) => theme.colors.cardBackground}; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);;
+const Title = styled(motion.h2) font-size: 2rem; margin-bottom: 2rem; text-align: center;;
+const NavigationArrow = styled(motion.button) position: fixed; top: 50%; background: none; border: none; font-size: 2rem; color: ${({ theme }) => theme.colors.primary}; cursor: pointer; z-index: 10; &.left { left: 1rem; } &.right { right: 1rem; };
+const CodeButton = styled(motion.button) display: flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; background-color: ${({ theme }) => theme.colors.primary}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 1rem;;
+const CodeIcon = styled(FaCode) margin-right: 0.5rem;; EditHere's the corrected and updated ProjectShowcase.jsx file:
+jsxCopyimport React, { useState } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManager';
+import Calculator from '../projects/Calculator';
+import WeatherApp from '../projects/WeatherApp';
+import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+
+const ShowcaseContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+`;
+
+const ProjectView = styled(motion.div)`
+  width: 100%;
+  max-width: 800px;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const Title = styled(motion.h2)`
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const NavigationArrow = styled(motion.button)`
+  position: fixed;
+  top: 50%;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+  z-index: 10;
+  &.left {
+    left: 1rem;
+  }
+  &.right {
+    right: 1rem;
+  }
+`;
+
+const CodeButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 1rem;
+`;
+
+const CodeIcon = styled(FaCode)`
+  margin-right: 0.5rem;
+`;
+
+const CodeCurtain = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+`;
+
+const CodeContent = styled.pre`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 1rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 800px;
+  overflow-x: auto;
+`;
+
+const CloseButton = styled(motion.button)`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: ${({ theme }) => theme.colors.text};
+  cursor: pointer;
+`;
+
+const projects = [
+  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
+  { id: 'calculator', component: Calculator, title: 'Calculator' },
+  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
+];
+
+function ProjectShowcase() {
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
+  const currentProject = projects[currentProjectIndex];
+  const [showCode, setShowCode] = useState(false);
+
+  const navigateProject = (direction) => {
+    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
+    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
+  };
+
+  const toggleCode = () => {
+    setShowCode(!showCode);
+  };
+
+  if (!currentProject) {
+    return <div>Project not found</div>;
+  }
+
+  const ProjectComponent = currentProject.component;
+
+  return (
+    <ShowcaseContainer
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+
+

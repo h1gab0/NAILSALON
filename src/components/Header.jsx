@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// File: components/Header.jsx
+
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -110,43 +112,17 @@ function Header() {
 
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isMenuOpen]);
-
-  const handleClickOutside = useCallback((event) => {
-    if (isMenuOpen && !event.target.closest('nav') && !event.target.closest('.theme-toggle')) {
-      closeMenu();
-    }
-  }, [isMenuOpen, closeMenu]);
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [handleClickOutside]);
-
   return (
     <StyledHeader>
       <Nav>
-        <Logo to="/" onClick={closeMenu}>My Portfolio</Logo>
+        <Logo to="/" onClick={closeMenu}>Nail Salon Scheduler</Logo>
         <MenuButton onClick={toggleMenu} aria-label="Toggle menu">
           {isMenuOpen ? '✕' : '☰'}
         </MenuButton>
         <NavLinks>
           <NavLink to="/">Home</NavLink>
-          <NavLink to="/about">About</NavLink>
-          <NavLink to="/portfolio">Portfolio</NavLink>
-          <NavLink to="/contact">Contact</NavLink>
+          <NavLink to="/schedule">Schedule Appointment</NavLink>
+          <NavLink to="/admin">Admin Dashboard</NavLink>
           <ThemeToggleWrapper>
             <ThemeToggle />
           </ThemeToggleWrapper>
@@ -161,9 +137,8 @@ function Header() {
             transition={{ duration: 0.3 }}
           >
             <MobileNavLink to="/" onClick={closeMenu}>Home</MobileNavLink>
-            <MobileNavLink to="/about" onClick={closeMenu}>About</MobileNavLink>
-            <MobileNavLink to="/portfolio" onClick={closeMenu}>Portfolio</MobileNavLink>
-            <MobileNavLink to="/contact" onClick={closeMenu}>Contact</MobileNavLink>
+            <MobileNavLink to="/schedule" onClick={closeMenu}>Schedule Appointment</MobileNavLink>
+            <MobileNavLink to="/admin" onClick={closeMenu}>Admin Dashboard</MobileNavLink>
             <ThemeToggleWrapper className="theme-toggle">
               <ThemeToggle />
             </ThemeToggleWrapper>

@@ -1,15 +1,19 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import GlobalStyles from './styles/GlobalStyles';
 import { lightTheme, darkTheme } from './styles/Theme';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
-import Portfolio from './pages/Portfolio';
 import Contact from './pages/Contact';
-import ProjectShowcase from './components/ProjectShowcase';
+import ClientScheduling from './pages/ClientScheduling';
+import AdminDashboard from './pages/AdminDashboard';
+import Login from './pages/Login';
+import OrderSystem from './pages/OrderSystem';
+import Chat from './components/Chat';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 
 const MainContent = styled.main`
@@ -19,6 +23,7 @@ const MainContent = styled.main`
 
 function AppContent() {
   const { isDarkMode } = useTheme();
+
   return (
     <StyledThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <GlobalStyles />
@@ -27,11 +32,14 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/project-showcase/:projectId" element={<ProjectShowcase />} />
+          <Route path="/schedule" element={<ClientScheduling />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/order" element={<OrderSystem />} />
         </Routes>
       </MainContent>
+      <Chat />
       <Footer />
     </StyledThemeProvider>
   );
@@ -39,10 +47,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

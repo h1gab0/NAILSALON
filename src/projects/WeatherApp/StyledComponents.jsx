@@ -8,6 +8,7 @@ export const WeatherContainer = styled(motion.div)`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   max-width: 400px;
   margin: 0 auto;
+  position: relative;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
     padding: 0.5rem;
@@ -61,6 +62,31 @@ export const WeatherSuggestions = styled.div`
   overflow-y: auto;
   width: 100%;
   z-index: 10;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: ${({ theme }) => theme.colors.secondary} ${({ theme }) => theme.colors.cardBackground};
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: ${({ theme }) => theme.colors.cardBackground};
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: ${({ theme }) => theme.colors.secondary};
+    border-radius: 4px;
+    border: 2px solid ${({ theme }) => theme.colors.cardBackground};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+    position: static;
+    margin-top: 0.5rem;
+  }
 `;
 
 export const WeatherSuggestion = styled(motion.div)`
@@ -83,4 +109,10 @@ export const WeatherTemp = styled.h2`
 export const WeatherDescription = styled.p`
   font-size: 1.2rem;
   margin-bottom: 1rem;
+`;
+
+export const WeatherLocation = styled.h1`
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: ${({ theme }) => theme.colors.primary};
 `;

@@ -1,1133 +1,1691 @@
-MAKE SURE TO CAREFULLY REVIEW MY REQUEST, DO NOT RETURN YOUR FASTEST RESPONSE.
-Please, take the following demo projects and their respective components filed and ADD THEM INTO View Code project view with a cool IDE like project structure where 
-each file is clickable and will show the code itself.
+File: main.jsx
+==================================================
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
 
-Here are each project's components, add them to projectshowcas as requested:
+ReactDOM.createRoot(document.getElementById('root')).render(
+<React.StrictMode>
+<App />
+</React.StrictMode>,
+)
 
+==================================================
 
-Calculator:
+File: App.jsx
+==================================================
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import GlobalStyles from './styles/GlobalStyles';
+import { lightTheme, darkTheme } from './styles/Theme';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import About from './pages/About';
+import Portfolio from './pages/Portfolio';
+import Contact from './pages/Contact';
+import ProjectShowcase from './components/ProjectShowcase';
+import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
+
+const MainContent = styled.main`
+padding-top: 60px;
+min-height: calc(100vh - 60px);
+`;
+
+function AppContent() {
+const { isDarkMode } = useTheme();
+return (
+<StyledThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+<GlobalStyles />
+<Header />
+<MainContent>
+<Routes>
+<Route path="/" element={<Home />} />
+<Route path="/about" element={<About />} />
+<Route path="/portfolio" element={<Portfolio />} />
+<Route path="/contact" element={<Contact />} />
+<Route path="/project-showcase/:projectId" element={<ProjectShowcase />} />
+</Routes>
+</MainContent>
+<Footer />
+</StyledThemeProvider>
+);
+}
+
+export default function App() {
+return (
+<ThemeProvider>
+<BrowserRouter>
+<AppContent />
+</BrowserRouter>
+</ThemeProvider>
+);
+}
+
+==================================================
+
+File: context/ThemeContext.jsx
+==================================================
+import React, { createContext, useState, useContext, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+const [isDarkMode, setIsDarkMode] = useState(false);
+
+useEffect(() => {
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') setIsDarkMode(true);
+}, []);
+
+const toggleTheme = () => {
+const newTheme = !isDarkMode;
+setIsDarkMode(newTheme);
+localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+};
+
+return (
+<ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+{children}
+</ThemeContext.Provider>
+);
+};
+
+export const useTheme = () => useContext(ThemeContext);
+
+==================================================
+
+File: pages/Portfolio.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import SoftwareToolShowcase from '../components/SoftwareToolShowcase';
+import ComparisonTable from '../components/ComparisonTable';
+import CaseStudy from '../components/CaseStudy';
+
+const PortfolioContainer = styled.div`
+max-width: 1200px;
+margin: 0 auto;
+padding: 2rem;
+`;
+
+const Title = styled.h1`
+font-size: 2.5rem;
+margin-bottom: 2rem;
+text-align: center;
+`;
+
+export default function Portfolio() {
+return (
+<PortfolioContainer>
+<Title>Our Software Portfolio</Title>
+<SoftwareToolShowcase />
+<ComparisonTable />
+<CaseStudy
+title="Success Story: XYZ Company"
+description="XYZ Company implemented our project management tool and saw significant improvements in their workflow and productivity."
+results={[
+'Reduced project completion time by 30%',
+'Improved team collaboration and communication',
+'Increased customer satisfaction by 25%',
+]}
+/>
+</PortfolioContainer>
+);
+}
+
+==================================================
+
+File: pages/Home.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import Hero from '../components/Hero';
+import SoftwareToolShowcase from '../components/SoftwareToolShowcase';
+
+const HomeContainer = styled.div`
+max-width: 1200px;
+margin: 0 auto;
+padding: 2rem;
+`;
+
+export default function Home() {
+return (
+<HomeContainer>
+<Hero />
+<SoftwareToolShowcase />
+</HomeContainer>
+);
+}
+
+==================================================
+
+File: pages/Contact.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import ContactForm from '../components/ContactForm';
+
+const ContactContainer = styled.div`
+max-width: 800px;
+margin: 0 auto;
+padding: 2rem;
+`;
+
+export default function Contact() {
+return (
+<ContactContainer>
+<h1>Contact Us</h1>
+<ContactForm />
+</ContactContainer>
+);
+}
+
+==================================================
+
+File: pages/About.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+
+const AboutContainer = styled.div`
+max-width: 800px;
+margin: 0 auto;
+padding: 2rem;
+`;
+
+const Title = styled(motion.h1)`
+font-size: 2.5rem;
+margin-bottom: 1rem;
+`;
+
+const Paragraph = styled(motion.p)`
+margin-bottom: 1rem;
+line-height: 1.6;
+`;
+
+const textVariants = {
+hidden: { opacity: 0, y: -20 },
+visible: { opacity: 1, y: 0 },
+};
+
+export default function About() {
+return (
+<AboutContainer>
+<Title variants={textVariants} initial="hidden" animate="visible">
+About Us
+</Title>
+<Paragraph variants={textVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+We are a team of passionate software developers dedicated to creating innovative solutions for businesses of all sizes. Our mission is to empower organizations with cutting-edge tools that streamline operations, boost productivity, and drive growth.
+</Paragraph>
+<Paragraph variants={textVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
+With years of experience in the industry, we have developed a deep understanding of the challenges faced by modern businesses. Our software tools are designed to address these challenges head-on, providing intuitive interfaces, powerful features, and seamless integration capabilities.
+</Paragraph>
+<Paragraph variants={textVariants} initial="hidden" animate="visible" transition={{ delay: 0.6 }}>
+We believe in the power of technology to transform businesses and improve lives. That's why we're committed to continuous innovation and exceptional customer support. When you choose our software tools, you're not just getting a product – you're gaining a partner in your success.
+</Paragraph>
+</AboutContainer>
+);
+}
+
+==================================================
+
+File: utils/animations.js
+==================================================
+export const fadeIn = {
+initial: { opacity: 0 },
+animate: { opacity: 1 },
+exit: { opacity: 0 },
+};
+
+export const slideIn = (direction) => ({
+initial: { [direction]: 100, opacity: 0 },
+animate: { [direction]: 0, opacity: 1 },
+exit: { [direction]: 100, opacity: 0 },
+});
+
+export const scaleIn = {
+initial: { scale: 0.8, opacity: 0 },
+animate: { scale: 1, opacity: 1 },
+exit: { scale: 0.8, opacity: 0 },
+};
+
+export const bounce = {
+initial: { y: -20 },
+animate: { y: 0 },
+transition: { type: 'spring', stiffness: 300, damping: 10 },
+};
+
+export const staggerChildren = {
+animate: { transition: { staggerChildren: 0.1 } },
+};
+
+export const letterAnimation = {
+initial: { opacity: 0, y: 50 },
+animate: { 
+opacity: 1, 
+y: 0,
+transition: { type: 'spring', damping: 12, stiffness: 200 },
+},
+};
+
+export const infiniteBounce = {
+animate: {
+y: ['0%', '-20%'],
+transition: {
+duration: 0.6,
+repeat: Infinity,
+repeatType: 'reverse',
+ease: 'easeInOut',
+},
+},
+};
+
+==================================================
+
+File: components/Home.jsx
+==================================================
+import React from 'react';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+
+const ExploreButton = styled(Link)`
+padding: 10px 20px;
+background-color: ${({ theme }) => theme.colors.primary};
+color: white;
+text-decoration: none;
+border-radius: 5px;
+`;
+
+function Home() {
+return (
+<div>
+<h1>Welcome to My Software Portfolio</h1>
+<ExploreButton to="/portfolio">Explore My Tools</ExploreButton>
+</div>
+);
+}
+
+export default Home;
+
+==================================================
+
+File: components/CaseStudy.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+
+const CaseStudyContainer = styled.div`
+background-color: ${({ theme }) => theme.colors.cardBackground};
+border-radius: 8px;
+padding: 2rem;
+margin: 2rem 0;
+color: ${({ theme }) => theme.colors.text};
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+padding: 1rem;
+}
+`;
+
+const Title = styled.h3`
+font-size: 1.5rem;
+margin-bottom: 1rem;
+color: ${({ theme }) => theme.colors.primary};
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+font-size: 1.2rem;
+}
+`;
+
+const ResultItem = styled(motion.li)`
+margin-bottom: 0.5rem;
+display: flex;
+align-items: center;
+&:before {
+content: '✓';
+color: ${({ theme }) => theme.colors.primary};
+margin-right: 0.5rem;
+}
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+font-size: 0.9rem;
+}
+`;
+
+const Description = styled.p`
+margin-bottom: 1rem;
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+font-size: 0.9rem;
+}
+`;
+
+const Results = styled.ul`
+list-style-type: none;
+padding-left: 0;
+`;
+
+function CaseStudy({ title, description, results }) {
+return (
+<CaseStudyContainer>
+<Title>{title}</Title>
+<Description>{description}</Description>
+<Results>
+{results.map((result, index) => (
+<ResultItem
+key={index}
+initial={{ opacity: 0, x: -20 }}
+animate={{ opacity: 1, x: 0 }}
+transition={{ duration: 0.5, delay: index * 0.1 }}
+>
+{result}
+</ResultItem>
+))}
+</Results>
+</CaseStudyContainer>
+);
+}
+
+export default CaseStudy;
+
+==================================================
+
+File: components/Header.jsx
+==================================================
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from './ThemeToggle';
+
+const StyledHeader = styled.header`
+background-color: ${({ theme }) => theme.colors.headerBackground};
+padding: 1rem;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+z-index: 1000;
+transition: all 0.3s ease;
+`;
+
+const Nav = styled.nav`
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+max-width: 1200px;
+margin: 0 auto;
+`;
+
+const Logo = styled(Link)`
+font-size: 1.5rem;
+font-weight: bold;
+color: ${({ theme }) => theme.colors.primary};
+display: flex;
+align-items: center;
+`;
+
+const NavLinks = styled(motion.div)`
+display: flex;
+gap: 1rem;
+align-items: center;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+display: none;
+}
+`;
+
+const NavLink = styled(Link)`
+color: ${({ theme }) => theme.colors.text};
+&:hover {
+color: ${({ theme }) => theme.colors.primary};
+}
+`;
+
+const ThemeToggleWrapper = styled.div`
+margin-left: 1rem;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+margin-left: 0;
+margin-top: 1rem;
+}
+`;
+
+const MenuButton = styled.button`
+display: none;
+background: none;
+border: none;
+font-size: 1.5rem;
+color: ${({ theme }) => theme.colors.text};
+cursor: pointer;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+display: block;
+}
+`;
+
+const MobileMenu = styled(motion.div)`
+display: none;
+position: fixed;
+top: 60px;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: ${({ theme }) => theme.colors.headerBackground};
+padding: 1rem;
+z-index: 999;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+}
+`;
+
+const MobileNavLink = styled(Link)`
+color: ${({ theme }) => theme.colors.text};
+font-size: 1.2rem;
+padding: 1rem;
+width: 100%;
+text-align: center;
+&:hover {
+color: ${({ theme }) => theme.colors.primary};
+background-color: ${({ theme }) => theme.colors.cardBackground};
+}
+`;
+
+function Header() {
+const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
+
+const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+
+useEffect(() => {
+if (isMenuOpen) {
+document.body.style.overflow = 'hidden';
+} else {
+document.body.style.overflow = 'unset';
+}
+
+return () => {
+document.body.style.overflow = 'unset';
+};
+}, [isMenuOpen]);
+
+const handleClickOutside = useCallback((event) => {
+if (isMenuOpen && !event.target.closest('nav') && !event.target.closest('.theme-toggle')) {
+closeMenu();
+}
+}, [isMenuOpen, closeMenu]);
+
+useEffect(() => {
+document.addEventListener('mousedown', handleClickOutside);
+return () => {
+document.removeEventListener('mousedown', handleClickOutside);
+};
+}, [handleClickOutside]);
+
+return (
+<StyledHeader>
+<Nav>
+<Logo to="/" onClick={closeMenu}>My Portfolio</Logo>
+<MenuButton onClick={toggleMenu} aria-label="Toggle menu">
+{isMenuOpen ? '✕' : '☰'}
+</MenuButton>
+<NavLinks>
+<NavLink to="/">Home</NavLink>
+<NavLink to="/about">About</NavLink>
+<NavLink to="/portfolio">Portfolio</NavLink>
+<NavLink to="/contact">Contact</NavLink>
+<ThemeToggleWrapper>
+<ThemeToggle />
+</ThemeToggleWrapper>
+</NavLinks>
+</Nav>
+<AnimatePresence>
+{isMenuOpen && (
+<MobileMenu
+initial={{ opacity: 0, y: -20 }}
+animate={{ opacity: 1, y: 0 }}
+exit={{ opacity: 0, y: -20 }}
+transition={{ duration: 0.3 }}
+>
+<MobileNavLink to="/" onClick={closeMenu}>Home</MobileNavLink>
+<MobileNavLink to="/about" onClick={closeMenu}>About</MobileNavLink>
+<MobileNavLink to="/portfolio" onClick={closeMenu}>Portfolio</MobileNavLink>
+<MobileNavLink to="/contact" onClick={closeMenu}>Contact</MobileNavLink>
+<ThemeToggleWrapper className="theme-toggle">
+<ThemeToggle />
+</ThemeToggleWrapper>
+</MobileMenu>
+)}
+</AnimatePresence>
+</StyledHeader>
+);
+}
+
+export default Header;
+
+==================================================
+
+File: components/ContactForm.jsx
+==================================================
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 
-const CalculatorContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 300px;
-  margin: 0 auto;
+const FormContainer = styled(motion.form)`
+display: flex;
+flex-direction: column;
+max-width: 500px;
+margin: 0 auto;
 `;
 
-const Display = styled.div`
-  background-color: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text};
-  padding: 1rem;
-  font-size: 1.5rem;
-  text-align: right;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-  min-height: 3rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+const Input = styled(motion.input)`
+margin-bottom: 1rem;
+padding: 0.5rem;
+border: 1px solid #ddd;
+border-radius: 4px;
 `;
 
-const ButtonGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+const TextArea = styled(motion.textarea)`
+margin-bottom: 1rem;
+padding: 0.5rem;
+border: 1px solid #ddd;
+border-radius: 4px;
+resize: vertical;
+min-height: 100px;
 `;
 
-const Button = styled(motion.button)`
-  padding: 1rem;
-  font-size: 1.2rem;
-  border: none;
-  border-radius: 4px;
-  background-color: ${({ theme, operator }) => operator ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  cursor: pointer;
+const SubmitButton = styled(motion.button)`
+padding: 0.75rem 1.5rem;
+background-color: ${({ theme }) => theme.colors.primary};
+color: white;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+font-weight: bold;
 `;
 
-function Calculator() {
-  const [display, setDisplay] = useState('0');
-  const [firstOperand, setFirstOperand] = useState(null);
-  const [operator, setOperator] = useState(null);
-  const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
+const formVariants = {
+hidden: { opacity: 0 },
+visible: {
+opacity: 1,
+transition: {
+staggerChildren: 0.2,
+},
+},
+};
 
-  const inputDigit = (digit) => {
-    if (display.length >= 12) return; // Limit input to 12 digits
+const inputVariants = {
+hidden: { opacity: 0, y: 20 },
+visible: { opacity: 1, y: 0 },
+};
 
-    if (waitingForSecondOperand) {
-      setDisplay(String(digit));
-      setWaitingForSecondOperand(false);
-    } else {
-      setDisplay(display === '0' ? String(digit) : display + digit);
-    }
-  };
+function ContactForm() {
+const [formData, setFormData] = useState({
+name: '',
+email: '',
+message: '',
+});
 
-  const inputDecimal = () => {
-    if (waitingForSecondOperand) {
-      setDisplay('0.');
-      setWaitingForSecondOperand(false);
-      return;
-    }
+const handleChange = (e) => {
+setFormData({ ...formData, [e.target.name]: e.target.value });
+};
 
-    if (!display.includes('.')) {
-      setDisplay(display + '.');
-    }
-  };
+const handleSubmit = (e) => {
+e.preventDefault();
+// Handle form submission here
+console.log('Form submitted:', formData);
+// Reset form
+setFormData({ name: '', email: '', message: '' });
+};
 
-  const clear = () => {
-    setDisplay('0');
-    setFirstOperand(null);
-    setOperator(null);
-    setWaitingForSecondOperand(false);
-  };
-
-  const performOperation = (nextOperator) => {
-    const inputValue = parseFloat(display);
-
-    if (firstOperand === null) {
-      setFirstOperand(inputValue);
-    } else if (operator) {
-      const result = calculate(firstOperand, inputValue, operator);
-      setDisplay(String(result).slice(0, 12)); // Limit result to 12 digits
-      setFirstOperand(result);
-    }
-
-    setWaitingForSecondOperand(true);
-    setOperator(nextOperator);
-  };
-
-  const calculate = (firstOperand, secondOperand, operator) => {
-    switch (operator) {
-      case '+':
-        return firstOperand + secondOperand;
-      case '-':
-        return firstOperand - secondOperand;
-      case '*':
-        return firstOperand * secondOperand;
-      case '/':
-        return firstOperand / secondOperand;
-      default:
-        return secondOperand;
-    }
-  };
-
-  return (
-    <CalculatorContainer>
-      <Display>{display}</Display>
-      <ButtonGrid>
-        <Button onClick={() => inputDigit(7)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>7</Button>
-        <Button onClick={() => inputDigit(8)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>8</Button>
-        <Button onClick={() => inputDigit(9)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>9</Button>
-        <Button onClick={() => performOperation('/')} operator whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>/</Button>
-        <Button onClick={() => inputDigit(4)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>4</Button>
-        <Button onClick={() => inputDigit(5)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>5</Button>
-        <Button onClick={() => inputDigit(6)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>6</Button>
-        <Button onClick={() => performOperation('*')} operator whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>*</Button>
-        <Button onClick={() => inputDigit(1)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>1</Button>
-        <Button onClick={() => inputDigit(2)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>2</Button>
-        <Button onClick={() => inputDigit(3)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>3</Button>
-        <Button onClick={() => performOperation('-')} operator whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>-</Button>
-        <Button onClick={() => inputDigit(0)} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>0</Button>
-        <Button onClick={inputDecimal} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>.</Button>
-        <Button onClick={() => performOperation('=')} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>=</Button>
-        <Button onClick={() => performOperation('+')} operator whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>+</Button>
-        <Button onClick={clear} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} style={{ gridColumn: 'span 4' }}>Clear</Button>
-      </ButtonGrid>
-    </CalculatorContainer>
-  );
+return (
+<FormContainer onSubmit={handleSubmit} variants={formVariants} initial="hidden" animate="visible">
+<Input
+type="text"
+name="name"
+placeholder="Your Name"
+value={formData.name}
+onChange={handleChange}
+required
+variants={inputVariants}
+/>
+<Input
+type="email"
+name="email"
+placeholder="Your Email"
+value={formData.email}
+onChange={handleChange}
+required
+variants={inputVariants}
+/>
+<TextArea
+name="message"
+placeholder="Your Message"
+value={formData.message}
+onChange={handleChange}
+required
+variants={inputVariants}
+/>
+<SubmitButton
+type="submit"
+variants={inputVariants}
+whileHover={{ scale: 1.05 }}
+whileTap={{ scale: 0.95 }}
+>
+Send Message
+</SubmitButton>
+</FormContainer>
+);
 }
 
-export default Calculator;
-InventoryControl:
-import React, { useState, useEffect } from 'react';
+export default ContactForm;
+
+==================================================
+
+File: components/Hero.jsx
+==================================================
+import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { loadState, saveState } from './sharedStateManager';
+import { Link } from 'react-router-dom';
 
-const InventoryContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: 0 auto;
+const HeroContainer = styled.section`
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+min-height: 80vh;
+text-align: center;
 `;
 
-const Title = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+const Title = styled(motion.h1)`
+font-size: 3rem;
+margin-bottom: 1rem;
+color: ${({ theme }) => theme.colors.primary};
 `;
 
-const Form = styled.form`
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 2rem;
+const Subtitle = styled(motion.p)`
+font-size: 1.5rem;
+margin-bottom: 2rem;
 `;
 
-const Input = styled.input`
-  padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.secondary};
-  border-radius: 4px;
+const CallToAction = styled(motion(Link))`
+padding: 0.75rem 1.5rem;
+background-color: ${({ theme }) => theme.colors.primary};
+color: white;
+border-radius: 4px;
+text-decoration: none;
+font-weight: bold;
+transition: background-color 0.3s ease;
+
+&:hover {
+background-color: ${({ theme }) => theme.colors.secondary};
+}
 `;
 
-const Button = styled(motion.button)`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+const containerVariants = {
+hidden: { opacity: 0 },
+visible: {
+opacity: 1,
+transition: {
+staggerChildren: 0.3,
+},
+},
+};
+
+const itemVariants = {
+hidden: { opacity: 0, y: 20 },
+visible: { opacity: 1, y: 0 },
+};
+
+function Hero() {
+return (
+<HeroContainer as={motion.section} variants={containerVariants} initial="hidden" animate="visible">
+<Title variants={itemVariants}>
+Welcome to My Software Portfolio
+</Title>
+<Subtitle variants={itemVariants}>
+Discover innovative solutions for your business needs
+</Subtitle>
+<CallToAction
+to="/project-showcase/task-manager"
+variants={itemVariants}
+whileHover={{ scale: 1.05 }}
+whileTap={{ scale: 0.95 }}
+>
+Explore My Tools
+</CallToAction>
+</HeroContainer>
+);
+}
+
+export default Hero;
+
+==================================================
+
+File: components/ThemeToggle.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
+
+const ToggleContainer = styled(motion.button)`
+background: ${({ theme }) => theme.colors.toggleBackground};
+border: 2px solid ${({ theme }) => theme.colors.toggleBorder};
+border-radius: 30px;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0.5rem;
+width: 4rem;
+height: 2rem;
+transition: all 0.3s linear;
+overflow: hidden;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+width: 3.5rem;
+height: 1.75rem;
+}
 `;
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-  }
+const Icon = styled(motion.svg)`
+height: 1rem;
+width: 1rem;
+color: ${({ theme }) => theme.colors.toggleIcon};
 `;
 
-const Thead = styled.thead`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: none;
-  }
+// Use React.memo to prevent unnecessary re-renders
+const ThemeToggle = React.memo(() => {
+const { isDarkMode, toggleTheme } = useTheme();
+
+// Move variants outside of the component to prevent recreating on each render
+const toggleVariants = {
+light: { backgroundColor: '#f0f0f0' },
+dark: { backgroundColor: '#333333' },
+};
+
+const iconVariants = {
+light: { rotate: 0 },
+dark: { rotate: 360 },
+};
+
+const sunMoonVariants = {
+light: { scale: 1, opacity: 1 },
+dark: { scale: 0, opacity: 0 },
+};
+
+return (
+<ToggleContainer
+onClick={toggleTheme}
+animate={isDarkMode ? 'dark' : 'light'}
+variants={toggleVariants}
+whileHover={{ scale: 1.05 }}
+whileTap={{ scale: 0.95 }}
+aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+>
+<Icon
+xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 24 24"
+fill="none"
+stroke="currentColor"
+strokeWidth="2"
+strokeLinecap="round"
+strokeLinejoin="round"
+animate={isDarkMode ? 'dark' : 'light'}
+variants={iconVariants}
+transition={{ duration: 0.5 }}
+>
+<motion.circle cx="12" cy="12" r="5" variants={sunMoonVariants} />
+<motion.line x1="12" y1="1" x2="12" y2="3" variants={sunMoonVariants} />
+<motion.line x1="12" y1="21" x2="12" y2="23" variants={sunMoonVariants} />
+<motion.line x1="4.22" y1="4.22" x2="5.64" y2="5.64" variants={sunMoonVariants} />
+<motion.line x1="18.36" y1="18.36" x2="19.78" y2="19.78" variants={sunMoonVariants} />
+<motion.line x1="1" y1="12" x2="3" y2="12" variants={sunMoonVariants} />
+<motion.line x1="21" y1="12" x2="23" y2="12" variants={sunMoonVariants} />
+<motion.line x1="4.22" y1="19.78" x2="5.64" y2="18.36" variants={sunMoonVariants} />
+<motion.line x1="18.36" y1="5.64" x2="19.78" y2="4.22" variants={sunMoonVariants} />
+</Icon>
+<Icon
+xmlns="http://www.w3.org/2000/svg"
+viewBox="0 0 24 24"
+fill="none"
+stroke="currentColor"
+strokeWidth="2"
+strokeLinecap="round"
+strokeLinejoin="round"
+animate={isDarkMode ? 'dark' : 'light'}
+variants={iconVariants}
+transition={{ duration: 0.5 }}
+>
+<motion.path
+d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+variants={{
+light: { scale: 0, opacity: 0 },
+dark: { scale: 1, opacity: 1 },
+}}
+/>
+</Icon>
+</ToggleContainer>
+);
+});
+
+export default ThemeToggle;
+
+==================================================
+
+File: components/SoftwareToolShowcase.jsx
+==================================================
+// File: components/SoftwareToolShowcase.jsx
+
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { FaTasks, FaCalculator, FaCloudSun, FaBoxOpen, FaShoppingCart } from 'react-icons/fa';
+
+const ShowcaseContainer = styled(motion.section)`
+padding: 2rem 0;
+display: flex;
+flex-direction: column;
+align-items: center;
 `;
 
-const Tbody = styled.tbody`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-  }
+const Title = styled(motion.h2)`
+font-size: 2rem;
+margin-bottom: 2rem;
+text-align: center;
+color: ${({ theme }) => theme.colors.text};
 `;
 
-const Tr = styled.tr`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid ${({ theme }) => theme.colors.secondary};
-    border-radius: 4px;
-    padding: 0.5rem;
-  }
+const ToolGrid = styled(motion.div)`
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 2rem;
+max-width: 900px;
+width: 100%;
+`;
+
+const ToolCard = styled(motion.div)`
+background-color: ${({ theme }) => theme.colors.cardBackground};
+border-radius: 12px;
+padding: 1.5rem;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+display: flex;
+flex-direction: column;
+align-items: center;
+text-align: center;
+`;
+
+const ToolIcon = styled(motion.div)`
+font-size: 3rem;
+color: ${({ theme }) => theme.colors.primary};
+margin-bottom: 1rem;
+`;
+
+const ToolTitle = styled.h3`
+font-size: 1.25rem;
+margin-bottom: 1rem;
+color: ${({ theme }) => theme.colors.text};
+`;
+
+const ToolDescription = styled.p`
+font-size: 1rem;
+margin-bottom: 1rem;
+color: ${({ theme }) => theme.colors.text};
+`;
+
+const ToolLink = styled(Link)`
+color: ${({ theme }) => theme.colors.primary};
+font-weight: bold;
+text-decoration: none;
+&:hover {
+text-decoration: underline;
+}
+`;
+
+const tools = [
+{
+id: 'task-manager',
+title: 'Task Manager',
+description: 'Organize and manage your tasks with our intuitive task management tool.',
+icon: FaTasks,
+},
+{
+id: 'calculator',
+title: 'Calculator',
+description: 'Perform basic and advanced calculations with our sleek calculator app.',
+icon: FaCalculator,
+},
+{
+id: 'weather-app',
+title: 'Weather App',
+description: 'Check real-time weather information for any location with our weather app.',
+icon: FaCloudSun,
+},
+{
+id: 'inventory-control',
+title: 'Inventory Control',
+description: 'Manage your inventory efficiently with our comprehensive inventory control tool.',
+icon: FaBoxOpen,
+},
+{
+id: 'retail-order-system',
+title: 'Retail Order System',
+description: 'Handle retail orders and track your inventory with our streamlined order management system.',
+icon: FaShoppingCart,
+},
+];
+
+const containerVariants = {
+hidden: { opacity: 0 },
+visible: {
+opacity: 1,
+transition: {
+staggerChildren: 0.2,
+},
+},
+};
+
+const itemVariants = {
+hidden: { opacity: 0, y: 20 },
+visible: { opacity: 1, y: 0 },
+};
+
+function SoftwareToolShowcase() {
+return (
+<ShowcaseContainer variants={containerVariants} initial="hidden" animate="visible">
+<Title variants={itemVariants}>Our Software Tools</Title>
+<ToolGrid variants={containerVariants}>
+{tools.map((tool) => (
+<ToolCard key={tool.id} variants={itemVariants} whileHover={{ scale: 1.05 }}>
+<ToolIcon as={motion.div} whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+<tool.icon />
+</ToolIcon>
+<ToolTitle>{tool.title}</ToolTitle>
+<ToolDescription>{tool.description}</ToolDescription>
+<ToolLink to={`/project-showcase/${tool.id}`}>Try demo for FREE!</ToolLink>
+</ToolCard>
+))}
+</ToolGrid>
+</ShowcaseContainer>
+);
+}
+
+export default SoftwareToolShowcase;
+
+==================================================
+
+File: components/ComparisonTable.jsx
+==================================================
+import React from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+
+const TableContainer = styled(motion.div)`
+overflow-x: auto;
+margin: 2rem 0;
+-webkit-overflow-scrolling: touch;
+`;
+
+const Table = styled(motion.table)`
+width: 100%;
+border-collapse: collapse;
 `;
 
 const Th = styled.th`
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 2px solid ${({ theme }) => theme.colors.secondary};
-`;
-
-const Td = styled.td`
-  padding: 0.5rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.secondary};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: flex;
-    padding: 0.25rem 0;
-    border: none;
-
-    &:before {
-      content: attr(data-label);
-      font-weight: bold;
-      width: 40%;
-      margin-right: 0.5rem;
-    }
-  }
-`;
-
-function InventoryControl() {
-  const [state, setState] = useState(() => {
-    const loadedState = loadState();
-    return {
-      ...loadedState,
-      newItem: { name: '', quantity: '', price: '' }
-    };
-  });
-
-  useEffect(() => {
-    saveState({
-      inventory: state.inventory,
-      orders: state.orders
-    });
-  }, [state.inventory, state.orders]);
-
-  const handleInputChange = (e) => {
-    setState(prevState => ({
-      ...prevState,
-      newItem: { ...prevState.newItem, [e.target.name]: e.target.value }
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (state.newItem.name && state.newItem.quantity && state.newItem.price) {
-      setState(prevState => ({
-        ...prevState,
-        inventory: [...prevState.inventory, { ...prevState.newItem, id: Date.now(), quantity: parseInt(prevState.newItem.quantity), price: parseFloat(prevState.newItem.price) }],
-        newItem: { name: '', quantity: '', price: '' }
-      }));
-    }
-  };
-
-  const handleDelete = (id) => {
-    setState(prevState => ({
-      ...prevState,
-      inventory: prevState.inventory.filter(item => item.id !== id)
-    }));
-  };
-
-  return (
-    <InventoryContainer>
-      <Title>Inventory Control</Title>
-      <Form onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          name="name"
-          value={state.newItem.name}
-          onChange={handleInputChange}
-          placeholder="Item Name"
-          required
-        />
-        <Input
-          type="number"
-          name="quantity"
-          value={state.newItem.quantity}
-          onChange={handleInputChange}
-          placeholder="Quantity"
-          required
-        />
-        <Input
-          type="number"
-          name="price"
-          value={state.newItem.price}
-          onChange={handleInputChange}
-          placeholder="Price"
-          required
-        />
-        <Button type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          Add Item
-        </Button>
-      </Form>
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Quantity</Th>
-            <Th>Price</Th>
-            <Th>Actions</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {state.inventory.map((item) => (
-            <Tr key={item.id}>
-              <Td data-label="Name">{item.name}</Td>
-              <Td data-label="Quantity">{item.quantity}</Td>
-              <Td data-label="Price">${parseFloat(item.price).toFixed(2)}</Td>
-              <Td data-label="Actions">
-                <Button onClick={() => handleDelete(item.id)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  Delete
-                </Button>
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-    </InventoryContainer>
-  );
+background-color: ${({ theme }) => theme.colors.primary};
+color: ${({ theme }) => theme.colors.background};
+padding: 1rem;
+text-align: left;
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+padding: 0.5rem;
+font-size: 0.9rem;
 }
-
-export default InventoryControl;
-RetailOrderSystems:
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { loadState, saveState } from './sharedStateManager';
-
-const OrderSystemContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: 0 auto;
 `;
 
-const Title = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-`;
-
-const Form = styled.form`
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 2rem;
-`;
-
-const Input = styled.input`
-  padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.secondary};
-  border-radius: 4px;
-`;
-
-const Select = styled.select`
-  padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.secondary};
-  border-radius: 4px;
-`;
-
-const Button = styled(motion.button)`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-  }
-`;
-
-const Thead = styled.thead`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: none;
-  }
-`;
-
-const Tbody = styled.tbody`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-  }
-`;
-
-const Tr = styled.tr`
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid ${({ theme }) => theme.colors.secondary};
-    border-radius: 4px;
-    padding: 0.5rem;
-  }
-`;
-
-const Th = styled.th`
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 2px solid ${({ theme }) => theme.colors.secondary};
-`;
-
-const Td = styled.td`
-  padding: 0.5rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.secondary};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    display: flex;
-    padding: 0.25rem 0;
-    border: none;
-
-    &:before {
-      content: attr(data-label);
-      font-weight: bold;
-      width: 40%;
-      margin-right: 0.5rem;
-    }
-  }
-`;
-
-function RetailOrderSystem() {
-  const [state, setState] = useState(() => {
-    const loadedState = loadState();
-    return {
-      ...loadedState,
-      newOrder: { customer: '', product: '', quantity: '' }
-    };
-  });
-
-  useEffect(() => {
-    saveState({
-      inventory: state.inventory,
-      orders: state.orders
-    });
-  }, [state.inventory, state.orders]);
-
-  const handleInputChange = (e) => {
-    setState(prevState => ({
-      ...prevState,
-      newOrder: { ...prevState.newOrder, [e.target.name]: e.target.value }
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (state.newOrder.customer && state.newOrder.product && state.newOrder.quantity) {
-      const selectedProduct = state.inventory.find(item => item.name === state.newOrder.product);
-      if (selectedProduct && selectedProduct.quantity >= parseInt(state.newOrder.quantity)) {
-        const order = {
-          ...state.newOrder,
-          id: Date.now(),
-          price: selectedProduct.price * parseInt(state.newOrder.quantity),
-          date: new Date().toLocaleDateString()
-        };
-        
-        setState(prevState => ({
-          ...prevState,
-          orders: [...prevState.orders, order],
-          inventory: prevState.inventory.map(item => 
-            item.name === state.newOrder.product 
-              ? { ...item, quantity: item.quantity - parseInt(state.newOrder.quantity) } 
-              : item
-          ),
-          newOrder: { customer: '', product: '', quantity: '' }
-        }));
-      } else {
-        alert('Not enough inventory!');
-      }
-    }
-  };
-
-  const handleDelete = (id) => {
-    const orderToDelete = state.orders.find(order => order.id === id);
-    if (orderToDelete) {
-      setState(prevState => ({
-        ...prevState,
-        orders: prevState.orders.filter(order => order.id !== id),
-        inventory: prevState.inventory.map(item =>
-          item.name === orderToDelete.product
-            ? { ...item, quantity: item.quantity + parseInt(orderToDelete.quantity) }
-            : item
-        )
-      }));
-    }
-  };
-
-  return (
-    <OrderSystemContainer>
-      <Title>Retail Order System</Title>
-      <Form onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          name="customer"
-          value={state.newOrder.customer}
-          onChange={handleInputChange}
-          placeholder="Customer Name"
-          required
-        />
-        <Select
-          name="product"
-          value={state.newOrder.product}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="">Select Product</option>
-          {state.inventory.map(item => (
-            <option key={item.id} value={item.name}>{item.name} (In stock: {item.quantity})</option>
-          ))}
-        </Select>
-        <Input
-          type="number"
-          name="quantity"
-          value={state.newOrder.quantity}
-          onChange={handleInputChange}
-          placeholder="Quantity"
-          required
-        />
-        <Button type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          Place Order
-        </Button>
-      </Form>
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Date</Th>
-            <Th>Customer</Th>
-            <Th>Product</Th>
-            <Th>Quantity</Th>
-            <Th>Total Price</Th>
-            <Th>Actions</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {state.orders.map((order) => (
-            <Tr key={order.id}>
-              <Td data-label="Date">{order.date}</Td>
-              <Td data-label="Customer">{order.customer}</Td>
-              <Td data-label="Product">{order.product}</Td>
-              <Td data-label="Quantity">{order.quantity}</Td>
-              <Td data-label="Total Price">${parseFloat(order.price).toFixed(2)}</Td>
-              <Td data-label="Actions">
-                <Button onClick={() => handleDelete(order.id)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  Delete
-                </Button>
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-    </OrderSystemContainer>
-  );
+const Td = styled(motion.td)`
+padding: 1rem;
+border-bottom: 1px solid ${({ theme }) => theme.colors.secondary};
+color: ${({ theme }) => theme.colors.text};
+@media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
+padding: 0.5rem;
+font-size: 0.9rem;
 }
-
-export default RetailOrderSystem;
-TaskManager:
-import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence, usePresence } from 'framer-motion';
-import { FaTrash, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
-
-const ProjectContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
-const TaskInput = styled(motion.input)`
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.secondary};
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}33;
-  }
+const Tr = styled(motion.tr)`
+&:nth-child(even) {
+background-color: ${({ theme }) => theme.colors.cardBackground};
+}
 `;
 
-const TaskListContainer = styled(motion.div)`
-  width: 100%;
-  overflow: hidden;
-`;
+const features = [
+{ name: 'Task Management', tool1: '✓', tool2: '✓', tool3: '✓' },
+{ name: 'Time Tracking', tool1: '✓', tool2: '✘', tool3: '✓' },
+{ name: 'Collaboration', tool1: '✓', tool2: '✓', tool3: '✓' },
+{ name: 'Reporting', tool1: '✓', tool2: '✓', tool3: '✘' },
+{ name: 'Mobile App', tool1: '✓', tool2: '✘', tool3: '✓' },
+];
 
-const TaskList = styled(motion.ul)`
-  list-style-type: none;
-  padding: 0;
-  width: 100%;
-  margin: 0;
-`;
-
-const TaskItem = styled(motion.li)`
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const TaskCheckbox = styled(motion.input)`
-  margin-right: 0.5rem;
-  cursor: pointer;
-`;
-
-const TaskText = styled(motion.span)`
-  flex-grow: 1;
-  text-decoration: ${props => props.completed ? 'line-through' : 'none'};
-  color: ${props => props.completed ? props.theme.colors.secondary : props.theme.colors.text};
-  transition: all 0.3s ease;
-`;
-
-const TaskActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const ActionButton = styled(motion.button)`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 1rem;
-  padding: 0.2rem;
-  transition: color 0.3s ease;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-const AddTaskButton = styled(motion.button)`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  margin-top: 1rem;
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-const FilterContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  margin-top: 1rem;
-`;
-
-const FilterButton = styled(motion.button)`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.text};
-  font-weight: ${({ active }) => active ? 'bold' : 'normal'};
-  transition: color 0.3s ease;
-  padding: 0.5rem 1rem;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-const listVariants = {
-  hidden: { 
-    height: 0,
-    opacity: 0,
-    transition: {
-      height: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.2 }
-    }
-  },
-  visible: { 
-    height: "auto",
-    opacity: 1,
-    transition: {
-      height: { type: "spring", stiffness: 300, damping: 30 },
-      opacity: { duration: 0.2 },
-      staggerChildren: 0.07,
-      delayChildren: 0.2
-    }
-  }
+const tableVariants = {
+hidden: { opacity: 0 },
+visible: {
+opacity: 1,
+transition: {
+staggerChildren: 0.1,
+},
+},
 };
 
-const taskVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 20,
-    transition: {
-      y: { type: "spring", stiffness: 500, damping: 25 },
-      opacity: { duration: 0.15 }
-    }
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: {
-      y: { type: "spring", stiffness: 500, damping: 25 },
-      opacity: { duration: 0.15 }
-    }
-  }
+const rowVariants = {
+hidden: { opacity: 0, x: -20 },
+visible: { opacity: 1, x: 0 },
 };
 
-function TaskManager() {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [filter, setFilter] = useState('all');
-  const [editingTask, setEditingTask] = useState(null);
-  const [listHeight, setListHeight] = useState("auto");
-  const listRef = useRef(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const storedTasks = localStorage.getItem('tasks');
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    updateListHeight();
-  }, [tasks]);
-
-  useEffect(() => {
-    window.addEventListener('resize', updateListHeight);
-    return () => window.removeEventListener('resize', updateListHeight);
-  }, []);
-
-  const updateListHeight = () => {
-    if (listRef.current) {
-      setListHeight(listRef.current.scrollHeight);
-    }
-  };
-
-  const addTask = (e) => {
-    e.preventDefault();
-    if (newTask.trim()) {
-      setTasks([...tasks, { id: Date.now(), text: newTask, completed: false }]);
-      setNewTask('');
-    }
-  };
-
-  const toggleTask = (id) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
-  const deleteTask = (id) => {
-    setIsDeleting(true);
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
-  };
-
-  const startEditingTask = (id) => {
-    setEditingTask(id);
-  };
-
-  const saveEditedTask = (id, newText) => {
-    setTasks(tasks.map(task =>
-      task.id === id ? { ...task, text: newText } : task
-    ));
-    setEditingTask(null);
-  };
-
-  const cancelEditing = () => {
-    setEditingTask(null);
-  };
-
-  const filteredTasks = tasks.filter(task => {
-    if (filter === 'active') return !task.completed;
-    if (filter === 'completed') return task.completed;
-    return true;
-  });
-
-  return (
-    <ProjectContainer>
-      <h3>Add and Manage Tasks</h3>
-      <form onSubmit={addTask}>
-        <TaskInput
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Add a new task"
-          whileFocus={{ scale: 1.05 }}
-        />
-        <AddTaskButton type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          Add Task
-        </AddTaskButton>
-      </form>
-      <FilterContainer>
-        <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>All</FilterButton>
-        <FilterButton active={filter === 'active'} onClick={() => setFilter('active')}>Active</FilterButton>
-        <FilterButton active={filter === 'completed'} onClick={() => setFilter('completed')}>Completed</FilterButton>
-      </FilterContainer>
-      <AnimatePresence initial={false} onExitComplete={() => {
-        setIsDeleting(false);
-        updateListHeight();
-      }}>
-        {filteredTasks.length > 0 && (
-          <TaskListContainer
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={listVariants}
-            style={{ height: listHeight }}
-            transition={{ duration: 0.3 }}
-          >
-            <TaskList ref={listRef}>
-              <AnimatePresence initial={false}>
-                {filteredTasks.map((task) => (
-                  <TaskItemWrapper 
-                    key={task.id} 
-                    task={task}
-                    toggleTask={toggleTask}
-                    editingTask={editingTask}
-                    startEditingTask={startEditingTask}
-                    saveEditedTask={saveEditedTask}
-                    cancelEditing={cancelEditing}
-                    deleteTask={deleteTask}
-                    isDeleting={isDeleting}
-                  />
-                ))}
-              </AnimatePresence>
-            </TaskList>
-          </TaskListContainer>
-        )}
-      </AnimatePresence>
-    </ProjectContainer>
-  );
+function ComparisonTable() {
+return (
+<TableContainer initial="hidden" animate="visible" variants={tableVariants}>
+<Table>
+<thead>
+<Tr variants={rowVariants}>
+<Th>Feature</Th>
+<Th>Our Tool</Th>
+<Th>Competitor A</Th>
+<Th>Competitor B</Th>
+</Tr>
+</thead>
+<tbody>
+{features.map((feature, index) => (
+<Tr key={index} variants={rowVariants}>
+<Td>{feature.name}</Td>
+<Td>{feature.tool1}</Td>
+<Td>{feature.tool2}</Td>
+<Td>{feature.tool3}</Td>
+</Tr>
+))}
+</tbody>
+</Table>
+</TableContainer>
+);
 }
 
-function TaskItemWrapper({ task, toggleTask, editingTask, startEditingTask, saveEditedTask, cancelEditing, deleteTask, isDeleting }) {
-  const [isPresent, safeToRemove] = usePresence();
+export default ComparisonTable;
 
-  useEffect(() => {
-    !isPresent && setTimeout(safeToRemove, 300);
-  }, [isPresent, safeToRemove]);
+==================================================
 
-  return (
-    <TaskItem
-      layout
-      variants={taskVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-      positionTransition={{
-        type: "spring",
-        stiffness: 500,
-        damping: 25,
-        delay: isDeleting ? 0.2 : 0
-      }}
-    >
-      <TaskCheckbox
-        type="checkbox"
-        checked={task.completed}
-        onChange={() => toggleTask(task.id)}
-      />
-      {editingTask === task.id ? (
-        <TaskInput
-          type="text"
-          value={task.text}
-          onChange={(e) => saveEditedTask(task.id, e.target.value)}
-          onBlur={() => saveEditedTask(task.id, task.text)}
-          autoFocus
-        />
-      ) : (
-        <TaskText completed={task.completed}>{task.text}</TaskText>
-      )}
-      <TaskActions>
-        {editingTask === task.id ? (
-          <>
-            <ActionButton onClick={() => saveEditedTask(task.id, task.text)}><FaSave /></ActionButton>
-            <ActionButton onClick={cancelEditing}><FaTimes /></ActionButton>
-          </>
-        ) : (
-          <>
-            <ActionButton onClick={() => startEditingTask(task.id)}><FaEdit /></ActionButton>
-            <ActionButton onClick={() => deleteTask(task.id)}><FaTrash /></ActionButton>
-          </>
-        )}
-      </TaskActions>
-    </TaskItem>
-  );
-}
-
-export default TaskManager;
-WeatherApp:
-import React, { useState, useEffect } from 'react';
+File: components/Footer.jsx
+==================================================
+import React from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
 
-const WeatherContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  margin: 0 auto;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: 0.5rem;
-  }
+const StyledFooter = styled.footer`
+background-color: ${({ theme }) => theme.colors.background};
+padding: 1rem;
+text-align: center;
+border-top: 1px solid ${({ theme }) => theme.colors.secondary};
 `;
 
-const WeatherForm = styled.form`
-  display: flex;
-  margin-bottom: 1rem;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    flex-direction: column;
-  }
-`;
-
-const WeatherInput = styled(motion.input)`
-  flex-grow: 1;
-  padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.secondary};
-  border-radius: 4px 0 0 4px;
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-  }
-`;
-
-const WeatherButton = styled(motion.button)`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 0 4px 4px 0;
-  cursor: pointer;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    border-radius: 4px;
-  }
-`;
-
-const WeatherSuggestions = styled.div`
-  position: absolute;
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 4px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-  width: 100%;
-  z-index: 10;
-`;
-
-const WeatherSuggestion = styled(motion.div)`
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-const WeatherInfo = styled.div`
-  text-align: center;
-`;
-
-const WeatherTemp = styled.h2`
-  font-size: 2.5rem;
-  margin: 1rem 0;
-`;
-
-const WeatherDescription = styled.p`
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-`;
-
-function WeatherApp() {
-  const [city, setCity] = useState('');
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      try {
-        const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=5&language=en&format=json`);
-        const data = await response.json();
-        setSuggestions(data.results);
-        setShowSuggestions(true);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
-    if (city.trim().length > 2) {
-      fetchSuggestions();
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [city]);
-
-  const fetchWeather = async (lat, lon) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m`);
-      if (!weatherResponse.ok) {
-        throw new Error('Weather data not available');
-      }
-      const weatherData = await weatherResponse.json();
-
-      setWeather({
-        temperature: weatherData.current_weather.temperature,
-        windspeed: weatherData.current_weather.windspeed,
-        humidity: weatherData.hourly.relativehumidity_2m[0],
-      });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    setShowSuggestions(false);
-
-    try {
-      const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
-      if (!geoResponse.ok) {
-        throw new Error('City not found');
-      }
-      const geoData = await geoResponse.json();
-
-      if (!geoData.results || geoData.results.length === 0) {
-        throw new Error('City not found');
-      }
-
-      const { latitude, longitude } = geoData.results[0];
-      await fetchWeather(latitude, longitude);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setCity(suggestion.name);
-    setShowSuggestions(false);
-    fetchWeather(suggestion.latitude, suggestion.longitude);
-  };
-
-  return (
-    <WeatherContainer>
-      <WeatherForm onSubmit={handleSearch}>
-        <WeatherInput
-          type="text"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="Enter city name"
-          whileFocus={{ scale: 1.05 }}
-        />
-        <WeatherButton type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          Search
-        </WeatherButton>
-      </WeatherForm>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <WeatherSuggestions>
-          {suggestions.map((suggestion, index) => (
-            <WeatherSuggestion
-              key={index}
-              onClick={() => handleSuggestionClick(suggestion)}
-              whileHover={{ backgroundColor: `${({ theme }) => theme.colors.secondary}` }}
-            >
-              {suggestion.name}
-            </WeatherSuggestion>
-          ))}
-        </WeatherSuggestions>
-      )}
-
-      {loading && <p>Loading...</p>}
-      {error && <p>Error: {error}</p>}
-
-      {weather && (
-        <WeatherInfo>
-          <WeatherTemp>{Math.round(weather.temperature)}°C</WeatherTemp>
-          <WeatherDescription>
-            Wind Speed: {weather.windspeed} m/s
-          </WeatherDescription>
-          <p>Humidity: {weather.humidity}%</p>
-        </WeatherInfo>
-      )}
-    </WeatherContainer>
-  );
+function Footer() {
+return (
+<StyledFooter>
+<p>&copy; 2024 My Portfolio. All rights reserved.</p>
+</StyledFooter>
+);
 }
 
-export default WeatherApp;
----
+export default Footer;
+
+==================================================
+
+File: components/ProjectShowcase.jsx
+==================================================
+import React, { useState, useRef, useEffect } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManagerApp/TaskManager';
+import Calculator from '../projects/CalculatorApp/Calculator';
+import WeatherApp from '../projects/WeatherApp/Weather';
+import InventoryControl from '../projects/Retail&InventoryControlApp/InventoryControl';
+import RetailOrderSystems from '../projects/Retail&InventoryControlApp/RetailOrderSystems';
+import { FaChevronLeft, FaChevronRight, FaCode, FaFolder, FaFolderOpen, FaFile } from 'react-icons/fa';
+
+const ShowcaseContainer = styled(motion.div)`
+display: flex;
+flex-direction: column;
+align-items: center;
+min-height: calc(100vh - 60px);
+padding: 2rem;
+`;
+
+const ProjectView = styled(motion.div)`
+width: 100%;
+max-width: 800px;
+background-color: ${({ theme }) => theme.colors.cardBackground};
+border-radius: 12px;
+padding: 2rem;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+position: relative;
+`;
+
+const Title = styled(motion.h2)`
+font-size: 2rem;
+margin-bottom: 2rem;
+text-align: center;
+`;
+
+const NavigationArrow = styled(motion.button)`
+position: fixed;
+top: 50%;
+background: none;
+border: none;
+font-size: 2rem;
+color: ${({ theme }) => theme.colors.primary};
+cursor: pointer;
+z-index: 10;
+&.left {
+left: 1rem;
+}
+&.right {
+right: 1rem;
+}
+`;
+
+const CodeButton = styled(motion.button)`
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 0.5rem 1rem;
+background-color: ${({ theme }) => theme.colors.primary};
+color: white;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+font-weight: bold;
+margin-top: 1rem;
+`;
+
+const CodeIcon = styled(FaCode)`
+margin-right: 0.5rem;
+`;
+
+const CodeCurtain = styled(motion.div)`
+position: fixed;
+top: 60px;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: ${({ theme }) => theme.colors.background};
+z-index: 100;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+padding: 2rem;
+overflow-y: auto;
+height: calc(100% - 60px);
+`;
+
+const CloseButton = styled(motion.button)`
+position: absolute;
+top: 1rem;
+right: 1rem;
+background: none;
+border: none;
+font-size: 1.5rem;
+color: ${({ theme }) => theme.colors.text};
+cursor: pointer;
+z-index: 101;
+`;
+
+const StructureContainer = styled(motion.div)`
+width: 100%;
+max-width: 800px;
+margin: 0 auto;
+padding: 1rem;
+`;
+
+const FileTree = styled.ul`
+list-style-type: none;
+padding-left: 1rem;
+`;
+
+const FileItemContainer = styled(motion.div)`
+margin-bottom: 0.5rem;
+`;
+
+const FileItem = styled(motion.div)`
+cursor: pointer;
+display: flex;
+align-items: center;
+padding: 0.25rem 0;
+`;
+
+const CodePreviewWrapper = styled(motion.div)`
+overflow: hidden;
+width: 100%;
+`;
+
+const CodePreview = styled.pre`
+background-color: ${({ theme }) => theme.colors.cardBackground};
+padding: 1rem;
+border-radius: 8px;
+overflow-x: auto;
+width: 100%;
+margin-top: 0.5rem;
+`;
+
+const FileName = styled.span`
+margin-left: 0.5rem;
+`;
+
+const projects = [
+{ id: 'task-manager', component: TaskManager, title: 'Task Manager' },
+{ id: 'calculator', component: Calculator, title: 'Calculator' },
+{ id: 'weather-app', component: WeatherApp, title: 'Weather App' },
+{ id: 'inventory-control', component: InventoryControl, title: 'Inventory Control' },
+{ id: 'retail-order-system', component: RetailOrderSystems, title: 'Retail Order System' },
+];
+
+const projectFiles = {
+'task-manager': {
+'TaskManager.jsx': `// TaskManager component code`,
+'TaskForm.jsx': `// TaskForm component code`,
+'TaskList.jsx': `// TaskList component code`,
+'TaskItem.jsx': `// TaskItem component code`,
+'FilterContainer.jsx': `// FilterContainer component code`,
+'StyledComponents.jsx': `// Styled components for TaskManager`
+},
+'calculator': {
+'Calculator.jsx': `// Calculator component code`,
+'Display.jsx': `// Display component code`,
+'ButtonGrid.jsx': `// ButtonGrid component code`,
+'Button.jsx': `// Button component code`,
+'CalculatorStyles.jsx': `// Styled components for Calculator`
+},
+'weather-app': {
+'Weather.jsx': `// WeatherApp component code`,
+'WeatherForm.jsx': `// WeatherForm component code`,
+'WeatherInfo.jsx': `// WeatherInfo component code`,
+'StyledComponents.jsx': `// Styled components for WeatherApp`
+},
+'inventory-control': {
+'InventoryControl.jsx': `// InventoryControl component code`,
+'InventoryForm.jsx': `// InventoryForm component code`,
+'InventoryTable.jsx': `// InventoryTable component code`,
+'InventoryTableRow.jsx': `// InventoryTableRow component code`,
+'InventoryStyles.jsx': `// Styled components for InventoryControl`
+},
+'retail-order-system': {
+'RetailOrderSystems.jsx': `// RetailOrderSystem component code`,
+'OrderForm.jsx': `// OrderForm component code`,
+'OrderTable.jsx': `// OrderTable component code`,
+'OrderTableRow.jsx': `// OrderTableRow component code`,
+'RetailOrderStyles.jsx': `// Styled components for RetailOrderSystem`,
+'sharedStateManager.js': `// Shared state management functions`
+}
+};
+
+const FileTreeItem = ({ name, content, level = 0 }) => {
+const [isOpen, setIsOpen] = useState(false);
+const [showCode, setShowCode] = useState(false);
+const codeRef = useRef(null);
+const [codeHeight, setCodeHeight] = useState(0);
+
+const isFolder = typeof content === 'object';
+
+useEffect(() => {
+if (codeRef.current) {
+setCodeHeight(codeRef.current.scrollHeight);
+}
+}, [showCode, content]);
+
+const toggleOpen = () => {
+if (isFolder) {
+setIsOpen(!isOpen);
+} else {
+setShowCode(!showCode);
+}
+};
+
+return (
+<FileItemContainer layout transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+<FileItem onClick={toggleOpen}>
+{isFolder ? (
+isOpen ? <FaFolderOpen /> : <FaFolder />
+) : (
+<FaFile />
+)}
+<FileName>{name}</FileName>
+</FileItem>
+<AnimatePresence>
+{isOpen && isFolder && (
+<motion.div
+initial={{ opacity: 0, height: 0 }}
+animate={{ opacity: 1, height: "auto" }}
+exit={{ opacity: 0, height: 0 }}
+transition={{ type: "spring", stiffness: 300, damping: 30 }}
+>
+<FileTree>
+{Object.entries(content).map(([key, value]) => (
+<FileTreeItem key={key} name={key} content={value} level={level + 1} />
+))}
+</FileTree>
+</motion.div>
+)}
+{showCode && !isFolder && (
+<CodePreviewWrapper
+initial={{ height: 0, opacity: 0 }}
+animate={{ 
+height: codeHeight,
+opacity: 1,
+transition: { 
+height: { type: "spring", stiffness: 300, damping: 30 },
+opacity: { duration: 0.2 }
+}
+}}
+exit={{ 
+height: 0,
+opacity: 0,
+transition: { 
+height: { type: "spring", stiffness: 300, damping: 30 },
+opacity: { duration: 0.2 }
+}
+}}
+>
+<CodePreview ref={codeRef}>
+{content}
+</CodePreview>
+</CodePreviewWrapper>
+)}
+</AnimatePresence>
+</FileItemContainer>
+);
+};
+
+const CodeStructure = ({ projectId }) => {
+return (
+<StructureContainer
+initial={{ opacity: 0 }}
+animate={{ opacity: 1 }}
+exit={{ opacity: 0 }}
+transition={{ duration: 0.5 }}
+>
+<h2>Project Structure</h2>
+<LayoutGroup>
+<FileTree>
+<FileTreeItem name={projectId} content={projectFiles[projectId]} />
+</FileTree>
+</LayoutGroup>
+</StructureContainer>
+);
+};
+
+function ProjectShowcase() {
+const { projectId } = useParams();
+const navigate = useNavigate();
+const currentProjectIndex = projects.findIndex(p => p.id === projectId);
+const currentProject = projects[currentProjectIndex];
+const [showCode, setShowCode] = useState(false);
+
+const navigateProject = (direction) => {
+const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
+navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
+};
+
+const toggleCode = () => {
+setShowCode(!showCode);
+};
+
+if (!currentProject) {
+return <div>Project not found</div>;
+}
+
+const ProjectComponent = currentProject.component;
+
+return (
+<ShowcaseContainer
+initial={{ opacity: 0 }}
+animate={{ opacity: 1 }}
+exit={{ opacity: 0 }}
+transition={{ duration: 0.5 }}
+>
+<ProjectView>
+<Title>{currentProject.title}</Title>
+<ProjectComponent />
+<CodeButton onClick={toggleCode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+<CodeIcon /> View Code
+</CodeButton>
+</ProjectView>
+<NavigationArrow
+className="left"
+onClick={() => navigateProject(-1)}
+whileHover={{ scale: 1.1 }}
+whileTap={{ scale: 0.9 }}
+>
+<FaChevronLeft />
+</NavigationArrow>
+<NavigationArrow
+className="right"
+onClick={() => navigateProject(1)}
+whileHover={{ scale: 1.1 }}
+whileTap={{ scale: 0.9 }}
+>
+<FaChevronRight />
+</NavigationArrow>
+<AnimatePresence>
+{showCode && (
+<CodeCurtain
+initial={{ y: '100%', opacity: 0 }}
+animate={{ y: 0, opacity: 1 }}
+exit={{ y: '100%', opacity: 0 }}
+transition={{ 
+type: 'spring', 
+damping: 30, 
+stiffness: 300,
+opacity: { duration: 0.2 }
+}}
+>
+<CloseButton onClick={toggleCode} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+✕
+</CloseButton>
+<CodeStructure projectId={projectId} />
+</CodeCurtain>
+)}
+</AnimatePresence>
+</ShowcaseContainer>
+);
+}
+
+export default ProjectShowcase;
+
+==================================================
+
+File: styles/Theme.js
+==================================================
+// File: styles/Theme.js
+
+const breakpoints = {
+sm: '576px',
+md: '768px',
+lg: '992px',
+xl: '1200px',
+};
+
+const baseTheme = {
+fonts: {
+body: '"Open Sans", sans-serif',
+heading: '"Montserrat", sans-serif',
+},
+breakpoints,
+transitions: {
+default: '0.3s ease-in-out',
+},
+};
+
+const lightColors = {
+primary: '#3498db',
+secondary: '#2ecc71',
+background: '#f5f5f5',
+text: '#333333',
+cardBackground: '#ffffff',
+headerBackground: '#ffffff',
+toggleBackground: '#f0f0f0',
+toggleBorder: '#3498db',
+toggleIcon: '#3498db',
+};
+
+const darkColors = {
+primary: '#3498db',
+secondary: '#2ecc71',
+background: '#2c3e50',
+text: '#ecf0f1',
+cardBackground: '#34495e',
+headerBackground: '#2c3e50',
+toggleBackground: '#34495e',
+toggleBorder: '#3498db',
+toggleIcon: '#ecf0f1',
+};
+
+export const lightTheme = { ...baseTheme, colors: lightColors };
+export const darkTheme = { ...baseTheme, colors: darkColors };
+
+==================================================
+
+File: styles/GlobalStyles.js
+==================================================
+// File: styles/GlobalStyles.js
+
+import { createGlobalStyle } from 'styled-components';
+
+const GlobalStyles = createGlobalStyle`
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+}
+
+html {
+font-size: 16px;
+scroll-behavior: smooth;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+font-size: 14px;
+}
+}
+
+body {
+font-family: ${({ theme }) => theme.fonts.body};
+line-height: 1.5;
+color: ${({ theme }) => theme.colors.text};
+background-color: ${({ theme }) => theme.colors.background};
+transition: all ${({ theme }) => theme.transitions.default};
+}
+
+a {
+color: ${({ theme }) => theme.colors.primary};
+text-decoration: none;
+transition: color ${({ theme }) => theme.transitions.default};
+
+&:hover {
+color: ${({ theme }) => theme.colors.secondary};
+}
+}
+
+img {
+max-width: 100%;
+height: auto;
+}
+
+#root {
+display: flex;
+flex-direction: column;
+min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+font-family: ${({ theme }) => theme.fonts.heading};
+margin-bottom: 1rem;
+line-height: 1.2;
+}
+
+p {
+margin-bottom: 1rem;
+}
+
+button {
+cursor: pointer;
+font-family: ${({ theme }) => theme.fonts.body};
+transition: all ${({ theme }) => theme.transitions.default};
+}
+
+.container {
+max-width: 1200px;
+margin: 0 auto;
+padding: 0 1rem;
+}
+
+.section {
+padding: 4rem 0;
+
+@media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+padding: 3rem 0;
+}
+}
+
+/* Add some additional styles for improved aesthetics */
+::selection {
+background-color: ${({ theme }) => theme.colors.primary};
+color: ${({ theme }) => theme.colors.background};
+}
+
+::-webkit-scrollbar {
+width: 10px;
+}
+
+::-webkit-scrollbar-track {
+background: ${({ theme }) => theme.colors.background};
+}
+
+::-webkit-scrollbar-thumb {
+background: ${({ theme }) => theme.colors.primary};
+border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+background: ${({ theme }) => theme.colors.secondary};
+}
+`;
+
+export default GlobalStyles;
+
+==================================================
+
+Transform MAJORITy of codebase to a client/admin APP with useful client/admin modular projects 
+
+LIVE AGENDA.
+Web scheduling nails clients, configuring 
+SHOW DATE STATUS AVAILAVBLE/ NO AVAILABLE.
+USER/OWNER interfaces
+
 Fix it please and return fully merged files ONLY as required. Ready to copy and paste, make sure you are not OVERmodifying unnecessary information.
+Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
+No, as you are generating the code it gets changed again to wrong syntax.
+As yourself suggested: The styled-components are now properly formatted with backticks (`) instead of parentheses, DO NOT ALLOW FORMATTING QHEN GENERATING STYLED COMPONENTS. 
+In the previous iteratio youve created: I understand your request to transform the codebase into a client/admin app with useful modular projects, focusing on web scheduling for nail clients with date availability status and user/owner interfaces. I'll make the necessary changes while being careful not to overmodify unnecessary information. I'll ensure that styled-components are properly formatted with backticks and avoid automatic formatting issues.
+Here are the key files that need to be modified or added to implement the requested features:
+Updated App.jsx with new routingClick to open code
+Now, let's create the ClientScheduling component:
+ClientScheduling ComponentClick to open code
+Now, let's create the AdminDashboard component:
+AdminDashboard ComponentClick to open code
+
+continue by updating header and so on

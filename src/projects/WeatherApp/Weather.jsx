@@ -5,10 +5,11 @@ import { WeatherContainer } from './StyledComponents';
 
 function WeatherApp() {
   const [weather, setWeather] = useState(null);
+  const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchWeather = async (lat, lon) => {
+  const fetchWeather = async (lat, lon, name, admin1, country) => {
     setLoading(true);
     setError(null);
 
@@ -24,6 +25,8 @@ function WeatherApp() {
         windspeed: data.current_weather.windspeed,
         humidity: data.hourly.relativehumidity_2m[0],
       });
+
+      setLocation({ name, admin1, country });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -36,7 +39,7 @@ function WeatherApp() {
       <WeatherForm fetchWeather={fetchWeather} setError={setError} />
       {loading && <p>Loading...</p>}
       {error && <p>Error: {error}</p>}
-      {weather && <WeatherInfo weather={weather} />}
+      {weather && location && <WeatherInfo weather={weather} location={location} />}
     </WeatherContainer>
   );
 }

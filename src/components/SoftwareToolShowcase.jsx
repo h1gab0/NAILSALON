@@ -126,7 +126,7 @@ function SoftwareToolShowcase() {
             </ToolIcon>
             <ToolTitle>{tool.title}</ToolTitle>
             <ToolDescription>{tool.description}</ToolDescription>
-            <ToolLink to={`/project-showcase/${tool.id}`}>Learn More</ToolLink>
+            <ToolLink to={`/project-showcase/${tool.id}`}>Try demo for FREE!</ToolLink>
           </ToolCard>
         ))}
       </ToolGrid>

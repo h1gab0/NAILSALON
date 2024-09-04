@@ -1,5 +1,3 @@
-// File: styles/GlobalStyles.js
-
 import { createGlobalStyle } from 'styled-components';
 
 const GlobalStyles = createGlobalStyle`
@@ -20,7 +18,7 @@ const GlobalStyles = createGlobalStyle`
 
   body {
     font-family: ${({ theme }) => theme.fonts.body};
-    line-height: 1.5;
+    line-height: 1.6;
     color: ${({ theme }) => theme.colors.text};
     background-color: ${({ theme }) => theme.colors.background};
     transition: all ${({ theme }) => theme.transitions.default};
@@ -49,42 +47,51 @@ const GlobalStyles = createGlobalStyle`
 
   h1, h2, h3, h4, h5, h6 {
     font-family: ${({ theme }) => theme.fonts.heading};
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     line-height: 1.2;
+    font-weight: 600;
   }
 
   p {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   button {
     cursor: pointer;
     font-family: ${({ theme }) => theme.fonts.body};
     transition: all ${({ theme }) => theme.transitions.default};
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: ${({ theme }) => theme.radii.small};
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.background};
+
+    &:hover {
+      background-color: ${({ theme }) => theme.colors.secondary};
+    }
   }
 
   .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 1.5rem;
   }
 
   .section {
-    padding: 4rem 0;
+    padding: 5rem 0;
 
     @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-      padding: 3rem 0;
+      padding: 4rem 0;
     }
   }
 
-  /* Add some additional styles for improved aesthetics */
   ::selection {
     background-color: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.background};
   }
 
   ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -93,7 +100,7 @@ const GlobalStyles = createGlobalStyle`
 
   ::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.primary};
-    border-radius: 5px;
+    border-radius: ${({ theme }) => theme.radii.small};
   }
 
   ::-webkit-scrollbar-thumb:hover {

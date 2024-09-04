@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Hero from '../components/Hero';
-import SoftwareToolShowcase from '../components/SoftwareToolShowcase';
+import SoftwareToolShowcase from '../components/NailTrendShowcase';
 
 const HomeContainer = styled.div`
   max-width: 1200px;

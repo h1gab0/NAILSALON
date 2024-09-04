@@ -1,39 +1,70 @@
-// File: components/Home.jsx
-
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
-const HomeContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+const HeroContainer = styled.section`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
   text-align: center;
+  background-image: url('/images/elegant-nails-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const Content = styled.div`
+  position: relative;
+  z-index: 1;
 `;
 
 const Title = styled(motion.h1)`
-  font-size: 2.5rem;
+  font-size: 3.5rem;
   margin-bottom: 1rem;
-  color: ${({ theme }) => theme.colors.primary};
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: 2.5rem;
+  }
 `;
 
 const Subtitle = styled(motion.p)`
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   margin-bottom: 2rem;
+  color: #f0f0f0;
+  font-family: 'Montserrat', sans-serif;
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: 1.2rem;
+  }
 `;
 
-const ScheduleButton = styled(motion(Link))`
+const CallToAction = styled(motion(Link))`
   padding: 0.75rem 1.5rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border-radius: 4px;
+  background-color: #f7d1ba;
+  color: #333;
+  border-radius: 30px;
   text-decoration: none;
   font-weight: bold;
   transition: background-color 0.3s ease;
+  font-family: 'Montserrat', sans-serif;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
+    background-color: #f9a789;
   }
 `;
 
@@ -52,25 +83,27 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-function Home() {
+function Hero() {
   return (
-    <HomeContainer as={motion.div} variants={containerVariants} initial="hidden" animate="visible">
-      <Title variants={itemVariants}>
-        Welcome to Nail Salon Scheduler
-      </Title>
-      <Subtitle variants={itemVariants}>
-        Book your next nail appointment with ease
-      </Subtitle>
-      <ScheduleButton
-        to="/schedule"
-        variants={itemVariants}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Schedule Now
-      </ScheduleButton>
-    </HomeContainer>
+    <HeroContainer as={motion.section} variants={containerVariants} initial="hidden" animate="visible">
+      <Content>
+        <Title variants={itemVariants}>
+          Elegance at Your Fingertips
+        </Title>
+        <Subtitle variants={itemVariants}>
+          Experience luxury nail care in the heart of the city
+        </Subtitle>
+        <CallToAction
+          to="/book-appointment"
+          variants={itemVariants}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Book Your Appointment
+        </CallToAction>
+      </Content>
+    </HeroContainer>
   );
 }
 
-export default Home;
+export default Hero;

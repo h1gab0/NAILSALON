@@ -3,40 +3,42 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 
+// Update these styles in ThemeToggle.jsx
+
 const ToggleContainer = styled(motion.button)`
-  background: ${({ theme }) => theme.colors.toggleBackground};
-  border: 2px solid ${({ theme }) => theme.colors.toggleBorder};
-  border-radius: 30px;
+  background: ${({ theme, isDark }) => isDark ? theme.colors.cardBackground : theme.colors.background};
+  border: 2px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.round};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem;
-  width: 4rem;
+  padding: 0.25rem;
+  width: 3.5rem;
   height: 2rem;
-  transition: all 0.3s linear;
+  transition: all ${({ theme }) => theme.transitions.default};
   overflow: hidden;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    width: 3.5rem;
+    width: 3rem;
     height: 1.75rem;
   }
 `;
 
 const Icon = styled(motion.svg)`
-  height: 1rem;
-  width: 1rem;
-  color: ${({ theme }) => theme.colors.toggleIcon};
+  height: 1.25rem;
+  width: 1.25rem;
+  color: ${({ theme, isDark }) => isDark ? theme.colors.primary : theme.colors.secondary};
 `;
 
 // Use React.memo to prevent unnecessary re-renders
 const ThemeToggle = React.memo(() => {
   const { isDarkMode, toggleTheme } = useTheme();
 
-  // Move variants outside of the component to prevent recreating on each render
+  // Update the variants
   const toggleVariants = {
-    light: { backgroundColor: '#f0f0f0' },
-    dark: { backgroundColor: '#333333' },
+    light: { backgroundColor: '#f8f9fa' },
+    dark: { backgroundColor: '#34495e' },
   };
 
   const iconVariants = {

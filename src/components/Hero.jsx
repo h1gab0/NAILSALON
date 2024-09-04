@@ -8,29 +8,53 @@ const HeroContainer = styled.section`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 80vh;
+  min-height: 100vh;
   text-align: center;
+  background-image: ${({ theme }) => theme.isDark 
+    ? 'linear-gradient(rgba(26, 26, 26, 0.7), rgba(26, 26, 26, 0.7)), url("/images/elegant-nails-bg-dark.jpg")'
+    : 'linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url("/images/elegant-nails-bg-light.jpg")'};
+  background-size: cover;
+  background-position: center;
+  transition: all ${({ theme }) => theme.transitions.default};
+  padding-top: 60px; // Add padding to account for the fixed header
+`;
+
+const Content = styled.div`
+  position: relative;
+  z-index: 1;
 `;
 
 const Title = styled(motion.h1)`
-  font-size: 3rem;
+  font-size: 3.5rem;
   margin-bottom: 1rem;
-  color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.text};
+  font-family: ${({ theme }) => theme.fonts.heading};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: 2.5rem;
+  }
 `;
 
 const Subtitle = styled(motion.p)`
   font-size: 1.5rem;
   margin-bottom: 2rem;
+  color: ${({ theme }) => theme.colors.subtext};
+  font-family: ${({ theme }) => theme.fonts.body};
+  
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    font-size: 1.2rem;
+  }
 `;
 
 const CallToAction = styled(motion(Link))`
   padding: 0.75rem 1.5rem;
   background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border-radius: 4px;
+  color: ${({ theme }) => theme.isDark ? theme.colors.text : theme.colors.background};
+  border-radius: 30px;
   text-decoration: none;
   font-weight: bold;
   transition: background-color 0.3s ease;
+  font-family: ${({ theme }) => theme.fonts.body};
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.secondary};
@@ -55,20 +79,22 @@ const itemVariants = {
 function Hero() {
   return (
     <HeroContainer as={motion.section} variants={containerVariants} initial="hidden" animate="visible">
-      <Title variants={itemVariants}>
-        Welcome to My Software Portfolio
-      </Title>
-      <Subtitle variants={itemVariants}>
-        Discover innovative solutions for your business needs
-      </Subtitle>
-      <CallToAction
-        to="/project-showcase/task-manager"
-        variants={itemVariants}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Explore My Tools
-      </CallToAction>
+      <Content>
+        <Title variants={itemVariants}>
+          Elegance at Your Fingertips
+        </Title>
+        <Subtitle variants={itemVariants}>
+          Experience luxury nail care in the heart of the city
+        </Subtitle>
+        <CallToAction
+          to="/book-appointment"
+          variants={itemVariants}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Book Your Appointment
+        </CallToAction>
+      </Content>
     </HeroContainer>
   );
 }

@@ -1,6 +1,4 @@
-// File: components/Header.jsx
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -112,6 +110,31 @@ function Header() {
 
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
+  const handleClickOutside = useCallback((event) => {
+    if (isMenuOpen && !event.target.closest('nav') && !event.target.closest('.theme-toggle')) {
+      closeMenu();
+    }
+  }, [isMenuOpen, closeMenu]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [handleClickOutside]);
+
   return (
     <StyledHeader>
       <Nav>
@@ -121,7 +144,9 @@ function Header() {
         </MenuButton>
         <NavLinks>
           <NavLink to="/">Home</NavLink>
+          <NavLink to="/services">Services</NavLink>
           <NavLink to="/schedule">Schedule Appointment</NavLink>
+          <NavLink to="/gallery">Nail Gallery</NavLink>
           <NavLink to="/admin">Admin Dashboard</NavLink>
           <ThemeToggleWrapper>
             <ThemeToggle />
@@ -137,7 +162,9 @@ function Header() {
             transition={{ duration: 0.3 }}
           >
             <MobileNavLink to="/" onClick={closeMenu}>Home</MobileNavLink>
+            <MobileNavLink to="/services" onClick={closeMenu}>Services</MobileNavLink>
             <MobileNavLink to="/schedule" onClick={closeMenu}>Schedule Appointment</MobileNavLink>
+            <MobileNavLink to="/gallery" onClick={closeMenu}>Nail Gallery</MobileNavLink>
             <MobileNavLink to="/admin" onClick={closeMenu}>Admin Dashboard</MobileNavLink>
             <ThemeToggleWrapper className="theme-toggle">
               <ThemeToggle />

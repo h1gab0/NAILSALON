@@ -42,9 +42,9 @@ def print_duplicates(duplicates, context=20):
             print(f"...{context_str}...")
         print("\n" + "="*50 + "\n")
 
-if __name__ == "__main__":
+if __name__ == "__main__":h
     file_name = input("Enter the name of the text file to scan: ")
-    min_length = int(input("Enter the minimum length of duplicate substrings to detect: "))
+    min_length = int(input("Enter the minimum lengt of duplicate substrings to detect: "))
 
     try:
         duplicates = find_duplicates(file_name, min_length)

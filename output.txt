@@ -1,124 +1,22 @@
-hero.jsx:
+Trends Will redirect to tiktok chann.
 
-import React from 'react';
+I have following design components:
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaPaintBrush, FaPalette, FaGem, FaLeaf, FaMagic, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const HeroContainer = styled.section`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  text-align: center;
-  background-image: ${({ theme }) => theme.isDark 
-    ? 'linear-gradient(rgba(26, 26, 26, 0.7), rgba(26, 26, 26, 0.7)), url("/images/elegant-nails-bg-dark.jpg")'
-    : 'linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url("/images/elegant-nails-bg-light.jpg")'};
-  background-size: cover;
-  background-position: center;
-  transition: all ${({ theme }) => theme.transitions.default};
-  padding-top: 60px; // Add padding to account for the fixed header
-`;
-
-const Content = styled.div`
-  position: relative;
-  z-index: 1;
-`;
-
-const Title = styled(motion.h1)`
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
-  color: ${({ theme }) => theme.colors.text};
-  font-family: ${({ theme }) => theme.fonts.heading};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: 2.5rem;
-  }
-`;
-
-const Subtitle = styled(motion.p)`
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-  color: ${({ theme }) => theme.colors.subtext};
-  font-family: ${({ theme }) => theme.fonts.body};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: 1.2rem;
-  }
-`;
-
-const CallToAction = styled(motion(Link))`
-  padding: 0.75rem 1.5rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.isDark ? theme.colors.text : theme.colors.background};
-  border-radius: 30px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  font-family: ${({ theme }) => theme.fonts.body};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.3,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-
-function Hero() {
-  return (
-    <HeroContainer as={motion.section} variants={containerVariants} initial="hidden" animate="visible">
-      <Content>
-        <Title variants={itemVariants}>
-          Elegance at Your Fingertips
-        </Title>
-        <Subtitle variants={itemVariants}>
-          Experience luxury nail care in the heart of the city
-        </Subtitle>
-        <CallToAction
-          to="/book-appointment"
-          variants={itemVariants}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Book Your Appointment
-        </CallToAction>
-      </Content>
-    </HeroContainer>
-  );
-}
-
-export default Hero;
-.......
-NailTrendShowcase.jsx:  
-
-import React from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { FaPaintBrush, FaPalette } from 'react-icons/fa';
-
-const ShowcaseContainer = styled(motion.section)`
+const ShowcaseContainer = styled.section`
   padding: 5rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: ${({ theme }) => theme.colors.background};
+  overflow: hidden;
 `;
 
-const Title = styled(motion.h2)`
+const Title = styled.h2`
   font-size: 2.5rem;
   margin-bottom: 3rem;
   text-align: center;
@@ -126,16 +24,18 @@ const Title = styled(motion.h2)`
   font-family: ${({ theme }) => theme.fonts.heading};
 `;
 
-const TrendGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2.5rem;
-  max-width: 1200px;
+const CarouselWrapper = styled.div`
+  position: relative;
   width: 100%;
-  padding: 0 2rem;
+  max-width: 800px;
+  height: 500px;
+  touch-action: pan-y;
 `;
 
 const TrendCard = styled(motion.div)`
+  position: absolute;
+  width: 100%;
+  height: 100%;
   background-color: ${({ theme }) => theme.colors.cardBackground};
   border-radius: ${({ theme }) => theme.radii.medium};
   padding: 2rem;
@@ -146,7 +46,7 @@ const TrendCard = styled(motion.div)`
   text-align: center;
 `;
 
-const TrendIcon = styled(motion.div)`
+const TrendIcon = styled.div`
   font-size: 3.5rem;
   color: ${({ theme }) => theme.colors.primary};
   margin-bottom: 1.5rem;
@@ -166,401 +66,292 @@ const TrendDescription = styled.p`
   font-family: ${({ theme }) => theme.fonts.body};
 `;
 
-const TrendImage = styled.img`
+const StyledImage = styled.div`
   width: 100%;
   height: 250px;
-  object-fit: cover;
+  background-color: ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.radii.medium};
   margin-bottom: 1.5rem;
+`;
+
+const ArrowButton = styled.button`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.3s;
+  z-index: 10;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &.left {
+    left: 10px;
+  }
+
+  &.right {
+    right: 10px;
+  }
+`;
+
+const IndicatorWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+`;
+
+const Indicator = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: ${props => props.isActive ? props.theme.colors.primary : props.theme.colors.subtext};
+  margin: 0 5px;
+  transition: background 0.3s;
+  cursor: pointer;
 `;
 
 const trends = [
   {
     id: 'minimalist-designs',
     title: 'Minimalist Designs',
-    description: 'Clean lines and subtle patterns for a sophisticated look.',
+    description: 'Clean lines and subtle patterns for a sophisticated look. Perfect for professional settings.',
     icon: FaPaintBrush,
-    image: '/images/minimalist-nails.jpg',
   },
   {
     id: 'pastel-palette',
     title: 'Pastel Palette',
-    description: 'Soft, dreamy colors perfect for any season.',
+    description: 'Soft, dreamy colors perfect for any season. Great for weddings and special events.',
     icon: FaPalette,
-    image: '/images/pastel-nails.jpg',
+  },
+  {
+    id: 'nail-art-techniques',
+    title: 'Advanced Nail Art Techniques',
+    description: 'Learn intricate designs to wow your clients and stand out in the industry.',
+    icon: FaGem,
+  },
+  {
+    id: 'eco-friendly-products',
+    title: 'Eco-Friendly Nail Products',
+    description: 'Sustainable and non-toxic options for environmentally conscious clients.',
+    icon: FaLeaf,
+  },
+  {
+    id: 'nail-health-tips',
+    title: 'Nail Health & Maintenance',
+    description: 'Advice on maintaining strong, healthy nails to share with your clients.',
+    icon: FaMagic,
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.3,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0 },
-};
 
 function NailTrendShowcase() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
+
+  const nextSlide = useCallback(() => {
+    setDirection(1);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % trends.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setDirection(-1);
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + trends.length) % trends.length);
+  }, []);
+
+  useEffect(() => {
+    let interval;
+    if (isAutoPlay) {
+      interval = setInterval(() => {
+        nextSlide();
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [isAutoPlay, nextSlide]);
+
+  const handleManualInteraction = useCallback(() => {
+    setIsAutoPlay(false);
+    // Restart autoplay after 10 seconds of inactivity
+    const timeout = setTimeout(() => setIsAutoPlay(true), 10000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const handleTouchStart = useCallback((e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+    handleManualInteraction();
+  }, [handleManualInteraction]);
+
+  const handleTouchMove = useCallback((e) => {
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50; // minimum distance to be considered a swipe
+
+    if (diff > threshold) {
+      nextSlide();
+    } else if (diff < -threshold) {
+      prevSlide();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  }, [nextSlide, prevSlide]);
+
+  const handleIndicatorClick = useCallback((index) => {
+    setDirection(index > currentIndex ? 1 : -1);
+    setCurrentIndex(index);
+    handleManualInteraction();
+  }, [currentIndex, handleManualInteraction]);
+
+  const CurrentIcon = trends[currentIndex].icon;
+
+  const variants = {
+    enter: (direction) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0,
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0,
+    }),
+  };
+
   return (
-    <ShowcaseContainer variants={containerVariants} initial="hidden" animate="visible">
-      <Title variants={itemVariants}>Trending Nail Styles</Title>
-      <TrendGrid variants={containerVariants}>
-        {trends.map((trend) => (
-          <TrendCard 
-            key={trend.id} 
-            variants={itemVariants} 
-            whileHover={{ 
-              scale: 1.03, 
-              boxShadow: (theme) => theme.shadows.large,
-              transition: { duration: 0.3 }
+    <ShowcaseContainer>
+      <Title>Trending Nail Styles</Title>
+      <CarouselWrapper
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <ArrowButton className="left" onClick={() => { prevSlide(); handleManualInteraction(); }}>
+          <FaChevronLeft />
+        </ArrowButton>
+        <ArrowButton className="right" onClick={() => { nextSlide(); handleManualInteraction(); }}>
+          <FaChevronRight />
+        </ArrowButton>
+        <AnimatePresence initial={false} custom={direction}>
+          <TrendCard
+            key={trends[currentIndex].id}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
             }}
           >
-            <TrendIcon 
-              as={motion.div} 
-              whileHover={{ rotate: 360, scale: 1.1 }} 
-              transition={{ duration: 0.5 }}
-            >
-              <trend.icon />
+            <TrendIcon>
+              <CurrentIcon />
             </TrendIcon>
-            <TrendTitle>{trend.title}</TrendTitle>
-            <TrendImage src={trend.image} alt={trend.title} />
-            <TrendDescription>{trend.description}</TrendDescription>
+            <TrendTitle>{trends[currentIndex].title}</TrendTitle>
+            <StyledImage />
+            <TrendDescription>{trends[currentIndex].description}</TrendDescription>
           </TrendCard>
+        </AnimatePresence>
+      </CarouselWrapper>
+      <IndicatorWrapper>
+        {trends.map((_, index) => (
+          <Indicator
+            key={index}
+            isActive={index === currentIndex}
+            onClick={() => handleIndicatorClick(index)}
+          />
         ))}
-      </TrendGrid>
+      </IndicatorWrapper>
     </ShowcaseContainer>
   );
 }
 
 export default NailTrendShowcase;
-...........
-GlobalStyles.JS:
-import { createGlobalStyle } from 'styled-components';
 
-const GlobalStyles = createGlobalStyle`
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
 
-  html {
-    font-size: 16px;
-    scroll-behavior: smooth;
-    
-    @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-      font-size: 14px;
-    }
-  }
 
-  body {
-    font-family: ${({ theme }) => theme.fonts.body};
-    line-height: 1.6;
-    color: ${({ theme }) => theme.colors.text};
-    background-color: ${({ theme }) => theme.colors.background};
-    transition: all ${({ theme }) => theme.transitions.default};
-  }
+Fix it please and return fully merged ONLY as required. Ready to copy and paste.
+Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
+      No, as you are generating the code it gets changed again to wrong syntax.
+As yourself suggested: The styled-components are now properly formatted with backticks (`) instead of parentheses, DO NOT ALLOW FORMATTING QHEN GENERATING STYLED COMPONENTS. 
 
-  a {
-    color: ${({ theme }) => theme.colors.primary};
-    text-decoration: none;
-    transition: color ${({ theme }) => theme.transitions.default};
+You still doing the same, let me share with you a snippet where you have understood, DO NOT ALLOW FORMATTING WHEN GENERATING STYLED COMPONENTS : 
 
-    &:hover {
-      color: ${({ theme }) => theme.colors.secondary};
-    }
-  }
-
-  img {
-    max-width: 100%;
-    height: auto;
-  }
-  
-  #root {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: ${({ theme }) => theme.fonts.heading};
-    margin-bottom: 1.5rem;
-    line-height: 1.2;
-    font-weight: 600;
-  }
-
-  p {
-    margin-bottom: 1.5rem;
-  }
-
-  button {
-    cursor: pointer;
-    font-family: ${({ theme }) => theme.fonts.body};
-    transition: all ${({ theme }) => theme.transitions.default};
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: ${({ theme }) => theme.radii.small};
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.background};
-
-    &:hover {
-      background-color: ${({ theme }) => theme.colors.secondary};
-    }
-  }
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-  }
-
-  .section {
-    padding: 5rem 0;
-
-    @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-      padding: 4rem 0;
-    }
-  }
-
-  ::selection {
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.background};
-  }
-
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: ${({ theme }) => theme.colors.background};
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.colors.primary};
-    border-radius: ${({ theme }) => theme.radii.small};
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-export default GlobalStyles;
-......
-Theme.js:
-
-const baseTheme = {
-  fonts: {
-    body: '"Inter", sans-serif',
-    heading: '"Poppins", sans-serif',
-  },
-  breakpoints: {
-    sm: '576px',
-    md: '768px',
-    lg: '992px',
-    xl: '1200px',
-  },
-  transitions: {
-    default: '0.3s ease-in-out',
-  },
-  radii: {
-    small: '4px',
-    medium: '8px',
-    large: '16px',
-    round: '50%',
-  },
-  shadows: {
-    small: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    medium: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    large: '0 10px 15px rgba(0, 0, 0, 0.1)',
-  },
-};
-
-export const lightTheme = {
-  ...baseTheme,
-  colors: {
-    primary: '#3498db',
-    secondary: '#2ecc71',
-    background: '#f8f9fa',
-    cardBackground: '#ffffff',
-    text: '#2c3e50',
-    subtext: '#7f8c8d',
-    headerBackground: '#ffffff',
-    border: '#e0e0e0',
-    hover: '#ecf0f1',
-    success: '#27ae60',
-    warning: '#f39c12',
-    error: '#e74c3c',
-  },
-};
-
-export const darkTheme = {
-  ...baseTheme,
-  colors: {
-    primary: '#6c5ce7',
-    secondary: '#00b894',
-    background: '#2d3436',
-    cardBackground: '#34495e',
-    text: '#ecf0f1',
-    subtext: '#bdc3c7',
-    headerBackground: '#1e272e',
-    border: '#4a4a4a',
-    hover: '#3d3d3d',
-    success: '#55efc4',
-    warning: '#ffeaa7',
-    error: '#ff7675',
-  },
-};
-......
-ThemeContext.jsx:
-import React, { createContext, useState, useContext, useEffect } from 'react';
-
-const ThemeContext = createContext();
-
-export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') setIsDarkMode(true);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-  };
-
-  return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
-
-export const useTheme = () => useContext(ThemeContext);
-.........
-themetoggle.jsx:
-import React from 'react';
+I understand the issues you've pointed out. I'll address each of them and provide the updated files with the necessary fixes. I'll make sure to use the correct syntax for styled-components with backticks. Here are the updated files:
+File: components/ProjectShowcase.jsx
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
+import TaskManager from '../projects/TaskManager';
+import Calculator from '../projects/Calculator';
+import WeatherApp from '../projects/WeatherApp';
+import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+const ShowcaseContainer = styled(motion.div)  display: flex;   flex-direction: column;   align-items: center;   min-height: calc(100vh - 60px);   padding: 2rem;;
+const ProjectView = styled(motion.div)  width: 100%;   max-width: 800px;   background-color: ${({ theme }) => theme.colors.cardBackground};   border-radius: 12px;   padding: 2rem;   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);;
+const Title = styled(motion.h2)  font-size: 2rem;   margin-bottom: 2rem;   text-align: center;;
+const NavigationArrow = styled(motion.button)  position: fixed;   top: 50%;   background: none;   border: none;   font-size: 2rem;   color: ${({ theme }) => theme.colors.primary};   cursor: pointer;   z-index: 10;   &.left {     left: 1rem;   }   &.right {     right: 1rem;   };
+const CodeButton = styled(motion.button)  display: flex;   align-items: center;   justify-content: center;   padding: 0.5rem 1rem;   background-color: ${({ theme }) => theme.colors.primary};   color: white;   border: none;   border-radius: 4px;   cursor: pointer;   font-weight: bold;   margin-top: 1rem;;
+const CodeIcon = styled(FaCode)  margin-right: 0.5rem;;
+const CodeCurtain = styled(motion.div)  position: fixed;   top: 0;   left: 0;   right: 0;   bottom: 0;   background-color: ${({ theme }) => theme.colors.background};   z-index: 100;   display: flex;   flex-direction: column;   align-items: center;   justify-content: center;   padding: 2rem;   overflow-y: auto;;
+const CodeContent = styled.pre  background-color: ${({ theme }) => theme.colors.cardBackground};   padding: 1rem;   border-radius: 8px;   width: 100%;   max-width: 800px;   overflow-x: auto;;
+const CloseButton = styled(motion.button)`
+position: absolute;
+top: 1rem;
+right: 1rem;
+background: none;
+border: none;
+font-size: 1.5rem;
+color CopyRetryEI understand the issues you've pointed out. I'll address each of them and provide the updated files with the necessary fixes. I'll make sure to use the correct syntax for styled-components with backticks. Here are the updated files:
 
-// Update these styles in ThemeToggle.jsx
 
-const ToggleContainer = styled(motion.button)`
-  background: ${({ theme, isDark }) => isDark ? theme.colors.cardBackground : theme.colors.background};
-  border: 2px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.round};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem;
-  width: 3.5rem;
-  height: 2rem;
-  transition: all ${({ theme }) => theme.transitions.default};
-  overflow: hidden;
 
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    width: 3rem;
-    height: 1.75rem;
-  }
-`;
+IN MOBILE PHONE VIEW, DECREASE HERO TOP SPACING FROM NAVBAR.
+When dark mode enabled and page reloaded, do not ALLOW flashing before setting dark mode.
+Slideshow Is not bringing next item with right to left animation Even
+when it goes to the right side item the new item animation comes from left
+to right which Is at least anti-intuitive.
 
-const Icon = styled(motion.svg)`
-  height: 1.25rem;
-  width: 1.25rem;
-  color: ${({ theme, isDark }) => isDark ? theme.colors.primary : theme.colors.secondary};
-`;
+la aplicación muestra al cliente un calendario para seleccionar su fecha  
+deseada cuando selecciona la fecha muestra un menú con las horas 
+isponibles organizadas de más temprano a más tarde.
 
-// Use React.memo to prevent unnecessary re-renders
-const ThemeToggle = React.memo(() => {
-  const { isDarkMode, toggleTheme } = useTheme();
+cuándo el cliente confirma la fecha y hora deseadas el sistema pide
+ingresar tu nombre y número de teléfono y luego emite un  
+número de cita el cual se refleja en el lado del administrador 
+a través de un calendario en donde una pequeña burbuja en la fecha específica 
+indica cuántas citas hay para el día al momento de abrir el ítem de fecha 
+tú verás múltiples ítems de citas confirmadas por clientes las cuales 
+puedes abrir para agregar alguna nota consultar la información,
+cancelarla o finalizarla en dónde el sistema pedirá la ganancia de la cita y 
+el material utilizad.
+en caso de tener que cancelarla al número de teléfono se le va a enviar 
+un mensaje de WhatsApp dejándole saber que la cita está cancelada junto
+con el número de cita.
 
-  // Update the variants
-  const toggleVariants = {
-    light: { backgroundColor: '#f8f9fa' },
-    dark: { backgroundColor: '#34495e' },
-  };
-
-  const iconVariants = {
-    light: { rotate: 0 },
-    dark: { rotate: 360 },
-  };
-
-  const sunMoonVariants = {
-    light: { scale: 1, opacity: 1 },
-    dark: { scale: 0, opacity: 0 },
-  };
-
-  return (
-    <ToggleContainer
-      onClick={toggleTheme}
-      animate={isDarkMode ? 'dark' : 'light'}
-      variants={toggleVariants}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
-    >
-      <Icon
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        animate={isDarkMode ? 'dark' : 'light'}
-        variants={iconVariants}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.circle cx="12" cy="12" r="5" variants={sunMoonVariants} />
-        <motion.line x1="12" y1="1" x2="12" y2="3" variants={sunMoonVariants} />
-        <motion.line x1="12" y1="21" x2="12" y2="23" variants={sunMoonVariants} />
-        <motion.line x1="4.22" y1="4.22" x2="5.64" y2="5.64" variants={sunMoonVariants} />
-        <motion.line x1="18.36" y1="18.36" x2="19.78" y2="19.78" variants={sunMoonVariants} />
-        <motion.line x1="1" y1="12" x2="3" y2="12" variants={sunMoonVariants} />
-        <motion.line x1="21" y1="12" x2="23" y2="12" variants={sunMoonVariants} />
-        <motion.line x1="4.22" y1="19.78" x2="5.64" y2="18.36" variants={sunMoonVariants} />
-        <motion.line x1="18.36" y1="5.64" x2="19.78" y2="4.22" variants={sunMoonVariants} />
-      </Icon>
-      <Icon
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        animate={isDarkMode ? 'dark' : 'light'}
-        variants={iconVariants}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.path
-          d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-          variants={{
-            light: { scale: 0, opacity: 0 },
-            dark: { scale: 1, opacity: 1 },
-          }}
-        />
-      </Icon>
-    </ToggleContainer>
-  );
-});
-
-export default ThemeToggle;
-
-NAILTRENDSHOWCASE.JSX component is missaligned in Mobile phone mode, it's not fitting the HERO section size in Mobile 
-phone mode.
-Also, the layer for background image in Hero section has to be modified accordingly depending on the theme toggle status, dark layer for light mode and viceversa.
-One more thing: if the content has to load in dark mode, DO NOT ALLOW pagr to show light mode and then instantly change to dark mode 
-Fix it please and return fully merged files ONLY as required. Ready to copy and paste, make sure you are not OVERmodifying unnecessary information.
-
-UNDO toSleep commit in Portfolio.
+fuerte backend y database.

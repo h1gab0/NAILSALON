@@ -28,35 +28,37 @@ const baseTheme = {
 export const lightTheme = {
   ...baseTheme,
   colors: {
-    primary: '#3498db',
-    secondary: '#2ecc71',
-    background: '#f8f9fa',
-    cardBackground: '#ffffff',
-    text: '#2c3e50',
-    subtext: '#7f8c8d',
-    headerBackground: '#ffffff',
-    border: '#e0e0e0',
-    hover: '#ecf0f1',
-    success: '#27ae60',
-    warning: '#f39c12',
-    error: '#e74c3c',
+    primary: '#FF69B4', // Hot Pink
+    secondary: '#FFC0CB', // Pink
+    tertiary: '#FFB6C1', // Light Pink
+    background: '#FFF0F5', // Lavender Blush
+    cardBackground: '#FFFFFF',
+    text: '#4B0082', // Indigo
+    subtext: '#8E4585', // Dark Orchid
+    headerBackground: '#FFFFFF',
+    border: '#FFB6C1', // Light Pink
+    hover: '#FFF0F5', // Lavender Blush
+    success: '#98FB98', // Pale Green
+    warning: '#FFFACD', // Lemon Chiffon
+    error: '#FFB6C1', // Light Pink
   },
 };
 
 export const darkTheme = {
   ...baseTheme,
   colors: {
-    primary: '#6c5ce7',
-    secondary: '#00b894',
-    background: '#2d3436',
-    cardBackground: '#34495e',
-    text: '#ecf0f1',
-    subtext: '#bdc3c7',
-    headerBackground: '#1e272e',
-    border: '#4a4a4a',
-    hover: '#3d3d3d',
-    success: '#55efc4',
-    warning: '#ffeaa7',
-    error: '#ff7675',
+    primary: '#FF1493', // Deep Pink
+    secondary: '#FF69B4', // Hot Pink
+    tertiary: '#DB7093', // Pale Violet Red
+    background: '#4B0082', // Indigo
+    cardBackground: '#8B008B', // Dark Magenta
+    text: '#FFF0F5', // Lavender Blush
+    subtext: '#DDA0DD', // Plum
+    headerBackground: '#800080', // Purple
+    border: '#C71585', // Medium Violet Red
+    hover: '#9932CC', // Dark Orchid
+    success: '#98FB98', // Pale Green
+    warning: '#FFFACD', // Lemon Chiffon
+    error: '#FFB6C1', // Light Pink
   },
 };

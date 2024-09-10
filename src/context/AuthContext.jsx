@@ -1,15 +1,31 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
+
+const MOCK_USER = { username: 'admin', password: 'password123' };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const login = (userData) => {
-    setUser(userData);
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const login = async (username, password) => {
+    if (username === MOCK_USER.username && password === MOCK_USER.password) {
+      const user = { username, role: 'admin' };
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+    } else {
+      throw new Error('Invalid credentials');
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -19,5 +35,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);

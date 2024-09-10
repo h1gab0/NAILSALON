@@ -10,6 +10,8 @@ const ShowcaseContainer = styled.section`
   align-items: center;
   background-color: ${({ theme }) => theme.colors.background};
   overflow: hidden;
+  position: relative;
+  z-index: 0;
 `;
 
 const Title = styled.h2`
@@ -85,7 +87,7 @@ const ArrowButton = styled.button`
   align-items: center;
   cursor: pointer;
   transition: background 0.3s;
-  z-index: 10;
+  z-index: 2;
 
   &:hover {
     background: rgba(0, 0, 0, 0.8);
@@ -108,6 +110,8 @@ const IndicatorWrapper = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 20px;
+  position: relative;
+  z-index: 2;
 `;
 
 const Indicator = styled.div`
@@ -153,7 +157,6 @@ const trends = [
   },
 ];
 
-
 function NailTrendShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -183,7 +186,6 @@ function NailTrendShowcase() {
 
   const handleManualInteraction = useCallback(() => {
     setIsAutoPlay(false);
-    // Restart autoplay after 10 seconds of inactivity
     const timeout = setTimeout(() => setIsAutoPlay(true), 10000);
     return () => clearTimeout(timeout);
   }, []);
@@ -201,7 +203,7 @@ function NailTrendShowcase() {
   const handleTouchEnd = useCallback(() => {
     if (!touchStartX.current || !touchEndX.current) return;
     const diff = touchStartX.current - touchEndX.current;
-    const threshold = 50; // minimum distance to be considered a swipe
+    const threshold = 50;
 
     if (diff > threshold) {
       nextSlide();

@@ -11,10 +11,11 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import ClientScheduling from './pages/ClientScheduling';
 import AdminDashboard from './pages/AdminDashboard';
-import Login from './pages/Login';
 import OrderSystem from './pages/OrderSystem';
 import Chat from './components/Chat';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import LoginComponent from './components/LoginComponent';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const MainContent = styled.main`
   padding-top: 60px;
@@ -34,9 +35,13 @@ function AppContent() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/schedule" element={<ClientScheduling />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/order" element={<OrderSystem />} />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/order" element={<OrderSystem />} />            
+          <Route path="/login" element={<LoginComponent />} />
         </Routes>
       </MainContent>
       <Chat />

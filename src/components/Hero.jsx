@@ -116,7 +116,7 @@ function Hero() {
         </Subtitle>
         <Divider variants={itemVariants} />
         <CallToAction
-          to="/book-appointment"
+          to="/schedule"
           variants={itemVariants}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+// src/components/ClientScheduling.js
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import AppointmentConfirmation from './AppointmentConfirmation';
 
 const SchedulingContainer = styled.div`
   max-width: 800px;
@@ -29,35 +31,39 @@ const TimeSlot = styled(motion.button)`
   opacity: ${props => props.isAvailable ? 1 : 0.5};
 `;
 
-const ConfirmationMessage = styled.p`
-  margin-top: 1rem;
-  font-weight: bold;
-  color: ${props => props.theme.colors.primary};
-`;
-
 const ClientScheduling = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
-  const [confirmation, setConfirmation] = useState('');
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const timeSlots = [
-    { time: '9:00 AM', isAvailable: true },
-    { time: '10:00 AM', isAvailable: false },
-    { time: '11:00 AM', isAvailable: true },
-    { time: '1:00 PM', isAvailable: true },
-    { time: '2:00 PM', isAvailable: false },
-    { time: '3:00 PM', isAvailable: true },
-  ];
+  useEffect(() => {
+    if (selectedDate) {
+      // Fetch available slots from local storage
+      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      const bookedSlots = appointments
+        .filter(appointment => appointment.date === selectedDate)
+        .map(appointment => appointment.time);
+
+      const allSlots = [
+        '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'
+      ];
+
+      setAvailableSlots(allSlots.map(slot => ({
+        time: slot,
+        isAvailable: !bookedSlots.includes(slot)
+      })));
+    }
+  }, [selectedDate]);
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
     setSelectedTime('');
-    setConfirmation('');
   };
 
   const handleTimeSelection = (time) => {
     setSelectedTime(time);
-    setConfirmation(`Your appointment is scheduled for ${selectedDate} at ${time}`);
+    setShowConfirmation(true);
   };
 
   return (
@@ -71,7 +77,7 @@ const ClientScheduling = () => {
       {selectedDate && (
         <div>
           <h2>Available Time Slots for {selectedDate}</h2>
-          {timeSlots.map((slot, index) => (
+          {availableSlots.map((slot, index) => (
             <TimeSlot
               key={index}
               isAvailable={slot.isAvailable}
@@ -84,7 +90,13 @@ const ClientScheduling = () => {
           ))}
         </div>
       )}
-      {confirmation && <ConfirmationMessage>{confirmation}</ConfirmationMessage>}
+      {showConfirmation && (
+        <AppointmentConfirmation
+          date={selectedDate}
+          time={selectedTime}
+          onClose={() => setShowConfirmation(false)}
+        />
+      )}
     </SchedulingContainer>
   );
 };

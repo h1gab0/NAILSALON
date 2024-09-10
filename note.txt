@@ -1,386 +1,590 @@
-On weather app when clicking on desired suggestion item fron the menu, it loads the actual INFORNATION item, but does not hide the DISPLAYED suggestion menu
-Also, when hovering over suggestions it does change the color to green in the first instance but does not come back once cursor has leaved the object, it has to be an smooth SLIGHTLY fluid like animation 
+You respond to all questions in the following way-
+<thinking>
+In this section you understand the problem and develop a plan to solve the problem.
 
+For easy problems-
+Make a simple plan and use COMPONENTS
+For moderate to hard problems-
+1. Devise a step-by-step plan to solve the problem. (don't actually start solving yet, just make a plan)
+2. Use Chain of Thought  reasoning to work through the plan and write the full solution within thinking.
 
-From below versions of code mix them for the best arrangement of style without loosing any 
-operational functionality i need the styling and animations of v1 and the projects present in version 2.
+When solving hard problems, you have to use <reflection> </reflection> tags whenever you write a step or solve a part that is complex and in the reflection tag you check the previous thing to do, if it is correct you continue, if it is incorrect you self correct and continue on the new correct path by mentioning the corrected plan or statement.
+Always do reflection after making the plan to see if you missed something and also after you come to a conclusion use reflection to verify
 
-v1:
+</thinking>
+
+<output>
+In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
+</output>
+ 
+// src/components/AdminCalendar.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
-import TaskManager from '../projects/TaskManager';
-import Calculator from '../projects/Calculator';
-import WeatherApp from '../projects/WeatherApp';
-import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const ShowcaseContainer = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: calc(100vh - 60px);
-  padding: 2rem;
-`;
-
-const ProjectView = styled(motion.div)`
-  width: 100%;
-  max-width: 800px;
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled(motion.h2)`
-  font-size: 2rem;
+const CalendarContainer = styled.div`
   margin-bottom: 2rem;
-  text-align: center;
 `;
 
-const NavigationArrow = styled(motion.button)`
-  position: fixed;
-  top: 50%;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-  z-index: 10;
-  &.left {
-    left: 1rem;
-  }
-  &.right {
-    right: 1rem;
-  }
-`;
-
-const CodeButton = styled(motion.button)`
+const CalendarHeader = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 1rem;
+  margin-bottom: 1rem;
 `;
 
-const CodeIcon = styled(FaCode)`
-  margin-right: 0.5rem;
-`;
-
-const CodeCurtain = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  overflow-y: auto;
-`;
-
-const CodeContent = styled.pre`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  padding: 1rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 800px;
-  overflow-x: auto;
-`;
-
-const CloseButton = styled(motion.button)`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+const MonthNavButton = styled.button`
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text};
   cursor: pointer;
-`;
-
-const projects = [
-  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
-  { id: 'calculator', component: Calculator, title: 'Calculator' },
-  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
-];
-
-function ProjectShowcase() {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
-  const currentProject = projects[currentProjectIndex];
-  const [showCode, setShowCode] = useState(false);
-
-  const navigateProject = (direction) => {
-    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
-    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
-  };
-
-  const toggleCode = () => {
-    setShowCode(!showCode);
-  };
-
-  if (!currentProject) {
-    return <div>Project not found</div>;
-  }
-
-  const ProjectComponent = currentProject.component;
-
-  return (
-    <ShowcaseContainer
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <ProjectView>
-        <Title>{currentProject.title}</Title>
-        <ProjectComponent />
-        <CodeButton onClick={toggleCode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <CodeIcon /> View Code
-        </CodeButton>
-      </ProjectView>
-      <NavigationArrow
-        className="left"
-        onClick={() => navigateProject(-1)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FaChevronLeft />
-      </NavigationArrow>
-      <NavigationArrow
-        className="right"
-        onClick={() => navigateProject(1)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FaChevronRight />
-      </NavigationArrow>
-      <AnimatePresence>
-        {showCode && (
-          <CodeCurtain
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-          >
-            <CloseButton onClick={toggleCode} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              ✕
-            </CloseButton>
-            <CodeContent>
-              {/* Add the code content here */}
-              {`import React from 'react';
-// ... rest of the component code`}
-            </CodeContent>
-          </CodeCurtain>
-        )}
-      </AnimatePresence>
-    </ShowcaseContainer>
-  );
-}
-
-export default ProjectShowcase;
-
-
-v2: 
-
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
-import TaskManager from '../projects/TaskManager';
-import Calculator from '../projects/Calculator';
-import WeatherApp from '../projects/WeatherApp';
-import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
-
-const ShowcaseContainer = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: calc(100vh - 60px);
-  padding: 2rem;
-`;
-
-const ProjectView = styled(motion.div)`
-  width: 100%;
-  max-width: 800px;
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled(motion.h2)`
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  text-align: center;
-`;
-
-const NavigationArrow = styled(motion.button)`
-  position: fixed;
-  top: 50%;
-  background: none;
-  border: none;
-  font-size: 2rem;
   color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-  z-index: 10;
-  &.left {
-    left: 1rem;
-  }
-  &.right {
-    right: 1rem;
-  }
 `;
 
-const CodeButton = styled(motion.button)`
+const CalendarGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: ${({ theme }) => theme.colors.secondary};
+`;
+
+const CalendarCell = styled.div`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  cursor: pointer;
+  ${({ isCurrentMonth, isSelected, theme }) => `
+    color: ${isCurrentMonth ? theme.colors.text : theme.colors.secondary};
+    ${isSelected ? `
+      background-color: ${theme.colors.primary};
+      color: white;
+    ` : ''}
+  `}
+`;
+
+const AppointmentCount = styled.div`
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
+  font-size: 0.8rem;
+`;
+
+const AdminCalendar = ({ appointments, onDaySelect }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const getAppointmentCount = (date) => {
+    return appointments.filter(appointment => appointment.date === format(date, 'yyyy-MM-dd')).length;
+  };
+
+  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+
+  const handleDayClick = (day) => {
+    setSelectedDate(day);
+    onDaySelect(day);
+  };
+
+  return (
+    <CalendarContainer>
+      <CalendarHeader>
+        <MonthNavButton onClick={handlePrevMonth}><FaChevronLeft /></MonthNavButton>
+        <h2>{format(currentDate, 'MMMM yyyy')}</h2>
+        <MonthNavButton onClick={handleNextMonth}><FaChevronRight /></MonthNavButton>
+      </CalendarHeader>
+      <CalendarGrid>
+        {daysInMonth.map((day, index) => (
+          <CalendarCell
+            key={index}
+            isCurrentMonth={isSameMonth(day, currentDate)}
+            isSelected={selectedDate && isSameDay(day, selectedDate)}
+            onClick={() => handleDayClick(day)}
+          >
+            {format(day, 'd')}
+            {getAppointmentCount(day) > 0 && (
+              <AppointmentCount>{getAppointmentCount(day)}</AppointmentCount>
+            )}
+          </CalendarCell>
+        ))}
+      </CalendarGrid>
+    </CalendarContainer>
+  );
+};
+
+export default AdminCalendar;
+
+// src/components/AdminDashboard.js
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { AuthContext } from '../context/AuthContext';
+import AdminCalendar from './AdminCalendar';
+import DayAvailabilityControl from './DayAvailabilityControl';
+import { format } from 'date-fns';
+
+const DashboardContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+`;
+
+const AppointmentList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+`;
+
+const AppointmentItem = styled.li`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  margin-bottom: 1rem;
+  padding: 1rem;
   border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+`;
+
+const AppointmentDetails = styled.div`
   margin-top: 1rem;
 `;
 
-const CodeIcon = styled(FaCode)`
+const Button = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
   margin-right: 0.5rem;
 `;
 
-const CodeCurtain = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 100;
+const NoteContainer = styled.div`
+  margin-top: 0.5rem;
+`;
+
+const NoteItem = styled.div`
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  overflow-y: auto;
+  background-color: ${({ theme }) => theme.colors.background};
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
 `;
 
-const CodeContent = styled.pre`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  padding: 1rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 800px;
-  overflow-x: auto;
-`;
-
-const CloseButton = styled(motion.button)`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
+const RemoveNoteButton = styled.button`
+  background-color: ${({ theme }) => theme.colors.secondary};
+  color: white;
   border: none;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text};
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
   cursor: pointer;
 `;
 
-const projects = [
-  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
-  { id: 'calculator', component: Calculator, title: 'Calculator' },
-  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
-];
-
-function ProjectShowcase() {
-  const { projectId } = useParams();
+function AdminDashboard() {
+  const [appointments, setAppointments] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availability, setAvailability] = useState({});
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
-  const currentProject = projects[currentProjectIndex];
-  const [showCode, setShowCode] = useState(false);
 
-  const navigateProject = (direction) => {
-    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
-    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+    } else {
+      const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      setAppointments(storedAppointments);
+      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+      setAvailability(storedAvailability);
+    }
+  }, [user, navigate]);
+
+  const handleAddNote = (id, note) => {
+    const updatedAppointments = appointments.map(appointment => 
+      appointment.id === id ? { ...appointment, notes: [...(appointment.notes || []), note] } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
-  const toggleCode = () => {
-    setShowCode(!showCode);
+  const handleRemoveNote = (appointmentId, noteIndex) => {
+    const updatedAppointments = appointments.map(appointment => {
+      if (appointment.id === appointmentId) {
+        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
+        return { ...appointment, notes: updatedNotes };
+      }
+      return appointment;
+    });
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
-  if (!currentProject) {
-    return <div>Project not found</div>;
-  }
+  const handleCancel = (id) => {
+    console.log(`Cancelling appointment ${id} and sending WhatsApp message`);
+    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
 
-  const ProjectComponent = currentProject.component;
+  const handleComplete = (id, profit, materials) => {
+    const updatedAppointments = appointments.map(appointment => 
+      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleDaySelect = (date) => {
+    setSelectedDate(date);
+  };
+
+  const handleAvailabilityChange = (date, isAvailable, availableSlots) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    const updatedAvailability = {
+      ...availability,
+      [dateString]: { isAvailable, availableSlots }
+    };
+    setAvailability(updatedAvailability);
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+  };
 
   return (
-    <ShowcaseContainer
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <ProjectView>
-        <Title>{currentProject.title}</Title>
-        <ProjectComponent />
-        <CodeButton onClick={toggleCode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <CodeIcon /> View Code
-        </CodeButton>
-      </ProjectView>
-      <NavigationArrow
-        className="left"
-        onClick={() => navigateProject(-1)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FaChevronLeft />
-      </NavigationArrow>
-      <NavigationArrow
-        className="right"
-        onClick={() => navigateProject(1)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FaChevronRight />
-      </NavigationArrow>
-      <AnimatePresence>
-        {showCode && (
-          <CodeCurtain
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-          >
-            <CloseButton onClick={toggleCode} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              ✕
-            </CloseButton>
-            <CodeContent>
-              {/* Add the code content here */}
-              {`import React from 'react';
-// ... rest of the component code`}
-            </CodeContent>
-          </CodeCurtain>
-        )}
-      </AnimatePresence>
-    </ShowcaseContainer>
+    <DashboardContainer>
+      <h1>Admin Dashboard</h1>
+      <Button onClick={handleLogout}>Logout</Button>
+      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
+      {selectedDate && (
+        <DayAvailabilityControl
+          selectedDate={selectedDate}
+          onAvailabilityChange={handleAvailabilityChange}
+        />
+      )}
+      <h2>Upcoming Appointments</h2>
+      <AppointmentList>
+        {appointments.map((appointment) => (
+          <AppointmentItem key={appointment.id}>
+            <p>Date: {appointment.date}</p>
+            <p>Time: {appointment.time}</p>
+            <p>Client: {appointment.clientName}</p>
+            <p>Phone: {appointment.phone}</p>
+            <p>Status: {appointment.status}</p>
+            <AppointmentDetails>
+              <Button onClick={() => handleAddNote(appointment.id, prompt('Enter note:'))}>Add Note</Button>
+              <Button onClick={() => handleCancel(appointment.id)}>Cancel</Button>
+              {appointment.status !== 'completed' && (
+                <Button onClick={() => {
+                  const profit = prompt('Enter profit:');
+                  const materials = prompt('Enter materials used:');
+                  handleComplete(appointment.id, profit, materials);
+                }}>Mark as Complete</Button>
+              )}
+            </AppointmentDetails>
+            <NoteContainer>
+              {appointment.notes && appointment.notes.map((note, index) => (
+                <NoteItem key={index}>
+                  <span>{note}</span>
+                  <RemoveNoteButton onClick={() => handleRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
+                </NoteItem>
+              ))}
+            </NoteContainer>
+            {appointment.status === 'completed' && (
+              <>
+                <p>Profit: {appointment.profit}</p>
+                <p>Materials: {appointment.materials}</p>
+              </>
+            )}
+          </AppointmentItem>
+        ))}
+      </AppointmentList>
+    </DashboardContainer>
   );
 }
 
-export default ProjectShowcase;
+export default AdminDashboard;
 
+// src/components/DayAvailabilityControl.js
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { format } from 'date-fns';
+
+const ControlContainer = styled.div`
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 4px;
+`;
+
+const ToggleButton = styled.button`
+  background-color: ${({ isAvailable, theme }) => isAvailable ? theme.colors.primary : theme.colors.secondary};
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+`;
+
+const TimeSlotContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+`;
+
+const TimeSlotToggle = styled.button`
+  background-color: ${({ isAvailable, theme }) => isAvailable ? theme.colors.primary : theme.colors.secondary};
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  margin: 0.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+`;
+
+const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState({});
+
+  useEffect(() => {
+    // Reset state when selectedDate changes
+    setIsAvailable(false);
+    setAvailableSlots({});
+  }, [selectedDate]);
+
+  const toggleAvailability = () => {
+    setIsAvailable(!isAvailable);
+    onAvailabilityChange(selectedDate, !isAvailable, availableSlots);
+  };
+
+  const toggleTimeSlot = (time) => {
+    const updatedSlots = { ...availableSlots, [time]: !availableSlots[time] };
+    setAvailableSlots(updatedSlots);
+    onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
+  };
+
+  const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'];
+
+  return (
+    <ControlContainer>
+      <h3>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h3>
+      <ToggleButton isAvailable={isAvailable} onClick={toggleAvailability}>
+        {isAvailable ? 'Set as Unavailable' : 'Set as Available'}
+      </ToggleButton>
+      {isAvailable && (
+        <TimeSlotContainer>
+          {timeSlots.map((time) => (
+            <TimeSlotToggle
+              key={time}
+              isAvailable={availableSlots[time]}
+              onClick={() => toggleTimeSlot(time)}
+            >
+              {time}
+            </TimeSlotToggle>
+          ))}
+        </TimeSlotContainer>
+      )}
+    </ControlContainer>
+  );
+};
+
+export default DayAvailabilityControl;
+
+
+// src/components/AppointmentConfirmation.js
+import React, { useState } from 'react';
+import styled from 'styled-components';
+
+const ConfirmationContainer = styled.div`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 2rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const Button = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+`;
+
+const AppointmentConfirmation = ({ date, time, onClose }) => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const handleConfirm = () => {
+    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+    const newAppointment = {
+      id: Date.now(),
+      date,
+      time,
+      clientName: name,
+      phone,
+      status: 'scheduled'
+    };
+    appointments.push(newAppointment);
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+    alert(`Appointment confirmed! Your appointment number is ${newAppointment.id}`);
+    onClose();
+  };
+
+  return (
+    <ConfirmationContainer>
+      <h2>Confirm Your Appointment</h2>
+      <p>Date: {date}</p>
+      <p>Time: {time}</p>
+      <Input
+        type="text"
+        placeholder="Your Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <Input
+        type="tel"
+        placeholder="Your Phone Number"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+      />
+      <Button onClick={handleConfirm}>Confirm Appointment</Button>
+    </ConfirmationContainer>
+  );
+};
+
+export default AppointmentConfirmation;
+
+// src/components/ClientScheduling.js
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { motion } from 'framer-motion';
+import AppointmentConfirmation from './AppointmentConfirmation';
+
+const SchedulingContainer = styled.div`
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+`;
+
+const Title = styled.h1`
+  font-size: 2rem;
+  margin-bottom: 1rem;
+`;
+
+const DatePicker = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const TimeSlot = styled(motion.button)`
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  border: none;
+  background-color: ${props => props.isAvailable ? props.theme.colors.primary : props.theme.colors.secondary};
+  color: white;
+  cursor: ${props => props.isAvailable ? 'pointer' : 'not-allowed'};
+  opacity: ${props => props.isAvailable ? 1 : 0.5};
+`;
+
+const ClientScheduling = () => {
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  useEffect(() => {
+    if (selectedDate) {
+      // Fetch available slots from local storage
+      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      const bookedSlots = appointments
+        .filter(appointment => appointment.date === selectedDate)
+        .map(appointment => appointment.time);
+
+      const allSlots = [
+        '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'
+      ];
+
+      setAvailableSlots(allSlots.map(slot => ({
+        time: slot,
+        isAvailable: !bookedSlots.includes(slot)
+      })));
+    }
+  }, [selectedDate]);
+
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+    setSelectedTime('');
+  };
+
+  const handleTimeSelection = (time) => {
+    setSelectedTime(time);
+    setShowConfirmation(true);
+  };
+
+  return (
+    <SchedulingContainer>
+      <Title>Schedule Your Nail Appointment</Title>
+      <DatePicker 
+        type="date" 
+        value={selectedDate} 
+        onChange={handleDateChange}
+      />
+      {selectedDate && (
+        <div>
+          <h2>Available Time Slots for {selectedDate}</h2>
+          {availableSlots.map((slot, index) => (
+            <TimeSlot
+              key={index}
+              isAvailable={slot.isAvailable}
+              onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
+              whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
+              whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
+            >
+              {slot.time}
+            </TimeSlot>
+          ))}
+        </div>
+      )}
+      {showConfirmation && (
+        <AppointmentConfirmation
+          date={selectedDate}
+          time={selectedTime}
+          onClose={() => setShowConfirmation(false)}
+        />
+      )}
+    </SchedulingContainer>
+  );
+};
+
+export default ClientScheduling;
+
+IN AdminDashboard, when selecting a date as available user Will se a complete menu to create new
+appointments to be visible on client side. 
+IN Clientscheduling, Client Will ONLY SEE those dates/appointments that
+have been enabled by admin, clients won't be able to SEE/click dates/appointments that are not
+enabled.
+ 
 Fix it please and return fully merged ONLY as required. Ready to copy and paste.
 Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
       No, as you are generating the code it gets changed again to wrong syntax.
@@ -414,151 +618,3 @@ background: none;
 border: none;
 font-size: 1.5rem;
 color CopyRetryEI understand the issues you've pointed out. I'll address each of them and provide the updated files with the necessary fixes. I'll make sure to use the correct syntax for styled-components with backticks. Here are the updated files:
-File: components/ProjectShowcase.jsx
-import React, { useState } from 'react'; import styled from 'styled-components'; import { motion, AnimatePresence } from 'framer-motion'; import { useParams, useNavigate } from 'react-router-dom'; import TaskManager from '../projects/TaskManager'; import Calculator from '../projects/Calculator'; import WeatherApp from '../projects/WeatherApp'; import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
-const ShowcaseContainer = styled(motion.div) display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 60px); padding: 2rem;;
-const ProjectView = styled(motion.div) width: 100%; max-width: 800px; background-color: ${({ theme }) => theme.colors.cardBackground}; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);;
-const Title = styled(motion.h2) font-size: 2rem; margin-bottom: 2rem; text-align: center;;
-const NavigationArrow = styled(motion.button) position: fixed; top: 50%; background: none; border: none; font-size: 2rem; color: ${({ theme }) => theme.colors.primary}; cursor: pointer; z-index: 10; &.left { left: 1rem; } &.right { right: 1rem; };
-const CodeButton = styled(motion.button) display: flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; background-color: ${({ theme }) => theme.colors.primary}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 1rem;;
-const CodeIcon = styled(FaCode) margin-right: 0.5rem;; EditHere's the corrected and updated ProjectShowcase.jsx file:
-jsxCopyimport React, { useState } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
-import TaskManager from '../projects/TaskManager';
-import Calculator from '../projects/Calculator';
-import WeatherApp from '../projects/WeatherApp';
-import { FaChevronLeft, FaChevronRight, FaCode } from 'react-icons/fa';
-
-const ShowcaseContainer = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: calc(100vh - 60px);
-  padding: 2rem;
-`;
-
-const ProjectView = styled(motion.div)`
-  width: 100%;
-  max-width: 800px;
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const Title = styled(motion.h2)`
-  font-size: 2rem;
-  margin-bottom: 2rem;
-  text-align: center;
-`;
-
-const NavigationArrow = styled(motion.button)`
-  position: fixed;
-  top: 50%;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-  z-index: 10;
-  &.left {
-    left: 1rem;
-  }
-  &.right {
-    right: 1rem;
-  }
-`;
-
-const CodeButton = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 1rem;
-`;
-
-const CodeIcon = styled(FaCode)`
-  margin-right: 0.5rem;
-`;
-
-const CodeCurtain = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: ${({ theme }) => theme.colors.background};
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  overflow-y: auto;
-`;
-
-const CodeContent = styled.pre`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  padding: 1rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 800px;
-  overflow-x: auto;
-`;
-
-const CloseButton = styled(motion.button)`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text};
-  cursor: pointer;
-`;
-
-const projects = [
-  { id: 'task-manager', component: TaskManager, title: 'Task Manager' },
-  { id: 'calculator', component: Calculator, title: 'Calculator' },
-  { id: 'weather-app', component: WeatherApp, title: 'Weather App' },
-];
-
-function ProjectShowcase() {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const currentProjectIndex = projects.findIndex(p => p.id === projectId);
-  const currentProject = projects[currentProjectIndex];
-  const [showCode, setShowCode] = useState(false);
-
-  const navigateProject = (direction) => {
-    const newIndex = (currentProjectIndex + direction + projects.length) % projects.length;
-    navigate(`/project-showcase/${projects[newIndex].id}`, { state: { direction } });
-  };
-
-  const toggleCode = () => {
-    setShowCode(!showCode);
-  };
-
-  if (!currentProject) {
-    return <div>Project not found</div>;
-  }
-
-  const ProjectComponent = currentProject.component;
-
-  return (
-    <ShowcaseContainer
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-
-

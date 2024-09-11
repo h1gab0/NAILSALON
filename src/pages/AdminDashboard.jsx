@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import DayAvailabilityControl from './DayAvailabilityControl';
 import { format } from 'date-fns';
 
 const DashboardContainer = styled.div`
@@ -62,10 +61,25 @@ const RemoveNoteButton = styled.button`
   cursor: pointer;
 `;
 
+const AvailabilityContainer = styled.div`
+  margin-top: 2rem;
+`;
+
+const TimeSlotContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const TimeInput = styled.input`
+  margin-right: 0.5rem;
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [availability, setAvailability] = useState({});
+  const [newTimeSlot, setNewTimeSlot] = useState('');
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -75,10 +89,19 @@ function AdminDashboard() {
     } else {
       const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
       setAppointments(storedAppointments);
-      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-      setAvailability(storedAvailability);
+      loadAvailability();
     }
   }, [user, navigate]);
+
+  const loadAvailability = () => {
+    const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+    setAvailability(storedAvailability);
+  };
+
+  const saveAvailability = (updatedAvailability) => {
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    setAvailability(updatedAvailability);
+  };
 
   const handleAddNote = (id, note) => {
     const updatedAppointments = appointments.map(appointment => 
@@ -101,7 +124,6 @@ function AdminDashboard() {
   };
 
   const handleCancel = (id) => {
-    console.log(`Cancelling appointment ${id} and sending WhatsApp message`);
     const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
@@ -124,14 +146,57 @@ function AdminDashboard() {
     setSelectedDate(date);
   };
 
-  const handleAvailabilityChange = (date, isAvailable, availableSlots) => {
-    const dateString = format(date, 'yyyy-MM-dd');
-    const updatedAvailability = {
-      ...availability,
-      [dateString]: { isAvailable, availableSlots }
-    };
-    setAvailability(updatedAvailability);
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+  const handleAddTimeSlot = () => {
+    if (selectedDate && newTimeSlot) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [newTimeSlot]: true
+          }
+        }
+      };
+      saveAvailability(updatedAvailability);
+      setNewTimeSlot('');
+    }
+  };
+
+  const handleRemoveTimeSlot = (time) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [time]: false
+          }
+        }
+      };
+      saveAvailability(updatedAvailability);
+    }
+  };
+
+  const handleChangeTimeSlot = (oldTime, newTime) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [oldTime]: false,
+            [newTime]: true
+          }
+        }
+      };
+      saveAvailability(updatedAvailability);
+    }
   };
 
   return (
@@ -140,10 +205,31 @@ function AdminDashboard() {
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
       {selectedDate && (
-        <DayAvailabilityControl
-          selectedDate={selectedDate}
-          onAvailabilityChange={handleAvailabilityChange}
-        />
+        <AvailabilityContainer>
+          <h2>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h2>
+          <TimeSlotContainer>
+            <TimeInput
+              type="time"
+              value={newTimeSlot}
+              onChange={(e) => setNewTimeSlot(e.target.value)}
+            />
+            <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
+          </TimeSlotContainer>
+          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
+            Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+              .filter(([_, isAvailable]) => isAvailable)
+              .map(([time, _]) => (
+                <TimeSlotContainer key={time}>
+                  <TimeInput
+                    type="time"
+                    value={time}
+                    onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
+                  />
+                  <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
+                </TimeSlotContainer>
+              ))
+          }
+        </AvailabilityContainer>
       )}
       <h2>Upcoming Appointments</h2>
       <AppointmentList>

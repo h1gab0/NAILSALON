@@ -1,8 +1,8 @@
-// src/components/ClientScheduling.js
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import AppointmentConfirmation from './AppointmentConfirmation';
+import { format } from 'date-fns';
 
 const SchedulingContainer = styled.div`
   max-width: 800px;
@@ -38,23 +38,45 @@ const ClientScheduling = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   useEffect(() => {
+    const handleStorageChange = () => {
+      if (selectedDate) {
+        updateAvailableSlots(selectedDate);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [selectedDate]);
+
+  useEffect(() => {
     if (selectedDate) {
-      // Fetch available slots from local storage
+      updateAvailableSlots(selectedDate);
+    }
+  }, [selectedDate]);
+
+  const updateAvailableSlots = (date) => {
+    const availability = JSON.parse(localStorage.getItem('availability')) || {};
+    const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
+
+    if (dateAvailability.isAvailable) {
       const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
       const bookedSlots = appointments
-        .filter(appointment => appointment.date === selectedDate)
+        .filter(appointment => appointment.date === date)
         .map(appointment => appointment.time);
 
-      const allSlots = [
-        '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'
-      ];
+      const allSlots = Object.keys(dateAvailability.availableSlots).filter(slot => dateAvailability.availableSlots[slot]);
 
       setAvailableSlots(allSlots.map(slot => ({
         time: slot,
         isAvailable: !bookedSlots.includes(slot)
       })));
+    } else {
+      setAvailableSlots([]);
     }
-  }, [selectedDate]);
+  };
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -94,7 +116,10 @@ const ClientScheduling = () => {
         <AppointmentConfirmation
           date={selectedDate}
           time={selectedTime}
-          onClose={() => setShowConfirmation(false)}
+          onClose={() => {
+            setShowConfirmation(false);
+            updateAvailableSlots(selectedDate);
+          }}
         />
       )}
     </SchedulingContainer>

@@ -1,3 +1,4 @@
+// src/components/DayAvailabilityControl.js
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { format } from 'date-fns';
@@ -35,19 +36,31 @@ const TimeSlotToggle = styled.button`
   cursor: pointer;
 `;
 
-const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
+const AddSlotButton = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+`;
+
+const DayAvailabilityControl = ({ selectedDate, availability, onAvailabilityChange }) => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [availableSlots, setAvailableSlots] = useState({});
 
   useEffect(() => {
-    // Reset state when selectedDate changes
-    setIsAvailable(false);
-    setAvailableSlots({});
-  }, [selectedDate]);
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    const dayAvailability = availability[dateString] || { isAvailable: false, availableSlots: {} };
+    setIsAvailable(dayAvailability.isAvailable);
+    setAvailableSlots(dayAvailability.availableSlots);
+  }, [selectedDate, availability]);
 
   const toggleAvailability = () => {
-    setIsAvailable(!isAvailable);
-    onAvailabilityChange(selectedDate, !isAvailable, availableSlots);
+    const newIsAvailable = !isAvailable;
+    setIsAvailable(newIsAvailable);
+    onAvailabilityChange(selectedDate, newIsAvailable, availableSlots);
   };
 
   const toggleTimeSlot = (time) => {
@@ -56,7 +69,16 @@ const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
     onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
   };
 
-  const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'];
+  const addTimeSlot = () => {
+    const newTime = prompt('Enter new time slot (e.g., 2:00 PM):');
+    if (newTime) {
+      const updatedSlots = { ...availableSlots, [newTime]: true };
+      setAvailableSlots(updatedSlots);
+      onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
+    }
+  };
+
+  const timeSlots = Object.keys(availableSlots).sort();
 
   return (
     <ControlContainer>
@@ -65,17 +87,20 @@ const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
         {isAvailable ? 'Set as Unavailable' : 'Set as Available'}
       </ToggleButton>
       {isAvailable && (
-        <TimeSlotContainer>
-          {timeSlots.map((time) => (
-            <TimeSlotToggle
-              key={time}
-              isAvailable={availableSlots[time]}
-              onClick={() => toggleTimeSlot(time)}
-            >
-              {time}
-            </TimeSlotToggle>
-          ))}
-        </TimeSlotContainer>
+        <>
+          <TimeSlotContainer>
+            {timeSlots.map((time) => (
+              <TimeSlotToggle
+                key={time}
+                isAvailable={availableSlots[time]}
+                onClick={() => toggleTimeSlot(time)}
+              >
+                {time}
+              </TimeSlotToggle>
+            ))}
+          </TimeSlotContainer>
+          <AddSlotButton onClick={addTimeSlot}>Add Time Slot</AddSlotButton>
+        </>
       )}
     </ControlContainer>
   );

@@ -17,7 +17,7 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>
  
-// src/components/AdminCalendar.js
+AdminCalendar.jsx:
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
@@ -133,7 +133,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import DayAvailabilityControl from './DayAvailabilityControl';
 import { format } from 'date-fns';
 
 const DashboardContainer = styled.div`
@@ -191,10 +190,25 @@ const RemoveNoteButton = styled.button`
   cursor: pointer;
 `;
 
+const AvailabilityContainer = styled.div`
+  margin-top: 2rem;
+`;
+
+const TimeSlotContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const TimeInput = styled.input`
+  margin-right: 0.5rem;
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [availability, setAvailability] = useState({});
+  const [newTimeSlot, setNewTimeSlot] = useState('');
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -230,7 +244,6 @@ function AdminDashboard() {
   };
 
   const handleCancel = (id) => {
-    console.log(`Cancelling appointment ${id} and sending WhatsApp message`);
     const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
@@ -253,14 +266,60 @@ function AdminDashboard() {
     setSelectedDate(date);
   };
 
-  const handleAvailabilityChange = (date, isAvailable, availableSlots) => {
-    const dateString = format(date, 'yyyy-MM-dd');
-    const updatedAvailability = {
-      ...availability,
-      [dateString]: { isAvailable, availableSlots }
-    };
-    setAvailability(updatedAvailability);
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+  const handleAddTimeSlot = () => {
+    if (selectedDate && newTimeSlot) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [newTimeSlot]: true
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      setNewTimeSlot('');
+    }
+  };
+
+  const handleRemoveTimeSlot = (time) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [time]: false
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    }
+  };
+
+  const handleChangeTimeSlot = (oldTime, newTime) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [oldTime]: false,
+            [newTime]: true
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    }
   };
 
   return (
@@ -269,10 +328,31 @@ function AdminDashboard() {
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
       {selectedDate && (
-        <DayAvailabilityControl
-          selectedDate={selectedDate}
-          onAvailabilityChange={handleAvailabilityChange}
-        />
+        <AvailabilityContainer>
+          <h2>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h2>
+          <TimeSlotContainer>
+            <TimeInput
+              type="time"
+              value={newTimeSlot}
+              onChange={(e) => setNewTimeSlot(e.target.value)}
+            />
+            <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
+          </TimeSlotContainer>
+          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
+            Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+              .filter(([_, isAvailable]) => isAvailable)
+              .map(([time, _]) => (
+                <TimeSlotContainer key={time}>
+                  <TimeInput
+                    type="time"
+                    value={time}
+                    onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
+                  />
+                  <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
+                </TimeSlotContainer>
+              ))
+          }
+        </AvailabilityContainer>
       )}
       <h2>Upcoming Appointments</h2>
       <AppointmentList>
@@ -355,19 +435,31 @@ const TimeSlotToggle = styled.button`
   cursor: pointer;
 `;
 
-const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
+const AddSlotButton = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+`;
+
+const DayAvailabilityControl = ({ selectedDate, availability, onAvailabilityChange }) => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [availableSlots, setAvailableSlots] = useState({});
 
   useEffect(() => {
-    // Reset state when selectedDate changes
-    setIsAvailable(false);
-    setAvailableSlots({});
-  }, [selectedDate]);
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    const dayAvailability = availability[dateString] || { isAvailable: false, availableSlots: {} };
+    setIsAvailable(dayAvailability.isAvailable);
+    setAvailableSlots(dayAvailability.availableSlots);
+  }, [selectedDate, availability]);
 
   const toggleAvailability = () => {
-    setIsAvailable(!isAvailable);
-    onAvailabilityChange(selectedDate, !isAvailable, availableSlots);
+    const newIsAvailable = !isAvailable;
+    setIsAvailable(newIsAvailable);
+    onAvailabilityChange(selectedDate, newIsAvailable, availableSlots);
   };
 
   const toggleTimeSlot = (time) => {
@@ -376,7 +468,16 @@ const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
     onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
   };
 
-  const timeSlots = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'];
+  const addTimeSlot = () => {
+    const newTime = prompt('Enter new time slot (e.g., 2:00 PM):');
+    if (newTime) {
+      const updatedSlots = { ...availableSlots, [newTime]: true };
+      setAvailableSlots(updatedSlots);
+      onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
+    }
+  };
+
+  const timeSlots = Object.keys(availableSlots).sort();
 
   return (
     <ControlContainer>
@@ -385,17 +486,20 @@ const DayAvailabilityControl = ({ selectedDate, onAvailabilityChange }) => {
         {isAvailable ? 'Set as Unavailable' : 'Set as Available'}
       </ToggleButton>
       {isAvailable && (
-        <TimeSlotContainer>
-          {timeSlots.map((time) => (
-            <TimeSlotToggle
-              key={time}
-              isAvailable={availableSlots[time]}
-              onClick={() => toggleTimeSlot(time)}
-            >
-              {time}
-            </TimeSlotToggle>
-          ))}
-        </TimeSlotContainer>
+        <>
+          <TimeSlotContainer>
+            {timeSlots.map((time) => (
+              <TimeSlotToggle
+                key={time}
+                isAvailable={availableSlots[time]}
+                onClick={() => toggleTimeSlot(time)}
+              >
+                {time}
+              </TimeSlotToggle>
+            ))}
+          </TimeSlotContainer>
+          <AddSlotButton onClick={addTimeSlot}>Add Time Slot</AddSlotButton>
+        </>
       )}
     </ControlContainer>
   );
@@ -474,11 +578,13 @@ const AppointmentConfirmation = ({ date, time, onClose }) => {
 
 export default AppointmentConfirmation;
 
-// src/components/ClientScheduling.js
+ClientScheduling.jsx:
+
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import AppointmentConfirmation from './AppointmentConfirmation';
+import { format } from 'date-fns';
 
 const SchedulingContainer = styled.div`
   max-width: 800px;
@@ -515,20 +621,26 @@ const ClientScheduling = () => {
 
   useEffect(() => {
     if (selectedDate) {
-      // Fetch available slots from local storage
-      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-      const bookedSlots = appointments
-        .filter(appointment => appointment.date === selectedDate)
-        .map(appointment => appointment.time);
+      const availability = JSON.parse(localStorage.getItem('availability')) || {};
+      const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
 
-      const allSlots = [
-        '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'
-      ];
+      if (dateAvailability.isAvailable) {
+        const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+        const bookedSlots = appointments
+          .filter(appointment => appointment.date === selectedDate)
+          .map(appointment => appointment.time);
 
-      setAvailableSlots(allSlots.map(slot => ({
-        time: slot,
-        isAvailable: !bookedSlots.includes(slot)
-      })));
+        const allSlots = [
+          '9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM'
+        ];
+
+        setAvailableSlots(allSlots.map(slot => ({
+          time: slot,
+          isAvailable: dateAvailability.availableSlots[slot] && !bookedSlots.includes(slot)
+        })));
+      } else {
+        setAvailableSlots([]);
+      }
     }
   }, [selectedDate]);
 
@@ -579,12 +691,13 @@ const ClientScheduling = () => {
 
 export default ClientScheduling;
 
-IN AdminDashboard, when selecting a date as available user Will se a complete menu to create new
-appointments to be visible on client side. 
-IN Clientscheduling, Client Will ONLY SEE those dates/appointments that
-have been enabled by admin, clients won't be able to SEE/click dates/appointments that are not
-enabled.
- 
+Include a persistent data storage, such as a localstorage within project
+that Is used to stablish a COMMUNICATION between admin newly added availability Slots
+and Clientside view for scheduling in real time, without the NEED of any 
+kind of reload.
+
+
+Make sure You Will not remove any existing features, it is imperative..
 Fix it please and return fully merged ONLY as required. Ready to copy and paste.
 Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
       No, as you are generating the code it gets changed again to wrong syntax.

@@ -1,4 +1,3 @@
-// src/components/AppointmentConfirmation.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
@@ -40,6 +39,17 @@ const AppointmentConfirmation = ({ date, time, onClose }) => {
     };
     appointments.push(newAppointment);
     localStorage.setItem('appointments', JSON.stringify(appointments));
+    
+    // Update availability
+    const availability = JSON.parse(localStorage.getItem('availability')) || {};
+    if (availability[date] && availability[date].availableSlots) {
+      availability[date].availableSlots[time] = false;
+      localStorage.setItem('availability', JSON.stringify(availability));
+    }
+
+    // Trigger storage event for real-time updates
+    window.dispatchEvent(new Event('storage'));
+
     alert(`Appointment confirmed! Your appointment number is ${newAppointment.id}`);
     onClose();
   };

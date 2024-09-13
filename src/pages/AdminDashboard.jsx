@@ -1,4 +1,3 @@
-// src/components/AdminDashboard.js
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -89,19 +88,10 @@ function AdminDashboard() {
     } else {
       const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
       setAppointments(storedAppointments);
-      loadAvailability();
+      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+      setAvailability(storedAvailability);
     }
   }, [user, navigate]);
-
-  const loadAvailability = () => {
-    const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-    setAvailability(storedAvailability);
-  };
-
-  const saveAvailability = (updatedAvailability) => {
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-    setAvailability(updatedAvailability);
-  };
 
   const handleAddNote = (id, note) => {
     const updatedAppointments = appointments.map(appointment => 
@@ -153,14 +143,17 @@ function AdminDashboard() {
         ...availability,
         [dateString]: {
           ...availability[dateString],
+          isAvailable: true,
           availableSlots: {
             ...availability[dateString]?.availableSlots,
             [newTimeSlot]: true
           }
         }
       };
-      saveAvailability(updatedAvailability);
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
       setNewTimeSlot('');
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
@@ -177,7 +170,9 @@ function AdminDashboard() {
           }
         }
       };
-      saveAvailability(updatedAvailability);
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
@@ -195,7 +190,9 @@ function AdminDashboard() {
           }
         }
       };
-      saveAvailability(updatedAvailability);
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
     }
   };
 

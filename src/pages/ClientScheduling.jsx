@@ -39,10 +39,13 @@ const StepIcon = styled.span`
 `;
 
 const DateGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1rem;
+  min-height: 150px; // Add a minimum height to ensure vertical centering
+  justify-content: center;
+  align-items: center;
 `;
 
 const DateButton = styled(motion.button)`
@@ -86,6 +89,14 @@ const TimeSlot = styled(motion.button)`
     transform: ${({ isAvailable }) => isAvailable ? 'translateY(-2px)' : 'none'};
     box-shadow: ${({ isAvailable }) => isAvailable ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'};
   }
+`;
+
+const NoDatesMessage = styled.p`
+  text-align: center;
+  width: 100%;
+  padding: 1rem;
+  font-style: italic;
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const ClientScheduling = () => {
@@ -197,7 +208,7 @@ const ClientScheduling = () => {
                 </DateButton>
               ))
             ) : (
-              <p>No available dates. Please check back later.</p>
+              <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
             )}
           </DateGrid>
         </StepContainer>

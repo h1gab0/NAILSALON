@@ -2,6 +2,8 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
+
+
 Why admin calendar shows AVAILABLE in some dates?
 Remove it.
 Always reafirm admin login, every single time the ADMINDASHBOARD component Is rendered admin has to login.

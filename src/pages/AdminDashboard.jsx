@@ -1,3 +1,4 @@
+// src/components/AdminDashboard.js
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -38,7 +39,7 @@ const Button = styled.button`
 `;
 
 const NoteContainer = styled.div`
-  margin-top: 0.5rem;
+  margin-bottom: 1rem;
 `;
 
 const NoteItem = styled.div`
@@ -95,7 +96,7 @@ function AdminDashboard() {
 
   const handleAddNote = (id, note) => {
     const updatedAppointments = appointments.map(appointment => 
-      appointment.id === id ? { ...appointment, notes: [...(appointment.notes || []), note] } : appointment
+      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
     );
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
@@ -114,9 +115,26 @@ function AdminDashboard() {
   };
 
   const handleCancel = (id) => {
+    const appointmentToCancel = appointments.find(appointment => appointment.id === id);
     const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+
+    // Update availability
+    const dateString = appointmentToCancel.date;
+    const updatedAvailability = {
+      ...availability,
+      [dateString]: {
+        ...availability[dateString],
+        availableSlots: {
+          ...availability[dateString]?.availableSlots,
+          [appointmentToCancel.time]: true
+        }
+      }
+    };
+    setAvailability(updatedAvailability);
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleComplete = (id, profit, materials) => {
@@ -237,6 +255,20 @@ function AdminDashboard() {
             <p>Client: {appointment.clientName}</p>
             <p>Phone: {appointment.phone}</p>
             <p>Status: {appointment.status}</p>
+            {appointment.status === 'completed' && (
+              <>
+                <p>Profit: {appointment.profit}</p>
+                <p>Materials: {appointment.materials}</p>
+              </>
+            )}
+            <NoteContainer>
+              {appointment.notes && appointment.notes.map((note, index) => (
+                <NoteItem key={index}>
+                  <span>{note}</span>
+                  <RemoveNoteButton onClick={() => handleRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
+                </NoteItem>
+              ))}
+            </NoteContainer>
             <AppointmentDetails>
               <Button onClick={() => handleAddNote(appointment.id, prompt('Enter note:'))}>Add Note</Button>
               <Button onClick={() => handleCancel(appointment.id)}>Cancel</Button>
@@ -248,20 +280,6 @@ function AdminDashboard() {
                 }}>Mark as Complete</Button>
               )}
             </AppointmentDetails>
-            <NoteContainer>
-              {appointment.notes && appointment.notes.map((note, index) => (
-                <NoteItem key={index}>
-                  <span>{note}</span>
-                  <RemoveNoteButton onClick={() => handleRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
-                </NoteItem>
-              ))}
-            </NoteContainer>
-            {appointment.status === 'completed' && (
-              <>
-                <p>Profit: {appointment.profit}</p>
-                <p>Materials: {appointment.materials}</p>
-              </>
-            )}
           </AppointmentItem>
         ))}
       </AppointmentList>

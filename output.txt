@@ -2,11 +2,8 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-
-
-Why admin calendar shows AVAILABLE in some dates?
-Remove it.
-Always reafirm admin login, every single time the ADMINDASHBOARD component Is rendered admin has to login.
+AFTER USER CONFIRMS AN APPOINTMENT, DO NOT SHOW A POP UP BUT A NEW PAGE WITH THE APPOINTMENT DETAILS.
+AND A LINK TO DISCOVER TRENDS.
 ADD LANGUAGE: Spanish/English.
 CREATE A GALLERY PAGE, AND A SERVICE OFFERING PAGE.
 polish client-admin views.

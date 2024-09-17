@@ -1,3 +1,4 @@
+// AdminCalendar.jsx
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
@@ -75,6 +76,22 @@ const AppointmentCount = styled.div`
   }
 `;
 
+const AvailabilityIndicator = styled.div`
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background-color: ${({ theme }) => theme.colors.secondary};
+  color: white;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.7rem;
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    bottom: 2px;
+    right: 2px;
+  }
+`;
+
 const AdminCalendar = ({ appointments, onDaySelect }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -103,6 +120,12 @@ const AdminCalendar = ({ appointments, onDaySelect }) => {
     return appointments.filter(appointment => appointment.date === dateString).length;
   };
 
+  const isDateAvailable = (date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    const dateAvailability = availability[dateString];
+    return dateAvailability && dateAvailability.isAvailable && Object.values(dateAvailability.availableSlots).some(slot => slot);
+  };
+
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
@@ -120,8 +143,8 @@ const AdminCalendar = ({ appointments, onDaySelect }) => {
       </CalendarHeader>
       <CalendarGrid>
         {daysInMonth.map((day, index) => {
-          const dateString = format(day, 'yyyy-MM-dd');
-          const isAvailable = availability[dateString]?.isAvailable;
+          const appointmentCount = getAppointmentCount(day);
+          const isAvailable = isDateAvailable(day);
           return (
             <CalendarCell
               key={index}
@@ -130,10 +153,12 @@ const AdminCalendar = ({ appointments, onDaySelect }) => {
               onClick={() => handleDayClick(day)}
             >
               {format(day, 'd')}
-              {getAppointmentCount(day) > 0 && (
-                <AppointmentCount>{getAppointmentCount(day)}</AppointmentCount>
+              {appointmentCount > 0 && (
+                <AppointmentCount>{appointmentCount}</AppointmentCount>
               )}
-              {isAvailable && <div>Available</div>}
+              {isAvailable && (
+                <AvailabilityIndicator>Available</AvailabilityIndicator>
+              )}
             </CalendarCell>
           );
         })}

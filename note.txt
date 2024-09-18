@@ -17,665 +17,87 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>
  
-For every deleted appointment, the availability slots have to become available again
-on admin and client side. 
+Adjust styling of Login screen.
+Re Imagine login screen with FUTURISTIC ELEGANT styling for BUTTONS, SPACING and other elements.
 
-// src/components/Clientscheduling.jsx
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import AppointmentConfirmation from './AppointmentConfirmation';
-import { format, addDays, isAfter, parseISO } from 'date-fns';
-import { FaCalendarAlt, FaClock } from 'react-icons/fa';
-
-const SchedulingContainer = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
-const Title = styled.h1`
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const StepContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-`;
-
-const StepTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-`;
-
-const StepIcon = styled.span`
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-`;
-
-const DateGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-  min-height: 150px; // Add a minimum height to ensure vertical centering
-  justify-content: center;
-  align-items: center;
-`;
-
-const DateButton = styled(motion.button)`
-  padding: 1rem;
-  border: none;
-  background-color: ${({ isSelected, theme }) => isSelected ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const TimeGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const TimeSlot = styled(motion.button)`
-  padding: 0.5rem;
-  border: none;
-  background-color: ${({ isAvailable, isSelected, theme }) => 
-    isSelected ? theme.colors.primary : 
-    isAvailable ? theme.colors.secondary : 
-    theme.colors.background};
-  color: ${({ isAvailable, theme }) => isAvailable ? 'white' : theme.colors.text};
-  border-radius: 8px;
-  cursor: ${({ isAvailable }) => isAvailable ? 'pointer' : 'not-allowed'};
-  opacity: ${({ isAvailable }) => isAvailable ? 1 : 0.5};
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: ${({ isAvailable }) => isAvailable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${({ isAvailable }) => isAvailable ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'};
-  }
-`;
-
-const NoDatesMessage = styled.p`
-  text-align: center;
-  width: 100%;
-  padding: 1rem;
-  font-style: italic;
-  color: ${({ theme }) => theme.colors.text};
-`;
-
-const ClientScheduling = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [availableDates, setAvailableDates] = useState([]);
-
-  const loadAvailability = () => {
-    try {
-      const availability = JSON.parse(localStorage.getItem('availability')) || {};
-      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-
-      console.log('Raw availability data:', availability);
-      console.log('Raw appointments data:', appointments);
-
-      const today = new Date();
-      const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
-      
-      const availableDatesWithSlots = nextThirtyDays.filter(date => {
-        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-        const availableSlots = Object.entries(dateAvailability.availableSlots)
-          .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
-        
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && isAfter(parseISO(date), today);
-        console.log(`Date ${date} availability:`, isDateAvailable);
-        return isDateAvailable;
-      });
-
-      console.log('Available dates with slots:', availableDatesWithSlots);
-
-      setAvailableDates(availableDatesWithSlots);
-
-      if (selectedDate) {
-        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments
-          .filter(appointment => appointment.date === selectedDate)
-          .map(appointment => appointment.time);
-
-        const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => ({
-            time: slot,
-            isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot)
-          }));
-
-        console.log('Available slots for selected date:', slotsWithAvailability);
-        setAvailableSlots(slotsWithAvailability);
-      }
-    } catch (error) {
-      console.error('Error loading availability:', error);
-    }
-  };
-
-  useEffect(() => {
-    loadAvailability();
-
-    const handleStorageChange = (e) => {
-      if (e.key === 'availability' || e.key === 'appointments') {
-        loadAvailability();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedDate]);
-
-  const handleDateSelection = (date) => {
-    setSelectedDate(date);
-    setSelectedTime('');
-    setShowConfirmation(false);
-  };
-
-  const handleTimeSelection = (time) => {
-    setSelectedTime(time);
-    setShowConfirmation(true);
-  };
-
-  return (
-    <SchedulingContainer>
-      <Title>Schedule Your Nail Appointment</Title>
-      <AnimatePresence>
-        <StepContainer
-          key="date-selection"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <StepTitle>
-            <StepIcon><FaCalendarAlt /></StepIcon>
-            Select a Date
-          </StepTitle>
-          <DateGrid>
-            {availableDates.length > 0 ? (
-              availableDates.map((date) => (
-                <DateButton
-                  key={date}
-                  isSelected={date === selectedDate}
-                  onClick={() => handleDateSelection(date)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {format(parseISO(date), 'MMM d')}
-                </DateButton>
-              ))
-            ) : (
-              <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
-            )}
-          </DateGrid>
-        </StepContainer>
-
-        {selectedDate && (
-          <StepContainer
-            key="time-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaClock /></StepIcon>
-              Select a Time
-            </StepTitle>
-            <TimeGrid>
-              {availableSlots.map((slot, index) => (
-                <TimeSlot
-                  key={index}
-                  isAvailable={slot.isAvailable}
-                  isSelected={selectedTime === slot.time}
-                  onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
-                  whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
-                  whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
-                >
-                  {slot.time}
-                </TimeSlot>
-              ))}
-            </TimeGrid>
-          </StepContainer>
-        )}
-
-        {showConfirmation && (
-          <StepContainer
-            key="confirmation"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <AppointmentConfirmation
-              date={selectedDate}
-              time={selectedTime}
-              onClose={() => {
-                setShowConfirmation(false);
-                setSelectedTime('');
-                loadAvailability();
-              }}
-            />
-          </StepContainer>
-        )}
-      </AnimatePresence>
-    </SchedulingContainer>
-  );
-};
-
-export default ClientScheduling;
-
-// src/Pagés/DayAvailabilityControl.jsx
-// src/components/DayAvailabilityControl.js
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { format } from 'date-fns';
-
-const ControlContainer = styled.div`
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 4px;
-`;
-
-const ToggleButton = styled.button`
-  background-color: ${({ isAvailable, theme }) => isAvailable ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 0.5rem;
-`;
-
-const TimeSlotContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-`;
-
-const TimeSlotToggle = styled.button`
-  background-color: ${({ isAvailable, theme }) => isAvailable ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  border: none;
-  padding: 0.5rem;
-  margin: 0.25rem;
-  border-radius: 4px;
-  cursor: pointer;
-`;
-
-const AddSlotButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
-`;
-
-const DayAvailabilityControl = ({ selectedDate, availability, onAvailabilityChange }) => {
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState({});
-
-  useEffect(() => {
-    const dateString = format(selectedDate, 'yyyy-MM-dd');
-    const dayAvailability = availability[dateString] || { isAvailable: false, availableSlots: {} };
-    setIsAvailable(dayAvailability.isAvailable);
-    setAvailableSlots(dayAvailability.availableSlots);
-  }, [selectedDate, availability]);
-
-  const toggleAvailability = () => {
-    const newIsAvailable = !isAvailable;
-    setIsAvailable(newIsAvailable);
-    onAvailabilityChange(selectedDate, newIsAvailable, availableSlots);
-  };
-
-  const toggleTimeSlot = (time) => {
-    const updatedSlots = { ...availableSlots, [time]: !availableSlots[time] };
-    setAvailableSlots(updatedSlots);
-    onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
-  };
-
-  const addTimeSlot = () => {
-    const newTime = prompt('Enter new time slot (e.g., 2:00 PM):');
-    if (newTime) {
-      const updatedSlots = { ...availableSlots, [newTime]: true };
-      setAvailableSlots(updatedSlots);
-      onAvailabilityChange(selectedDate, isAvailable, updatedSlots);
-    }
-  };
-
-  const timeSlots = Object.keys(availableSlots).sort();
-
-  return (
-    <ControlContainer>
-      <h3>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h3>
-      <ToggleButton isAvailable={isAvailable} onClick={toggleAvailability}>
-        {isAvailable ? 'Set as Unavailable' : 'Set as Available'}
-      </ToggleButton>
-      {isAvailable && (
-        <>
-          <TimeSlotContainer>
-            {timeSlots.map((time) => (
-              <TimeSlotToggle
-                key={time}
-                isAvailable={availableSlots[time]}
-                onClick={() => toggleTimeSlot(time)}
-              >
-                {time}
-              </TimeSlotToggle>
-            ))}
-          </TimeSlotContainer>
-          <AddSlotButton onClick={addTimeSlot}>Add Time Slot</AddSlotButton>
-        </>
-      )}
-    </ControlContainer>
-  );
-};
-
-export default DayAvailabilityControl;
-
-// src/components/AdminDashboard.js
-import React, { useState, useEffect, useContext } from 'react';
+// src/pages/Login.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import styled from 'styled-components';
-import { AuthContext } from '../context/AuthContext';
-import AdminCalendar from './AdminCalendar';
-import { format } from 'date-fns';
 
-const DashboardContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+const LoginContainer = styled.div`
+  max-width: 400px;
+  margin: 2rem auto;
   padding: 2rem;
-`;
-
-const AppointmentList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-`;
-
-const AppointmentItem = styled.li`
   background-color: ${({ theme }) => theme.colors.cardBackground};
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
 `;
 
-const AppointmentDetails = styled.div`
-  margin-top: 1rem;
+const LoginForm = styled.form`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Input = styled.input`
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.secondary};
+  border-radius: 4px;
 `;
 
 const Button = styled.button`
+  padding: 0.5rem;
   background-color: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 0.5rem;
-`;
-
-const NoteContainer = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const NoteItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: ${({ theme }) => theme.colors.background};
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-`;
-
-const RemoveNoteButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.secondary};
-  color: white;
-  border: none;
-  padding: 0.25rem 0.5rem;
   border-radius: 4px;
   cursor: pointer;
 `;
 
-const AvailabilityContainer = styled.div`
-  margin-top: 2rem;
-`;
-
-const TimeSlotContainer = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-`;
-
-const TimeInput = styled.input`
-  margin-right: 0.5rem;
-`;
-
-function AdminDashboard() {
-  const [appointments, setAppointments] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [availability, setAvailability] = useState({});
-  const [newTimeSlot, setNewTimeSlot] = useState('');
-  const { user, logout } = useContext(AuthContext);
+function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // In a real app, you would validate credentials against a backend
+    if (username === 'admin' && password === 'password') {
+      login({ username, role: 'admin' });
+      navigate('/admin');
     } else {
-      const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
-      setAppointments(storedAppointments);
-      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-      setAvailability(storedAvailability);
-    }
-  }, [user, navigate]);
-
-  const handleAddNote = (id, note) => {
-    const updatedAppointments = appointments.map(appointment => 
-      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
-  };
-
-  const handleRemoveNote = (appointmentId, noteIndex) => {
-    const updatedAppointments = appointments.map(appointment => {
-      if (appointment.id === appointmentId) {
-        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
-        return { ...appointment, notes: updatedNotes };
-      }
-      return appointment;
-    });
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
-  };
-
-  const handleCancel = (id) => {
-    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
-  };
-
-  const handleComplete = (id, profit, materials) => {
-    const updatedAppointments = appointments.map(appointment => 
-      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  const handleDaySelect = (date) => {
-    setSelectedDate(date);
-  };
-
-  const handleAddTimeSlot = () => {
-    if (selectedDate && newTimeSlot) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          isAvailable: true,
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [newTimeSlot]: true
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      setNewTimeSlot('');
-      window.dispatchEvent(new Event('storage'));
-    }
-  };
-
-  const handleRemoveTimeSlot = (time) => {
-    if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [time]: false
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
-    }
-  };
-
-  const handleChangeTimeSlot = (oldTime, newTime) => {
-    if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [oldTime]: false,
-            [newTime]: true
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
+      alert('Invalid credentials');
     }
   };
 
   return (
-    <DashboardContainer>
-      <h1>Admin Dashboard</h1>
-      <Button onClick={handleLogout}>Logout</Button>
-      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
-      {selectedDate && (
-        <AvailabilityContainer>
-          <h2>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h2>
-          <TimeSlotContainer>
-            <TimeInput
-              type="time"
-              value={newTimeSlot}
-              onChange={(e) => setNewTimeSlot(e.target.value)}
-            />
-            <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
-          </TimeSlotContainer>
-          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
-            Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
-              .filter(([_, isAvailable]) => isAvailable)
-              .map(([time, _]) => (
-                <TimeSlotContainer key={time}>
-                  <TimeInput
-                    type="time"
-                    value={time}
-                    onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
-                  />
-                  <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
-                </TimeSlotContainer>
-              ))
-          }
-        </AvailabilityContainer>
-      )}
-      <h2>Upcoming Appointments</h2>
-      <AppointmentList>
-        {appointments.map((appointment) => (
-          <AppointmentItem key={appointment.id}>
-            <p>Date: {appointment.date}</p>
-            <p>Time: {appointment.time}</p>
-            <p>Client: {appointment.clientName}</p>
-            <p>Phone: {appointment.phone}</p>
-            <p>Status: {appointment.status}</p>
-            <NoteContainer>
-              {appointment.notes && appointment.notes.map((note, index) => (
-                <NoteItem key={index}>
-                  <span>{note}</span>
-                  <RemoveNoteButton onClick={() => handleRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
-                </NoteItem>
-              ))}
-            </NoteContainer>
-            <AppointmentDetails>
-              <Button onClick={() => handleAddNote(appointment.id, prompt('Enter note:'))}>Add Note</Button>
-              <Button onClick={() => handleCancel(appointment.id)}>Cancel</Button>
-              {appointment.status !== 'completed' && (
-                <Button onClick={() => {
-                  const profit = prompt('Enter profit:');
-                  const materials = prompt('Enter materials used:');
-                  handleComplete(appointment.id, profit, materials);
-                }}>Mark as Complete</Button>
-              )}
-            </AppointmentDetails>
-            {appointment.status === 'completed' && (
-              <>
-                <p>Profit: {appointment.profit}</p>
-                <p>Materials: {appointment.materials}</p>
-              </>
-            )}
-          </AppointmentItem>
-        ))}
-      </AppointmentList>
-    </DashboardContainer>
+    <LoginContainer>
+      <h2>Login</h2>
+      <LoginForm onSubmit={handleSubmit}>
+        <Input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <Input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Button type="submit">Login</Button>
+      </LoginForm>
+    </LoginContainer>
   );
 }
 
-export default AdminDashboard;
+export default Login;
 
 Make sure You Will not remove any existing features, it is imperative..
-Fix it please and return fully merged ONLY as required. Ready to copy and paste.
+Fix it please and return fully mergedONLY as required. Ready to copy and paste.
 Be careful with your response, your app response generation interface, it automatically formats it the same so it will cause errors.
       No, as you are generating the code it gets changed again to wrong syntax.
 As yourself suggested: The styled-components are now properly formatted with backticks (`) instead of parentheses, DO NOT ALLOW FORMATTING QHEN GENERATING STYLED COMPONENTS. 

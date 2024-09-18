@@ -7,22 +7,73 @@ const LoginContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 100vh;
   padding: 2rem;
+  background-color: ${({ theme }) => theme.colors.background};
+  transition: all ${({ theme }) => theme.transitions.default};
+`;
+
+const LoginForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: ${({ theme }) => theme.radii.large};
+  box-shadow: ${({ theme }) => theme.shadows.large};
+`;
+
+const Title = styled.h2`
+  font-family: ${({ theme }) => theme.fonts.heading};
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
+  margin-bottom: 2rem;
+  text-align: center;
 `;
 
 const Input = styled.input`
-  margin-bottom: 1rem;
-  padding: 0.5rem;
   width: 100%;
-  max-width: 300px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.medium};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.text};
+  background-color: ${({ theme }) => theme.colors.background};
+  transition: all ${({ theme }) => theme.transitions.default};
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}33;
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.subtext};
+  }
 `;
 
 const Button = styled.button`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
   border: none;
+  border-radius: ${({ theme }) => theme.radii.medium};
+  font-family: ${({ theme }) => theme.fonts.body};
+  font-size: 1rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.background};
+  background-color: ${({ theme }) => theme.colors.primary};
   cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.default};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondary};
+  }
 `;
 
 const LoginComponent = () => {
@@ -43,8 +94,8 @@ const LoginComponent = () => {
 
   return (
     <LoginContainer>
-      <h2>Admin Login</h2>
-      <form onSubmit={handleSubmit}>
+      <LoginForm onSubmit={handleSubmit}>
+        <Title>Admin Login</Title>
         <Input
           type="text"
           placeholder="Username"
@@ -60,7 +111,7 @@ const LoginComponent = () => {
           autoComplete="current-password"
         />
         <Button type="submit">Login</Button>
-      </form>
+      </LoginForm>
     </LoginContainer>
   );
 };

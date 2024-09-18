@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import AppointmentConfirmation from './AppointmentConfirmation';
 import { format, addDays, isAfter, parseISO } from 'date-fns';
-import { FaCalendarAlt, FaClock } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaUser } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const SchedulingContainer = styled.div`
   max-width: 800px;
@@ -43,7 +43,7 @@ const DateGrid = styled.div`
   flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1rem;
-  min-height: 150px; // Add a minimum height to ensure vertical centering
+  min-height: 150px;
   justify-content: center;
   align-items: center;
 `;
@@ -99,20 +99,43 @@ const NoDatesMessage = styled.p`
   color: ${({ theme }) => theme.colors.text};
 `;
 
+const Input = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+`;
+
+const Button = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondary};
+  }
+`;
+
 const ClientScheduling = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
   const [availableDates, setAvailableDates] = useState([]);
+  const [step, setStep] = useState('date'); // 'date', 'time', 'info'
+  const navigate = useNavigate();
 
   const loadAvailability = () => {
     try {
       const availability = JSON.parse(localStorage.getItem('availability')) || {};
       const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-
-      console.log('Raw availability data:', availability);
-      console.log('Raw appointments data:', appointments);
 
       const today = new Date();
       const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
@@ -124,11 +147,8 @@ const ClientScheduling = () => {
           .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
         
         const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && isAfter(parseISO(date), today);
-        console.log(`Date ${date} availability:`, isDateAvailable);
         return isDateAvailable;
       });
-
-      console.log('Available dates with slots:', availableDatesWithSlots);
 
       setAvailableDates(availableDatesWithSlots);
 
@@ -145,7 +165,6 @@ const ClientScheduling = () => {
             isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot)
           }));
 
-        console.log('Available slots for selected date:', slotsWithAvailability);
         setAvailableSlots(slotsWithAvailability);
       }
     } catch (error) {
@@ -172,48 +191,82 @@ const ClientScheduling = () => {
   const handleDateSelection = (date) => {
     setSelectedDate(date);
     setSelectedTime('');
-    setShowConfirmation(false);
+    setStep('time');
   };
 
   const handleTimeSelection = (time) => {
     setSelectedTime(time);
-    setShowConfirmation(true);
+    setStep('info');
+  };
+
+  const handleConfirmAppointment = () => {
+    if (!name || !phone) {
+      alert('Please enter your name and phone number');
+      return;
+    }
+
+    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+    const newAppointment = {
+      id: Date.now(),
+      date: selectedDate,
+      time: selectedTime,
+      clientName: name,
+      phone: phone,
+      status: 'scheduled'
+    };
+    appointments.push(newAppointment);
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+    
+    // Update availability
+    const availability = JSON.parse(localStorage.getItem('availability')) || {};
+    if (availability[selectedDate] && availability[selectedDate].availableSlots) {
+      availability[selectedDate].availableSlots[selectedTime] = false;
+      localStorage.setItem('availability', JSON.stringify(availability));
+    }
+
+    // Trigger storage event for real-time updates
+    window.dispatchEvent(new Event('storage'));
+
+    // Navigate to the appointment confirmation page
+    navigate(`/appointment-confirmation/${newAppointment.id}`);
   };
 
   return (
     <SchedulingContainer>
       <Title>Schedule Your Nail Appointment</Title>
       <AnimatePresence>
-        <StepContainer
-          key="date-selection"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <StepTitle>
-            <StepIcon><FaCalendarAlt /></StepIcon>
-            Select a Date
-          </StepTitle>
-          <DateGrid>
-            {availableDates.length > 0 ? (
-              availableDates.map((date) => (
-                <DateButton
-                  key={date}
-                  isSelected={date === selectedDate}
-                  onClick={() => handleDateSelection(date)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {format(parseISO(date), 'MMM d')}
-                </DateButton>
-              ))
-            ) : (
-              <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
-            )}
-          </DateGrid>
-        </StepContainer>
+        {step === 'date' && (
+          <StepContainer
+            key="date-selection"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <StepTitle>
+              <StepIcon><FaCalendarAlt /></StepIcon>
+              Select a Date
+            </StepTitle>
+            <DateGrid>
+              {availableDates.length > 0 ? (
+                availableDates.map((date) => (
+                  <DateButton
+                    key={date}
+                    isSelected={date === selectedDate}
+                    onClick={() => handleDateSelection(date)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {format(parseISO(date), 'MMM d')}
+                  </DateButton>
+                ))
+              ) : (
+                <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
+              )}
+            </DateGrid>
+          </StepContainer>
+        )}
 
-        {selectedDate && (
+        {step === 'time' && (
           <StepContainer
             key="time-selection"
             initial={{ opacity: 0, y: 20 }}
@@ -241,22 +294,30 @@ const ClientScheduling = () => {
           </StepContainer>
         )}
 
-        {showConfirmation && (
+        {step === 'info' && (
           <StepContainer
-            key="confirmation"
+            key="info-collection"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <AppointmentConfirmation
-              date={selectedDate}
-              time={selectedTime}
-              onClose={() => {
-                setShowConfirmation(false);
-                setSelectedTime('');
-                loadAvailability();
-              }}
+            <StepTitle>
+              <StepIcon><FaUser /></StepIcon>
+              Your Information
+            </StepTitle>
+            <Input
+              type="text"
+              placeholder="Your Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
+            <Input
+              type="tel"
+              placeholder="Your Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
           </StepContainer>
         )}
       </AnimatePresence>

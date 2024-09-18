@@ -1,77 +1,59 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
+import React from 'react';
+import { useParams, Link } from 'react-router-dom';
+import styled, { useTheme } from 'styled-components';
 
 const ConfirmationContainer = styled.div`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
+  max-width: 600px;
+  margin: 2rem auto;
   padding: 2rem;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
   border-radius: 8px;
-  margin-top: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 `;
 
-const Input = styled.input`
-  width: 100%;
-  padding: 0.5rem;
+const Title = styled.h1`
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
   margin-bottom: 1rem;
 `;
 
-const Button = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
+const Details = styled.p`
+  margin-bottom: 0.5rem;
 `;
 
-const AppointmentConfirmation = ({ date, time, onClose }) => {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+const LinkButton = styled(Link)`
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 
-  const handleConfirm = () => {
-    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-    const newAppointment = {
-      id: Date.now(),
-      date,
-      time,
-      clientName: name,
-      phone,
-      status: 'scheduled'
-    };
-    appointments.push(newAppointment);
-    localStorage.setItem('appointments', JSON.stringify(appointments));
-    
-    // Update availability
-    const availability = JSON.parse(localStorage.getItem('availability')) || {};
-    if (availability[date] && availability[date].availableSlots) {
-      availability[date].availableSlots[time] = false;
-      localStorage.setItem('availability', JSON.stringify(availability));
-    }
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondary};
+  }
+`;
 
-    // Trigger storage event for real-time updates
-    window.dispatchEvent(new Event('storage'));
+const AppointmentConfirmation = () => {
+  const { id } = useParams();
+  const theme = useTheme();
+  const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+  const appointment = appointments.find(app => app.id === parseInt(id));
 
-    alert(`Appointment confirmed! Your appointment number is ${newAppointment.id}`);
-    onClose();
-  };
+  if (!appointment) {
+    return <ConfirmationContainer theme={theme}>Appointment not found.</ConfirmationContainer>;
+  }
 
   return (
-    <ConfirmationContainer>
-      <h2>Confirm Your Appointment</h2>
-      <p>Date: {date}</p>
-      <p>Time: {time}</p>
-      <Input
-        type="text"
-        placeholder="Your Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <Input
-        type="tel"
-        placeholder="Your Phone Number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
-      <Button onClick={handleConfirm}>Confirm Appointment</Button>
+    <ConfirmationContainer theme={theme}>
+      <Title>Appointment Confirmed!</Title>
+      <Details>Date: {appointment.date}</Details>
+      <Details>Time: {appointment.time}</Details>
+      <Details>Appointment ID: {appointment.id}</Details>
+      <LinkButton to="/trends">Discover Nail Trends</LinkButton>
     </ConfirmationContainer>
   );
 };

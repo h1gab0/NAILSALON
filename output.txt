@@ -2,8 +2,12 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-AFTER USER CONFIRMS AN APPOINTMENT, DO NOT SHOW A POP UP BUT A NEW PAGE WITH THE APPOINTMENT DETAILS.
-AND A LINK TO DISCOVER TRENDS.
+Clientscheduling PAGE Will ask for: 'What SERVICE do You need?'
+And Will show the ability to attach an image, which Will be stored
+admin-side APPOINTMENT item.
+
+From adminside add a button to send a WhatsApp message to user.
+
 ADD LANGUAGE: Spanish/English.
 CREATE A GALLERY PAGE, AND A SERVICE OFFERING PAGE.
 polish client-admin views.

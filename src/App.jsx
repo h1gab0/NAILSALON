@@ -16,6 +16,7 @@ import Chat from './components/Chat';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import LoginComponent from './components/LoginComponent';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppointmentConfirmation from './pages/AppointmentConfirmation';
 
 const MainContent = styled.main`
   padding-top: 60px;
@@ -23,7 +24,7 @@ const MainContent = styled.main`
 `;
 
 function AppContent() {
-  const { isDarkMode } = useTheme();
+  const { theme, isDarkMode } = useTheme();
 
   return (
     <StyledThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
@@ -42,6 +43,7 @@ function AppContent() {
           } />
           <Route path="/order" element={<OrderSystem />} />            
           <Route path="/login" element={<LoginComponent />} />
+          <Route path="/appointment-confirmation/:id" element={<AppointmentConfirmation />} />
         </Routes>
       </MainContent>
       <Chat />

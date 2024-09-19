@@ -2,8 +2,8 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-In ADMINDASHBOARD, appointment details appears collapsed with the 
-option to expands it to SEE all the content.
+
+WHAT TO DO FROM APNTMT CONFIRMATION PAGE???
 
 From adminside add a button to send a WhatsApp message to user
 with appointment details.

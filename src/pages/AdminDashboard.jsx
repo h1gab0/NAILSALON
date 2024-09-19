@@ -1,10 +1,10 @@
-// src/pages/ADMINDASHBOARD.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
 import { format } from 'date-fns';
+import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -258,45 +258,15 @@ function AdminDashboard() {
       <h2>Upcoming Appointments</h2>
       <AppointmentList>
         {appointments.map((appointment) => (
-          <AppointmentItem key={appointment.id}>
-            <p>Date: {appointment.date}</p>
-            <p>Time: {appointment.time}</p>
-            <p>Client: {appointment.clientName}</p>
-            <p>Phone: {appointment.phone}</p>
-            <p>Status: {appointment.status}</p>
-            {appointment.status === 'completed' && (
-              <>
-                <p>Profit: {appointment.profit}</p>
-                <p>Materials: {appointment.materials}</p>
-              </>
-            )}
-            {appointment.image && (
-              <div>
-                <p>Inspiration Image:</p>
-                <img src={appointment.image} alt="Inspiration" style={{ maxWidth: '200px', maxHeight: '200px' }} />
-                <Button onClick={() => handleDownloadImage(appointment.image)}>Download Image</Button>
-              </div>
-            )}
-            <NoteContainer>
-              {appointment.notes && appointment.notes.map((note, index) => (
-                <NoteItem key={index}>
-                  <span>{note}</span>
-                  <RemoveNoteButton onClick={() => handleRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
-                </NoteItem>
-              ))}
-            </NoteContainer>
-            <AppointmentDetails>
-              <Button onClick={() => handleAddNote(appointment.id, prompt('Enter note:'))}>Add Note</Button>
-              <Button onClick={() => handleCancel(appointment.id)}>Cancel</Button>
-              {appointment.status !== 'completed' && (
-                <Button onClick={() => {
-                  const profit = prompt('Enter profit:');
-                  const materials = prompt('Enter materials used:');
-                  handleComplete(appointment.id, profit, materials);
-                }}>Mark as Complete</Button>
-              )}
-            </AppointmentDetails>
-          </AppointmentItem>
+          <CollapsibleAppointment
+            key={appointment.id}
+            appointment={appointment}
+            onAddNote={handleAddNote}
+            onRemoveNote={handleRemoveNote}
+            onCancel={handleCancel}
+            onComplete={handleComplete}
+            onDownloadImage={handleDownloadImage}
+          />
         ))}
       </AppointmentList>
     </DashboardContainer>

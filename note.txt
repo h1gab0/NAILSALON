@@ -16,374 +16,292 @@ Always do reflection after making the plan to see if you missed something and al
 <output>
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>
+
+ADMINDASHBOARD:
+GENERAL APPOINTMENTS SORT WHILE NO DATE SELECTED WILL INCLUDE ALL DATES.
+ONCE DATE ITEM PICKED,
+UPCOMING APPOINTMENTS CORRESPOND TO SELECTED DATE ONLY THIS IS A GENERAL RULE.
+COMPLETED APPOINTMENTS WILL GO TO THE BOTTOM OF THE LIST IN 'ALL' SORTING.
+ADD 'UPCOMING'/'COMPLETED' SORTING TABS WITHIN APPOINTMENTS LIST.
  
-Clientscheduling animation in input elements transition does have to show smooth and FULLY fluido movement from hiding previous element 
-to brining next element, do not ALLOW any sudden position change, but everything smoothly
-animated.
 
-// src/pages/ClientScheduling.jsx
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { format, addDays, isAfter, parseISO } from 'date-fns';
-import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
+// src/pages/ADMINDASHBOARD.jsx
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
+import { AuthContext } from '../context/AuthContext';
+import AdminCalendar from './AdminCalendar';
+import { format } from 'date-fns';
+import CollapsibleAppointment from './CollapsibleAppointment';
 
-const SchedulingContainer = styled.div`
-  max-width: 800px;
+const DashboardContainer = styled.div`
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
-const Title = styled.h1`
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.primary};
+const AppointmentList = styled.ul`
+  list-style-type: none;
+  padding: 0;
 `;
 
-const StepContainer = styled(motion.div)`
+const AppointmentItem = styled.li`
   background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-`;
-
-const StepTitle = styled.h2`
-  font-size: 1.5rem;
   margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-`;
-
-const StepIcon = styled.span`
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-`;
-
-const DateGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-  min-height: 150px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const DateButton = styled(motion.button)`
   padding: 1rem;
-  border: none;
-  background-color: ${({ isSelected, theme }) => isSelected ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const TimeGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const TimeSlot = styled(motion.button)`
-  padding: 0.5rem;
-  border: none;
-  background-color: ${({ isAvailable, isSelected, theme }) => 
-    isSelected ? theme.colors.primary : 
-    isAvailable ? theme.colors.secondary : 
-    theme.colors.background};
-  color: ${({ isAvailable, theme }) => isAvailable ? 'white' : theme.colors.text};
-  border-radius: 8px;
-  cursor: ${({ isAvailable }) => isAvailable ? 'pointer' : 'not-allowed'};
-  opacity: ${({ isAvailable }) => isAvailable ? 1 : 0.5};
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: ${({ isAvailable }) => isAvailable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${({ isAvailable }) => isAvailable ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'};
-  }
-`;
-
-const NoDatesMessage = styled.p`
-  text-align: center;
-  width: 100%;
-  padding: 1rem;
-  font-style: italic;
-  color: ${({ theme }) => theme.colors.text};
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 4px;
+`;
+
+const AppointmentDetails = styled.div`
+  margin-top: 1rem;
 `;
 
 const Button = styled.button`
-  padding: 0.5rem 1rem;
   background-color: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-  }
+  margin-right: 0.5rem;
 `;
 
-const ImageUploadContainer = styled.div`
-  margin-top: 1rem;
+const NoteContainer = styled.div`
+  margin-bottom: 1rem;
 `;
 
-const ImagePreview = styled.img`
-  max-width: 100%;
-  max-height: 200px;
-  margin-top: 1rem;
+const NoteItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: ${({ theme }) => theme.colors.background};
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
 `;
 
-const ClientScheduling = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [image, setImage] = useState(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [availableDates, setAvailableDates] = useState([]);
-  const [step, setStep] = useState('date');
+const RemoveNoteButton = styled.button`
+  background-color: ${({ theme }) => theme.colors.secondary};
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+`;
+
+const AvailabilityContainer = styled.div`
+  margin-top: 2rem;
+`;
+
+const TimeSlotContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const TimeInput = styled.input`
+  margin-right: 0.5rem;
+`;
+
+function AdminDashboard() {
+  const [appointments, setAppointments] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availability, setAvailability] = useState({});
+  const [newTimeSlot, setNewTimeSlot] = useState('');
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const loadAvailability = () => {
-    try {
-      const availability = JSON.parse(localStorage.getItem('availability')) || {};
-      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-
-      const today = new Date();
-      const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
-      
-      const availableDatesWithSlots = nextThirtyDays.filter(date => {
-        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-        const availableSlots = Object.entries(dateAvailability.availableSlots)
-          .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
-        
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && isAfter(parseISO(date), today);
-        return isDateAvailable;
-      });
-
-      setAvailableDates(availableDatesWithSlots);
-
-      if (selectedDate) {
-        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments
-          .filter(appointment => appointment.date === selectedDate)
-          .map(appointment => appointment.time);
-
-        const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => ({
-            time: slot,
-            isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot)
-          }));
-
-        setAvailableSlots(slotsWithAvailability);
-      }
-    } catch (error) {
-      console.error('Error loading availability:', error);
-    }
-  };
-
   useEffect(() => {
-    loadAvailability();
+    if (!user || user.role !== 'admin') {
+      navigate('/login');
+    } else {
+      const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
+      setAppointments(storedAppointments);
+      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+      setAvailability(storedAvailability);
+    }
+  }, [user, navigate]);
 
-    const handleStorageChange = (e) => {
-      if (e.key === 'availability' || e.key === 'appointments') {
-        loadAvailability();
+  const handleAddNote = (id, note) => {
+    const updatedAppointments = appointments.map(appointment => 
+      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const handleRemoveNote = (appointmentId, noteIndex) => {
+    const updatedAppointments = appointments.map(appointment => {
+      if (appointment.id === appointmentId) {
+        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
+        return { ...appointment, notes: updatedNotes };
+      }
+      return appointment;
+    });
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const handleCancel = (id) => {
+    const appointmentToCancel = appointments.find(appointment => appointment.id === id);
+    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+
+    // Update availability
+    const dateString = appointmentToCancel.date;
+    const updatedAvailability = {
+      ...availability,
+      [dateString]: {
+        ...availability[dateString],
+        availableSlots: {
+          ...availability[dateString]?.availableSlots,
+          [appointmentToCancel.time]: true
+        }
       }
     };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedDate]);
-
-  const handleDateSelection = (date) => {
-    setSelectedDate(date);
-    setSelectedTime('');
-    setStep('time');
-  };
-
-  const handleTimeSelection = (time) => {
-    setSelectedTime(time);
-    setStep('info');
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleConfirmAppointment = () => {
-    if (!name || !phone) {
-      alert('Please enter your name and phone number');
-      return;
-    }
-
-    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-    const newAppointment = {
-      id: Date.now(),
-      date: selectedDate,
-      time: selectedTime,
-      clientName: name,
-      phone: phone,
-      status: 'scheduled',
-      image: image
-    };
-    appointments.push(newAppointment);
-    localStorage.setItem('appointments', JSON.stringify(appointments));
-    
-    const availability = JSON.parse(localStorage.getItem('availability')) || {};
-    if (availability[selectedDate] && availability[selectedDate].availableSlots) {
-      availability[selectedDate].availableSlots[selectedTime] = false;
-      localStorage.setItem('availability', JSON.stringify(availability));
-    }
-
+    setAvailability(updatedAvailability);
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
     window.dispatchEvent(new Event('storage'));
+  };
 
-    navigate(`/appointment-confirmation/${newAppointment.id}`);
+  const handleComplete = (id, profit, materials) => {
+    const updatedAppointments = appointments.map(appointment => 
+      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleDaySelect = (date) => {
+    setSelectedDate(date);
+  };
+
+  const handleAddTimeSlot = () => {
+    if (selectedDate && newTimeSlot) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          isAvailable: true,
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [newTimeSlot]: true
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      setNewTimeSlot('');
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const handleRemoveTimeSlot = (time) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [time]: false
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const handleChangeTimeSlot = (oldTime, newTime) => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [oldTime]: false,
+            [newTime]: true
+          }
+        }
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const handleDownloadImage = (imageData) => {
+    const link = document.createElement('a');
+    link.href = imageData;
+    link.download = 'inspiration_image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <SchedulingContainer>
-      <Title>Schedule Your Nail Appointment</Title>
-      <AnimatePresence>
-        {step === 'date' && (
-          <StepContainer
-            key="date-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaCalendarAlt /></StepIcon>
-              Select a Date
-            </StepTitle>
-            <DateGrid>
-              {availableDates.length > 0 ? (
-                availableDates.map((date) => (
-                  <DateButton
-                    key={date}
-                    isSelected={date === selectedDate}
-                    onClick={() => handleDateSelection(date)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {format(parseISO(date), 'MMM d')}
-                  </DateButton>
-                ))
-              ) : (
-                <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
-              )}
-            </DateGrid>
-          </StepContainer>
-        )}
-
-        {step === 'time' && (
-          <StepContainer
-            key="time-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaClock /></StepIcon>
-              Select a Time
-            </StepTitle>
-            <TimeGrid>
-              {availableSlots.map((slot, index) => (
-                <TimeSlot
-                  key={index}
-                  isAvailable={slot.isAvailable}
-                  isSelected={selectedTime === slot.time}
-                  onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
-                  whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
-                  whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
-                >
-                  {slot.time}
-                </TimeSlot>
-              ))}
-            </TimeGrid>
-          </StepContainer>
-        )}
-
-        {step === 'info' && (
-          <StepContainer
-            key="info-collection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaUser /></StepIcon>
-              Your Information
-            </StepTitle>
-            <Input
-              type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+    <DashboardContainer>
+      <h1>Admin Dashboard</h1>
+      <Button onClick={handleLogout}>Logout</Button>
+      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
+      {selectedDate && (
+        <AvailabilityContainer>
+          <h2>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h2>
+          <TimeSlotContainer>
+            <TimeInput
+              type="time"
+              value={newTimeSlot}
+              onChange={(e) => setNewTimeSlot(e.target.value)}
             />
-            <Input
-              type="tel"
-              placeholder="Your Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-            <ImageUploadContainer>
-              <StepTitle>
-                <StepIcon><FaImage /></StepIcon>
-                Upload Design Inspiration (Optional)
-              </StepTitle>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-              {image && <ImagePreview src={image} alt="Design Inspiration" />}
-            </ImageUploadContainer>
-            <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
-          </StepContainer>
-        )}
-      </AnimatePresence>
-    </SchedulingContainer>
+            <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
+          </TimeSlotContainer>
+          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
+            Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+              .filter(([_, isAvailable]) => isAvailable)
+              .map(([time, _]) => (
+                <TimeSlotContainer key={time}>
+                  <TimeInput
+                    type="time"
+                    value={time}
+                    onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
+                  />
+                  <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
+                </TimeSlotContainer>
+              ))
+          }
+        </AvailabilityContainer>
+      )}
+      <h2>Upcoming Appointments</h2>
+      <AppointmentList>
+        {appointments.map((appointment) => (
+          <CollapsibleAppointment
+            key={appointment.id}
+            appointment={appointment}
+            onAddNote={handleAddNote}
+            onRemoveNote={handleRemoveNote}
+            onCancel={handleCancel}
+            onComplete={handleComplete}
+            onDownloadImage={handleDownloadImage}
+          />
+        ))}
+      </AppointmentList>
+    </DashboardContainer>
   );
-};
+}
 
-export default ClientScheduling;
-
-
+export default AdminDashboard;
 
 Make sure You Will not remove any existing features, it is imperative..
 Fix it please and return fully mergedONLY as required. Ready to copy and paste.

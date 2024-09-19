@@ -1,11 +1,19 @@
 // src/pages/ClientScheduling.jsx
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { format, addDays, isAfter, parseISO } from 'date-fns';
 import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
+const StepContainer = styled(motion.div)`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+`;
 const SchedulingContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
@@ -17,14 +25,6 @@ const Title = styled.h1`
   margin-bottom: 2rem;
   text-align: center;
   color: ${({ theme }) => theme.colors.primary};
-`;
-
-const StepContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 `;
 
 const StepTitle = styled.h2`
@@ -252,108 +252,124 @@ const ClientScheduling = () => {
     navigate(`/appointment-confirmation/${newAppointment.id}`);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.5 } }
+  };
+
   return (
     <SchedulingContainer>
       <Title>Schedule Your Nail Appointment</Title>
-      <AnimatePresence>
-        {step === 'date' && (
-          <StepContainer
-            key="date-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaCalendarAlt /></StepIcon>
-              Select a Date
-            </StepTitle>
-            <DateGrid>
-              {availableDates.length > 0 ? (
-                availableDates.map((date) => (
-                  <DateButton
-                    key={date}
-                    isSelected={date === selectedDate}
-                    onClick={() => handleDateSelection(date)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {format(parseISO(date), 'MMM d')}
-                  </DateButton>
-                ))
-              ) : (
-                <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
-              )}
-            </DateGrid>
-          </StepContainer>
-        )}
-
-        {step === 'time' && (
-          <StepContainer
-            key="time-selection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaClock /></StepIcon>
-              Select a Time
-            </StepTitle>
-            <TimeGrid>
-              {availableSlots.map((slot, index) => (
-                <TimeSlot
-                  key={index}
-                  isAvailable={slot.isAvailable}
-                  isSelected={selectedTime === slot.time}
-                  onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
-                  whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
-                  whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
-                >
-                  {slot.time}
-                </TimeSlot>
-              ))}
-            </TimeGrid>
-          </StepContainer>
-        )}
-
-        {step === 'info' && (
-          <StepContainer
-            key="info-collection"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <StepTitle>
-              <StepIcon><FaUser /></StepIcon>
-              Your Information
-            </StepTitle>
-            <Input
-              type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Input
-              type="tel"
-              placeholder="Your Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-            <ImageUploadContainer>
+      <LayoutGroup>
+        <AnimatePresence mode="wait">
+          {step === 'date' && (
+            <StepContainer
+              key="date-selection"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              layout
+            >
               <StepTitle>
-                <StepIcon><FaImage /></StepIcon>
-                Upload Design Inspiration (Optional)
+                <StepIcon><FaCalendarAlt /></StepIcon>
+                Select a Date
+              </StepTitle>
+              <DateGrid>
+                {availableDates.length > 0 ? (
+                  availableDates.map((date) => (
+                    <DateButton
+                      key={date}
+                      isSelected={date === selectedDate}
+                      onClick={() => handleDateSelection(date)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      layout
+                    >
+                      {format(parseISO(date), 'MMM d')}
+                    </DateButton>
+                  ))
+                ) : (
+                  <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
+                )}
+              </DateGrid>
+            </StepContainer>
+          )}
+
+          {step === 'time' && (
+            <StepContainer
+              key="time-selection"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              layout
+            >
+              <StepTitle>
+                <StepIcon><FaClock /></StepIcon>
+                Select a Time
+              </StepTitle>
+              <TimeGrid>
+                {availableSlots.map((slot, index) => (
+                  <TimeSlot
+                    key={index}
+                    isAvailable={slot.isAvailable}
+                    isSelected={selectedTime === slot.time}
+                    onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
+                    whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
+                    whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
+                    layout
+                  >
+                    {slot.time}
+                  </TimeSlot>
+                ))}
+              </TimeGrid>
+            </StepContainer>
+          )}
+
+          {step === 'info' && (
+            <StepContainer
+              key="info-collection"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              layout
+            >
+              <StepTitle>
+                <StepIcon><FaUser /></StepIcon>
+                Your Information
               </StepTitle>
               <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
+                type="text"
+                placeholder="Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
-              {image && <ImagePreview src={image} alt="Design Inspiration" />}
-            </ImageUploadContainer>
-            <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
-          </StepContainer>
-        )}
-      </AnimatePresence>
+              <Input
+                type="tel"
+                placeholder="Your Phone Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <ImageUploadContainer>
+                <StepTitle>
+                  <StepIcon><FaImage /></StepIcon>
+                  Upload Design Inspiration (Optional)
+                </StepTitle>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+                {image && <ImagePreview src={image} alt="Design Inspiration" />}
+              </ImageUploadContainer>
+              <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
+            </StepContainer>
+          )}
+        </AnimatePresence>
+      </LayoutGroup>
     </SchedulingContainer>
   );
 };

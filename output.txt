@@ -2,11 +2,13 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-Clientscheduling animation in between elements does have to show smooth and FULLY fluido movement from hiding previous element 
-to brining next element, do not ALLOW any sudden position change, but everything smoothly
-animated.
-From adminside add a button to send a WhatsApp message to user.
+In ADMINDASHBOARD, appointment details appears collapsed with the 
+option to expands it to SEE all the content.
+
+From adminside add a button to send a WhatsApp message to user
+with appointment details.
 
 ADD LANGUAGE: Spanish/English.
-CREATE A GALLERY PAGE, AND A SERVICE OFFERING PAGE.
-polish client-admin views.
+CREATE A GALLERY PAGE, A SERVICE OFFERING PAGE AND LOCATION.
+
+SECURITY AUDIT.

@@ -1,8 +1,9 @@
+// src/pages/ClientScheduling.jsx
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, addDays, isAfter, parseISO } from 'date-fns';
-import { FaCalendarAlt, FaClock, FaUser } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const SchedulingContainer = styled.div`
@@ -122,14 +123,25 @@ const Button = styled.button`
   }
 `;
 
+const ImageUploadContainer = styled.div`
+  margin-top: 1rem;
+`;
+
+const ImagePreview = styled.img`
+  max-width: 100%;
+  max-height: 200px;
+  margin-top: 1rem;
+`;
+
 const ClientScheduling = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [image, setImage] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [availableDates, setAvailableDates] = useState([]);
-  const [step, setStep] = useState('date'); // 'date', 'time', 'info'
+  const [step, setStep] = useState('date');
   const navigate = useNavigate();
 
   const loadAvailability = () => {
@@ -199,6 +211,17 @@ const ClientScheduling = () => {
     setStep('info');
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleConfirmAppointment = () => {
     if (!name || !phone) {
       alert('Please enter your name and phone number');
@@ -212,22 +235,20 @@ const ClientScheduling = () => {
       time: selectedTime,
       clientName: name,
       phone: phone,
-      status: 'scheduled'
+      status: 'scheduled',
+      image: image
     };
     appointments.push(newAppointment);
     localStorage.setItem('appointments', JSON.stringify(appointments));
     
-    // Update availability
     const availability = JSON.parse(localStorage.getItem('availability')) || {};
     if (availability[selectedDate] && availability[selectedDate].availableSlots) {
       availability[selectedDate].availableSlots[selectedTime] = false;
       localStorage.setItem('availability', JSON.stringify(availability));
     }
 
-    // Trigger storage event for real-time updates
     window.dispatchEvent(new Event('storage'));
 
-    // Navigate to the appointment confirmation page
     navigate(`/appointment-confirmation/${newAppointment.id}`);
   };
 
@@ -317,6 +338,18 @@ const ClientScheduling = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
+            <ImageUploadContainer>
+              <StepTitle>
+                <StepIcon><FaImage /></StepIcon>
+                Upload Design Inspiration (Optional)
+              </StepTitle>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+              {image && <ImagePreview src={image} alt="Design Inspiration" />}
+            </ImageUploadContainer>
             <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
           </StepContainer>
         )}

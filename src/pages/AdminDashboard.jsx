@@ -1,4 +1,4 @@
-// src/components/AdminDashboard.js
+// src/pages/ADMINDASHBOARD.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -214,6 +214,15 @@ function AdminDashboard() {
     }
   };
 
+  const handleDownloadImage = (imageData) => {
+    const link = document.createElement('a');
+    link.href = imageData;
+    link.download = 'inspiration_image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <DashboardContainer>
       <h1>Admin Dashboard</h1>
@@ -260,6 +269,13 @@ function AdminDashboard() {
                 <p>Profit: {appointment.profit}</p>
                 <p>Materials: {appointment.materials}</p>
               </>
+            )}
+            {appointment.image && (
+              <div>
+                <p>Inspiration Image:</p>
+                <img src={appointment.image} alt="Inspiration" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                <Button onClick={() => handleDownloadImage(appointment.image)}>Download Image</Button>
+              </div>
             )}
             <NoteContainer>
               {appointment.notes && appointment.notes.map((note, index) => (

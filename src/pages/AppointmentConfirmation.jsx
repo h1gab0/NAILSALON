@@ -37,6 +37,12 @@ const LinkButton = styled(Link)`
   }
 `;
 
+const ImagePreview = styled.img`
+  max-width: 100%;
+  max-height: 200px;
+  margin-top: 1rem;
+`;
+
 const AppointmentConfirmation = () => {
   const { id } = useParams();
   const theme = useTheme();
@@ -53,9 +59,15 @@ const AppointmentConfirmation = () => {
       <Details>Date: {appointment.date}</Details>
       <Details>Time: {appointment.time}</Details>
       <Details>Appointment ID: {appointment.id}</Details>
+      {appointment.image && (
+        <>
+          <Details>Design Inspiration:</Details>
+          <ImagePreview src={appointment.image} alt="Design Inspiration" />
+        </>
+      )}
       <LinkButton to="/trends">Discover Nail Trends</LinkButton>
     </ConfirmationContainer>
   );
 };
 
-export default AppointmentConfirmation;
+export default AppointmentConfirmation

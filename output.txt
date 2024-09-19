@@ -2,10 +2,9 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-Clientscheduling PAGE Will ask for: 'What SERVICE do You need?'
-And Will show the ability to attach an image, which Will be stored
-admin-side APPOINTMENT item.
-
+Clientscheduling animation in between elements does have to show smooth and FULLY fluido movement from hiding previous element 
+to brining next element, do not ALLOW any sudden position change, but everything smoothly
+animated.
 From adminside add a button to send a WhatsApp message to user.
 
 ADD LANGUAGE: Spanish/English.

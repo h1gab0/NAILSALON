@@ -1,3 +1,4 @@
+// src/pages/ADMINDASHBOARD.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -75,11 +76,27 @@ const TimeInput = styled.input`
   margin-right: 0.5rem;
 `;
 
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 1rem;
+`;
+
+const Tab = styled.button`
+  background-color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.background};
+  color: ${({ active, theme }) => active ? 'white' : theme.colors.text};
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 0.5rem;
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [availability, setAvailability] = useState({});
   const [newTimeSlot, setNewTimeSlot] = useState('');
+  const [activeTab, setActiveTab] = useState('ALL');
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -223,6 +240,24 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
+  const filteredAppointments = appointments.filter(appointment => {
+    if (selectedDate) {
+      return appointment.date === format(selectedDate, 'yyyy-MM-dd');
+    }
+    return true;
+  }).sort((a, b) => {
+    if (a.status === 'completed' && b.status !== 'completed') return 1;
+    if (a.status !== 'completed' && b.status === 'completed') return -1;
+    return new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time);
+  });
+
+  const displayedAppointments = filteredAppointments.filter(appointment => {
+    if (activeTab === 'ALL') return true;
+    if (activeTab === 'UPCOMING') return appointment.status !== 'completed';
+    if (activeTab === 'COMPLETED') return appointment.status === 'completed';
+    return true;
+  });
+
   return (
     <DashboardContainer>
       <h1>Admin Dashboard</h1>
@@ -255,9 +290,14 @@ function AdminDashboard() {
           }
         </AvailabilityContainer>
       )}
-      <h2>Upcoming Appointments</h2>
+      <h2>Appointments</h2>
+      <TabContainer>
+        <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
+        <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
+        <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
+      </TabContainer>
       <AppointmentList>
-        {appointments.map((appointment) => (
+        {displayedAppointments.map((appointment) => (
           <CollapsibleAppointment
             key={appointment.id}
             appointment={appointment}

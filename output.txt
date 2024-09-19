@@ -2,7 +2,6 @@ Trends Will redirect to tiktok chann.
 
 fuerte backend y database.
 
-
 WHAT TO DO FROM APNTMT CONFIRMATION PAGE???
 
 From adminside add a button to send a WhatsApp message to user

@@ -3,6 +3,15 @@ Trends Will redirect to tiktok chann.
 fuerte backend y database.
 
 WHAT TO DO FROM APNTMT CONFIRMATION PAGE???
+MODIFY LAYOUT, IMAGE CENTERED.
+
+TOPBAR:
+Home
+Services
+Nail Gallery
+Schedule Appointment CALL TO ACTION
+
+DISCREETIZE ADMIN DASHBOARD ACCESS WITH A PARTICULR ACTION.
 
 From adminside add a button to send a WhatsApp message to user
 with appointment details.

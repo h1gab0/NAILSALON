@@ -63,6 +63,19 @@ const RemoveNoteButton = styled.button`
   cursor: pointer;
 `;
 
+const ImageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const InspirationImage = styled.img`
+  max-width: 200px;
+  max-height: 200px;
+  margin-bottom: 0.5rem;
+`;
+
 const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel, onComplete, onDownloadImage }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -91,11 +104,11 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel
               </>
             )}
             {appointment.image && (
-              <div>
+              <ImageContainer>
                 <p>Inspiration Image:</p>
-                <img src={appointment.image} alt="Inspiration" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                <InspirationImage src={appointment.image} alt="Inspiration" />
                 <Button onClick={() => onDownloadImage(appointment.image)}>Download Image</Button>
-              </div>
+              </ImageContainer>
             )}
             <NoteContainer>
               {appointment.notes && appointment.notes.map((note, index) => (

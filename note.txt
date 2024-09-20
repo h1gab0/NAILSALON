@@ -17,8 +17,9 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>
 
-Add a BETTER design for appointment items, they have to show a more elegant structure, design and elements positioning
-has to fit perfect in Mobile resolutions and in PC resolutions.
+Please change the design of the appointment items and ALWAYS show the appointment item
+centered horizontally in any screen.
+
 // src/pages/ADMINDASHBOARD.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -31,23 +32,43 @@ import CollapsibleAppointment from './CollapsibleAppointment';
 const DashboardContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const AppointmentList = styled.ul`
   list-style-type: none;
   padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `;
 
 const AppointmentItem = styled.li`
   background-color: ${({ theme }) => theme.colors.cardBackground};
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
 `;
 
 const AppointmentDetails = styled.div`
-  margin-top: 1rem;
+  padding: 1rem;
 `;
 
 const Button = styled.button`
@@ -58,10 +79,15 @@ const Button = styled.button`
   border-radius: 4px;
   cursor: pointer;
   margin-right: 0.5rem;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryDark};
+  }
 `;
 
 const NoteContainer = styled.div`
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 `;
 
 const NoteItem = styled.div`
@@ -81,6 +107,11 @@ const RemoveNoteButton = styled.button`
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondaryDark};
+  }
 `;
 
 const AvailabilityContainer = styled.div`
@@ -95,21 +126,51 @@ const TimeSlotContainer = styled.div`
 
 const TimeInput = styled.input`
   margin-right: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
 `;
 
 const TabContainer = styled.div`
   display: flex;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  @media (min-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const Tab = styled.button`
   background-color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.background};
   color: ${({ active, theme }) => active ? 'white' : theme.colors.text};
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
   cursor: pointer;
   margin-right: 0.5rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryLight};
+    color: white;
+  }
+`;
+
+const Header = styled.h1`
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+const SubHeader = styled.h2`
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  color: ${({ theme }) => theme.colors.secondary};
 `;
 
 function AdminDashboard() {

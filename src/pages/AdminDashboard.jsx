@@ -10,23 +10,46 @@ import CollapsibleAppointment from './CollapsibleAppointment';
 const DashboardContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const AppointmentList = styled.ul`
   list-style-type: none;
   padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
 `;
 
 const AppointmentItem = styled.li`
   background-color: ${({ theme }) => theme.colors.cardBackground};
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 350px;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (min-width: 768px) {
+    width: calc(50% - 0.5rem);
+  }
+
+  @media (min-width: 1024px) {
+    width: calc(33.333% - 0.667rem);
+  }
 `;
 
 const AppointmentDetails = styled.div`
-  margin-top: 1rem;
+  padding: 1rem;
 `;
 
 const Button = styled.button`
@@ -37,10 +60,15 @@ const Button = styled.button`
   border-radius: 4px;
   cursor: pointer;
   margin-right: 0.5rem;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryDark};
+  }
 `;
 
 const NoteContainer = styled.div`
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 `;
 
 const NoteItem = styled.div`
@@ -60,6 +88,11 @@ const RemoveNoteButton = styled.button`
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondaryDark};
+  }
 `;
 
 const AvailabilityContainer = styled.div`
@@ -74,21 +107,51 @@ const TimeSlotContainer = styled.div`
 
 const TimeInput = styled.input`
   margin-right: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
 `;
 
 const TabContainer = styled.div`
   display: flex;
   margin-bottom: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  @media (min-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const Tab = styled.button`
   background-color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.background};
   color: ${({ active, theme }) => active ? 'white' : theme.colors.text};
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 20px;
   cursor: pointer;
   margin-right: 0.5rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryLight};
+    color: white;
+  }
+`;
+
+const Header = styled.h1`
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+const SubHeader = styled.h2`
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  color: ${({ theme }) => theme.colors.secondary};
 `;
 
 function AdminDashboard() {
@@ -260,12 +323,12 @@ function AdminDashboard() {
 
   return (
     <DashboardContainer>
-      <h1>Admin Dashboard</h1>
+      <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
       {selectedDate && (
         <AvailabilityContainer>
-          <h2>Availability for {format(selectedDate, 'MMMM d, yyyy')}</h2>
+          <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
           <TimeSlotContainer>
             <TimeInput
               type="time"
@@ -290,7 +353,7 @@ function AdminDashboard() {
           }
         </AvailabilityContainer>
       )}
-      <h2>Appointments</h2>
+      <SubHeader>Appointments</SubHeader>
       <TabContainer>
         <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
         <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
@@ -298,15 +361,16 @@ function AdminDashboard() {
       </TabContainer>
       <AppointmentList>
         {displayedAppointments.map((appointment) => (
-          <CollapsibleAppointment
-            key={appointment.id}
-            appointment={appointment}
-            onAddNote={handleAddNote}
-            onRemoveNote={handleRemoveNote}
-            onCancel={handleCancel}
-            onComplete={handleComplete}
-            onDownloadImage={handleDownloadImage}
-          />
+          <AppointmentItem key={appointment.id}>
+            <CollapsibleAppointment
+              appointment={appointment}
+              onAddNote={handleAddNote}
+              onRemoveNote={handleRemoveNote}
+              onCancel={handleCancel}
+              onComplete={handleComplete}
+              onDownloadImage={handleDownloadImage}
+            />
+          </AppointmentItem>
         ))}
       </AppointmentList>
     </DashboardContainer>

@@ -1,14 +1,12 @@
-SETUP SI AGENTS.
-PERPLEXITY
-GROQ
-
-MotionDesign interdevice META WEB HARDWARE CONECTION
-Trends Will redirect to tiktok chann.
-
-fuerte backend y database.
-
-WHAT TO DO FROM APNTMT CONFIRMATION PAGE???
-MODIFY LAYOUT, IMAGE CENTERED.
+From adminside add a button to send a WhatsApp message to user
+with appointment details.
+TRY HAVING AN AI GROQ API simple algorythm TO ANALYZE CHAT ONCE 15 MINUTES WITHOUT REPLY, AND
+SYNTHESIZE REQUIREMENTS FOR A NEW ADMINDASHBOARD note item in given
+appointment.
+IF APPOINTMENT AVAILABLE TIME SLOTS HAVE ALREADY PASSED/ ARE NOT UPCOMING ANYMORE,
+DELETE THEM DIRECTLY FROM ADMIN AVAILABLE SLOTS AND ADD A NEW ADMIN BUTTON
+TO MANUALLY CREATE AN APPOINTMENT FOR PREVIOUS DATES/TIMES.
+From client, can SEE real time appointment status.
 
 TOPBAR:
 Home
@@ -18,10 +16,17 @@ Schedule Appointment CALL TO ACTION
 
 DISCREETIZE ADMIN DASHBOARD ACCESS WITH A PARTICULR ACTION.
 
-From adminside add a button to send a WhatsApp message to user
-with appointment details.
-
 ADD LANGUAGE: Spanish/English.
+
+SETUP Mixture Of AGENTS.
+PERPLEXITY
+GROQ
+
+MotionDesign interdevice META WEB HARDWARE CONECTION
+Trends Will redirect to tiktok chann.
+
+fuerte backend y database.
+
 CREATE A GALLERY PAGE, A SERVICE OFFERING PAGE AND LOCATION.
 
 SECURITY AUDIT.

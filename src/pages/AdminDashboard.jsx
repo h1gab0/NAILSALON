@@ -20,10 +20,17 @@ const DashboardContainer = styled.div`
 const AppointmentList = styled.ul`
   list-style-type: none;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
   gap: 1rem;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `;
 
 const AppointmentItem = styled.li`
@@ -31,20 +38,10 @@ const AppointmentItem = styled.li`
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  width: 100%;
-  max-width: 350px;
 
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  @media (min-width: 768px) {
-    width: calc(50% - 0.5rem);
-  }
-
-  @media (min-width: 1024px) {
-    width: calc(33.333% - 0.667rem);
   }
 `;
 
@@ -321,11 +318,32 @@ function AdminDashboard() {
     return true;
   });
 
+  const todayAppointments = appointments.filter(appointment => {
+    const today = new Date();
+    return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
+  }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+
   return (
     <DashboardContainer>
       <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
+      
+      <SubHeader>Today's Upcoming Appointments</SubHeader>
+      <AppointmentList>
+        {todayAppointments.map((appointment) => (
+          <CollapsibleAppointment
+            key={appointment.id}
+            appointment={appointment}
+            onAddNote={handleAddNote}
+            onRemoveNote={handleRemoveNote}
+            onCancel={handleCancel}
+            onComplete={handleComplete}
+            onDownloadImage={handleDownloadImage}
+          />
+        ))}
+      </AppointmentList>
+
       {selectedDate && (
         <AvailabilityContainer>
           <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
@@ -353,7 +371,8 @@ function AdminDashboard() {
           }
         </AvailabilityContainer>
       )}
-      <SubHeader>Appointments</SubHeader>
+      
+      <SubHeader>All Appointments</SubHeader>
       <TabContainer>
         <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
         <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
@@ -361,16 +380,15 @@ function AdminDashboard() {
       </TabContainer>
       <AppointmentList>
         {displayedAppointments.map((appointment) => (
-          <AppointmentItem key={appointment.id}>
-            <CollapsibleAppointment
-              appointment={appointment}
-              onAddNote={handleAddNote}
-              onRemoveNote={handleRemoveNote}
-              onCancel={handleCancel}
-              onComplete={handleComplete}
-              onDownloadImage={handleDownloadImage}
-            />
-          </AppointmentItem>
+          <CollapsibleAppointment
+            key={appointment.id}
+            appointment={appointment}
+            onAddNote={handleAddNote}
+            onRemoveNote={handleRemoveNote}
+            onCancel={handleCancel}
+            onComplete={handleComplete}
+            onDownloadImage={handleDownloadImage}
+          />
         ))}
       </AppointmentList>
     </DashboardContainer>

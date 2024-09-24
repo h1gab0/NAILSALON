@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { format, addDays, isAfter, parseISO } from 'date-fns';
+import { format, addDays, isAfter, parseISO, startOfDay, isBefore } from 'date-fns';
 import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ const StepContainer = styled(motion.div)`
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
 `;
+
 const SchedulingContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
@@ -149,7 +150,7 @@ const ClientScheduling = () => {
       const availability = JSON.parse(localStorage.getItem('availability')) || {};
       const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
 
-      const today = new Date();
+      const today = startOfDay(new Date());
       const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
       
       const availableDatesWithSlots = nextThirtyDays.filter(date => {
@@ -158,7 +159,7 @@ const ClientScheduling = () => {
         const availableSlots = Object.entries(dateAvailability.availableSlots)
           .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
         
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && isAfter(parseISO(date), today);
+        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && (parseISO(date) >= today || date === format(today, 'yyyy-MM-dd'));
         return isDateAvailable;
       });
 
@@ -170,12 +171,17 @@ const ClientScheduling = () => {
           .filter(appointment => appointment.date === selectedDate)
           .map(appointment => appointment.time);
 
+        const currentTime = new Date();
         const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
           .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => ({
-            time: slot,
-            isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot)
-          }));
+          .map(([slot, _]) => {
+            const slotTime = parseISO(`${selectedDate}T${slot}`);
+            return {
+              time: slot,
+              isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
+            };
+          })
+          .filter(slot => slot.isAvailable);
 
         setAvailableSlots(slotsWithAvailability);
       }

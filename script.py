@@ -59,7 +59,7 @@ def main() -> None:
         return
     
     skip_list = get_skip_list()
-    output_file = script_dir / "output.txt"
+    output_file = script_dir / "outpu.txt"
     
     print("\nProcessing files...")
     try:

@@ -1,6 +1,8 @@
+// src/components/CollapsibleAppointment.jsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FaWhatsapp, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 
 const CollapsibleContainer = styled.div`
   background-color: ${({ theme }) => theme.colors.cardBackground};
@@ -15,6 +17,33 @@ const AppointmentHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+`;
+
+const ClientNameContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const ClientName = styled.strong`
+  margin-right: 0.5rem;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 1rem;
+  padding: 0;
+  margin-right: 0.5rem;
+`;
+
+const NameInput = styled.input`
+  padding: 0.25rem;
+  margin-right: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+  font-size: 1rem;
 `;
 
 const ExpandButton = styled.button`
@@ -38,6 +67,12 @@ const Button = styled.button`
   cursor: pointer;
   margin-right: 0.5rem;
   margin-top: 0.5rem;
+`;
+
+const WhatsAppButton = styled(Button)`
+  background-color: #25D366;
+  display: flex;
+  align-items: center;
 `;
 
 const NoteContainer = styled.div`
@@ -76,15 +111,65 @@ const InspirationImage = styled.img`
   margin-bottom: 0.5rem;
 `;
 
-const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel, onComplete, onDownloadImage }) => {
+const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel, onComplete, onDownloadImage, onUpdateName }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableName, setEditableName] = useState(appointment.clientName);
+
+  const getWhatsAppLink = (phone, message) => {
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  };
+
+  const sendAppointmentMessage = () => {
+    const appointmentDetails = `Appointment Details:\nDate: ${appointment.date}\nTime: ${appointment.time}\nClient: ${appointment.clientName}`;
+    const appointmentLink = getWhatsAppLink(appointment.phone, appointmentDetails);
+    window.open(appointmentLink, '_blank');
+  };
+
+  const handleNameChange = (e) => {
+    setEditableName(e.target.value);
+  };
+
+  const handleNameUpdate = () => {
+    onUpdateName(appointment.id, editableName);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditableName(appointment.clientName);
+    setIsEditing(false);
+  };
+
+  const toggleExpand = (e) => {
+    if (!isEditing) {
+      setIsExpanded(!isExpanded);
+    }
+    e.stopPropagation();
+  };
 
   return (
     <CollapsibleContainer>
-      <AppointmentHeader onClick={() => setIsExpanded(!isExpanded)}>
-        <div>
-          <strong>{appointment.clientName}</strong> - {appointment.date} {appointment.time}
-        </div>
+      <AppointmentHeader onClick={toggleExpand}>
+        <ClientNameContainer>
+          {isEditing ? (
+            <>
+              <NameInput
+                type="text"
+                value={editableName}
+                onChange={handleNameChange}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <EditButton onClick={handleNameUpdate}><FaCheck /></EditButton>
+              <EditButton onClick={handleCancelEdit}><FaTimes /></EditButton>
+            </>
+          ) : (
+            <>
+              <ClientName>{appointment.clientName}</ClientName>
+              <EditButton onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}><FaEdit /></EditButton>
+            </>
+          )}
+          - {appointment.date} {appointment.time}
+        </ClientNameContainer>
         <ExpandButton>{isExpanded ? '▲' : '▼'}</ExpandButton>
       </AppointmentHeader>
       <AnimatePresence>
@@ -127,6 +212,10 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel
                 onComplete(appointment.id, profit, materials);
               }}>Mark as Complete</Button>
             )}
+            <WhatsAppButton onClick={sendAppointmentMessage}>
+              <FaWhatsapp style={{ marginRight: '5px' }} />
+              Send WhatsApp Message
+            </WhatsAppButton>
           </AppointmentDetails>
         )}
       </AnimatePresence>

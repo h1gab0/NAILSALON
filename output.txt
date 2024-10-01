@@ -1,12 +1,10 @@
-From adminside add a button to send a WhatsApp message to user
-with appointment details.
-TRY HAVING AN AI GROQ API simple algorythm TO ANALYZE CHAT ONCE 15 MINUTES WITHOUT REPLY, AND
-SYNTHESIZE REQUIREMENTS FOR A NEW ADMINDASHBOARD note item in given
-appointment.
-IF APPOINTMENT AVAILABLE TIME SLOTS HAVE ALREADY PASSED/ ARE NOT UPCOMING ANYMORE,
-DELETE THEM DIRECTLY FROM ADMIN AVAILABLE SLOTS AND ADD A NEW ADMIN BUTTON
-TO MANUALLY CREATE AN APPOINTMENT FOR PREVIOUS DATES/TIMES.
-From client, can SEE real time appointment status.
+ADD A NEW ADMIN BUTTON TO MANUALLY CREATE AN APPOINTMENT ITEM FOR 
+any DATES/TIMES.
+It has to show when clicking any particular day, underneath 'Todays upcoming 
+appointments'
+Appointment confirmation PAGE BUTTONS, and animations.
+From client, can SEE real time appointment status creating a route based on
+appointment number.
 
 TOPBAR:
 Home

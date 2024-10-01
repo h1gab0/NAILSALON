@@ -1,4 +1,3 @@
-// src/pages/ClientScheduling.jsx
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
@@ -145,48 +144,83 @@ const ClientScheduling = () => {
   const [step, setStep] = useState('date');
   const navigate = useNavigate();
 
-  const loadAvailability = () => {
-    try {
-      const availability = JSON.parse(localStorage.getItem('availability')) || {};
-      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+  const removePastTimeSlotsAndEmptyDates = () => {
+    const now = new Date();
+    const availability = JSON.parse(localStorage.getItem('availability')) || {};
+    const updatedAvailability = { ...availability };
+    let hasChanges = false;
 
-      const today = startOfDay(new Date());
-      const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
+    Object.keys(updatedAvailability).forEach(dateString => {
+      const date = parseISO(dateString);
+      const dateStart = startOfDay(date);
       
-      const availableDatesWithSlots = nextThirtyDays.filter(date => {
-        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-        const availableSlots = Object.entries(dateAvailability.availableSlots)
-          .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
+      if (isBefore(dateStart, startOfDay(now))) {
+        delete updatedAvailability[dateString];
+        hasChanges = true;
+      } else {
+        const availableSlots = updatedAvailability[dateString].availableSlots;
+        Object.keys(availableSlots).forEach(timeSlot => {
+          const slotTime = parseISO(`${dateString}T${timeSlot}`);
+          if (isBefore(slotTime, now)) {
+            delete availableSlots[timeSlot];
+            hasChanges = true;
+          }
+        });
         
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && (parseISO(date) >= today || date === format(today, 'yyyy-MM-dd'));
-        return isDateAvailable;
-      });
-
-      setAvailableDates(availableDatesWithSlots);
-
-      if (selectedDate) {
-        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments
-          .filter(appointment => appointment.date === selectedDate)
-          .map(appointment => appointment.time);
-
-        const currentTime = new Date();
-        const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => {
-            const slotTime = parseISO(`${selectedDate}T${slot}`);
-            return {
-              time: slot,
-              isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
-            };
-          })
-          .filter(slot => slot.isAvailable);
-
-        setAvailableSlots(slotsWithAvailability);
+        // Remove the date if there are no available slots left
+        if (Object.keys(availableSlots).length === 0) {
+          delete updatedAvailability[dateString];
+          hasChanges = true;
+        }
       }
-    } catch (error) {
-      console.error('Error loading availability:', error);
+    });
+
+    if (hasChanges) {
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    return updatedAvailability;
+  };
+
+  const loadAvailability = () => {
+    const updatedAvailability = removePastTimeSlotsAndEmptyDates();
+    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+
+    const today = startOfDay(new Date());
+    const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
+    
+    const availableDatesWithSlots = nextThirtyDays.filter(date => {
+      const dateAvailability = updatedAvailability[date] || { isAvailable: false, availableSlots: {} };
+      const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
+      const availableSlots = Object.entries(dateAvailability.availableSlots)
+        .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
+      
+      const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0;
+      return isDateAvailable;
+    });
+
+    setAvailableDates(availableDatesWithSlots);
+
+    if (selectedDate) {
+      const dateAvailability = updatedAvailability[selectedDate] || { isAvailable: false, availableSlots: {} };
+      const bookedSlots = appointments
+        .filter(appointment => appointment.date === selectedDate)
+        .map(appointment => appointment.time);
+
+      const currentTime = new Date();
+      const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
+        .filter(([_, isAvailable]) => isAvailable)
+        .map(([slot, _]) => {
+          const slotTime = parseISO(`${selectedDate}T${slot}`);
+          return {
+            time: slot,
+            isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
+          };
+        })
+        .filter(slot => slot.isAvailable);
+
+      setAvailableSlots(slotsWithAvailability);
     }
   };
 
@@ -201,8 +235,11 @@ const ClientScheduling = () => {
 
     window.addEventListener('storage', handleStorageChange);
 
+    const interval = setInterval(loadAvailability, 60000); // Run every minute
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
     };
   }, [selectedDate]);
 

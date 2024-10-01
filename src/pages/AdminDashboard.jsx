@@ -1,10 +1,9 @@
-// src/pages/ADMINDASHBOARD.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import { format } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
@@ -300,6 +299,14 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
+  const handleUpdateAppointmentName = (id, newName) => {
+    const updatedAppointments = appointments.map(appointment => 
+      appointment.id === id ? { ...appointment, clientName: newName } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
       return appointment.date === format(selectedDate, 'yyyy-MM-dd');
@@ -323,6 +330,50 @@ function AdminDashboard() {
     return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
   }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
 
+  const removePastTimeSlotsAndEmptyDates = () => {
+    const now = new Date();
+    const updatedAvailability = { ...availability };
+    let hasChanges = false;
+
+    Object.keys(updatedAvailability).forEach(dateString => {
+      const date = parseISO(dateString);
+      const dateStart = startOfDay(date);
+      
+      if (isBefore(dateStart, startOfDay(now))) {
+        delete updatedAvailability[dateString];
+        hasChanges = true;
+      } else {
+        const availableSlots = updatedAvailability[dateString].availableSlots;
+        Object.keys(availableSlots).forEach(timeSlot => {
+          const slotTime = parseISO(`${dateString}T${timeSlot}`);
+          if (isBefore(slotTime, now)) {
+            delete availableSlots[timeSlot];
+            hasChanges = true;
+          }
+        });
+        
+        // Remove the date if there are no available slots left
+        if (Object.keys(availableSlots).length === 0) {
+          delete updatedAvailability[dateString];
+          hasChanges = true;
+        }
+      }
+    });
+
+    if (hasChanges) {
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  // Call removePastTimeSlotsAndEmptyDates when the component mounts and every minute
+  useEffect(() => {
+    removePastTimeSlotsAndEmptyDates();
+    const interval = setInterval(removePastTimeSlotsAndEmptyDates, 60000);
+    return () => clearInterval(interval);
+  }, [availability]);
+
   return (
     <DashboardContainer>
       <Header>Admin Dashboard</Header>
@@ -340,6 +391,7 @@ function AdminDashboard() {
             onCancel={handleCancel}
             onComplete={handleComplete}
             onDownloadImage={handleDownloadImage}
+            onUpdateName={handleUpdateAppointmentName}
           />
         ))}
       </AppointmentList>
@@ -388,6 +440,7 @@ function AdminDashboard() {
             onCancel={handleCancel}
             onComplete={handleComplete}
             onDownloadImage={handleDownloadImage}
+            onUpdateName={handleUpdateAppointmentName}
           />
         ))}
       </AppointmentList>

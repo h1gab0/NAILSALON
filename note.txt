@@ -17,19 +17,17 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>
 
-I have the following react components, please, IF AVAILABLE TIME SLOTS 
-HAVE ALREADY PASSED/ ARE NOT UPCOMING ANYMORE,
-DELETE THEM DIRECTLY FROM ADMIN AVAILABLE SLOTS So the date does not 
-remain available on client side if it does not have an upcoming time
-slot available. 
-Here are the files:
+SELECT TIME button does its function properly, however it does
+n9t show the placeholder texto when in Mobile devices.
+
+Here is the relevant file:
 File: pages/AdminDashboard.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import { format } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
@@ -55,6 +53,40 @@ const AppointmentList = styled.ul`
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const AMPMSwitch = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const AMPMLabel = styled.span`
+  font-size: 0.9rem;
+  margin: 0 0.5rem;
+  color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.text};
+`;
+
+const Switch = styled.div`
+  width: 40px;
+  height: 20px;
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: ${({ isAM }) => isAM ? '2px' : '22px'};
+    width: 16px;
+    height: 16px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    border-radius: 50%;
+    transition: left 0.3s;
   }
 `;
 
@@ -127,11 +159,40 @@ const TimeSlotContainer = styled.div`
   margin-bottom: 0.5rem;
 `;
 
+const TimeInputPlaceholder = styled.label`
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${({ theme }) => theme.colors.textLight};
+  pointer-events: none;
+  transition: all 0.3s ease;
+  opacity: ${({ hasValue }) => (hasValue ? 0 : 1)};
+`;
+
+const TimeInputWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
 const TimeInput = styled.input`
-  margin-right: 0.5rem;
   padding: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 4px;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100px;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryLight};
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.textLight};
+  }
 `;
 
 const TabContainer = styled.div`
@@ -176,6 +237,90 @@ const SubHeader = styled.h2`
   color: ${({ theme }) => theme.colors.secondary};
 `;
 
+const CreateAppointmentButton = styled(Button)`
+  margin-bottom: 1rem;
+`;
+
+const ClockContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+`;
+
+const ClockInstruction = styled.p`
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: ${({ theme }) => theme.colors.secondary};
+`;
+
+const ClockFace = styled.div`
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  position: relative;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ClockNumber = styled.div`
+  position: absolute;
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.text};
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
+  transform: ${({ rotation }) => `rotate(${rotation}deg) translate(0, -80px) rotate(-${rotation}deg)`};
+`;
+
+const ClockHand = styled.div`
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom;
+  background-color: ${({ theme }) => theme.colors.primary};
+  transition: transform 0.2s;
+`;
+
+const HourHand = styled(ClockHand)`
+  width: 4px;
+  height: 60px;
+  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
+  display: ${({ show }) => (show ? 'block' : 'none')};
+`;
+
+const MinuteHand = styled(ClockHand)`
+  width: 2px;
+  height: 80px;
+  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
+  display: ${({ show }) => (show ? 'block' : 'none')};
+`;
+
+const TimeDisplay = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ClockButton = styled(Button)`
+  margin: 0.5rem;
+`;
+
+const ClockMarker = styled.div`
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  border-radius: 50%;
+  transform: ${({ angle }) => `rotate(${angle}deg) translateY(-90px)`};
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -184,6 +329,12 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('ALL');
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showClock, setShowClock] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const clockRef = useRef(null);
+  const isMobile = window.innerWidth <= 768;
+  const [clockPhase, setClockPhase] = useState('hour');
+  const [isAM, setIsAM] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -202,6 +353,15 @@ function AdminDashboard() {
     );
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const toggleAMPM = () => {
+    setIsAM(!isAM);
+    setSelectedTime(prevTime => {
+      const hours = prevTime.getHours();
+      const newHours = (hours + 12) % 24;
+      return set(prevTime, { hours: newHours });
+    });
   };
 
   const handleRemoveNote = (appointmentId, noteIndex) => {
@@ -333,6 +493,131 @@ function AdminDashboard() {
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
+  const handleCreateAppointment = () => {
+    if (selectedDate) {
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const newAppointment = {
+        id: Date.now(),
+        date: dateString,
+        time: '',
+        clientName: '',
+        phone: '',
+        status: 'scheduled',
+        notes: []
+      };
+      const updatedAppointments = [...appointments, newAppointment];
+      setAppointments(updatedAppointments);
+      localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    } else {
+      alert('Please select a date first');
+    }
+  };
+
+  const handleTimeInputClick = () => {
+    if (!isMobile) {
+      setShowClock(true);
+    }
+  };
+
+  const handleClockClick = (event) => {
+    if (!clockRef.current) return;
+  
+    const rect = clockRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const x = event.clientX - centerX;
+    const y = centerY - event.clientY; // Invert Y-axis
+  
+    // Calculate angle from 12 o'clock position
+    let angle = Math.atan2(x, y) * (180 / Math.PI);
+    
+    // Normalize angle to be between 0 and 360
+    angle = (angle + 360) % 360;
+  
+    // Add a small offset to align with visual number positions
+    angle = (angle + 15) % 360;
+  
+    if (clockPhase === 'hour') {
+      let hours = Math.floor(angle / 30) % 12;
+      hours = hours === 0 ? 12 : hours;
+      setSelectedTime(prevTime => set(prevTime, { hours }));
+    } else {
+      const minutes = Math.floor(angle / 6) % 60;
+      setSelectedTime(prevTime => {
+        const newDate = set(prevTime, { minutes });
+        // Ensure we're not changing the hour
+        return set(newDate, { hours: prevTime.getHours() });
+      });
+    }
+  };
+
+  const handleClockConfirm = () => {
+    if (clockPhase === 'hour') {
+      setClockPhase('minute');
+    } else {
+      let hours = selectedTime.getHours();
+      if (!isAM && hours < 12) {
+        hours += 12;
+      } else if (isAM && hours === 12) {
+        hours = 0;
+      }
+      const finalTime = set(selectedTime, { hours });
+      setNewTimeSlot(format(finalTime, 'HH:mm'));
+      setShowClock(false);
+      setClockPhase('hour');
+    }
+  };
+
+  const handleClockCancel = () => {
+    setShowClock(false);
+    setNewTimeSlot('');
+    setClockPhase('hour'); // Reset to hour phase for next use
+  };
+
+  const removePastTimeSlotsAndEmptyDates = () => {
+    const now = new Date();
+    const updatedAvailability = { ...availability };
+    let hasChanges = false;
+
+    Object.keys(updatedAvailability).forEach(dateString => {
+      const date = parseISO(dateString);
+      const dateStart = startOfDay(date);
+      
+      if (isBefore(dateStart, startOfDay(now))) {
+        delete updatedAvailability[dateString];
+        hasChanges = true;
+      } else {
+        const availableSlots = updatedAvailability[dateString].availableSlots;
+        Object.keys(availableSlots).forEach(timeSlot => {
+          const slotTime = parseISO(`${dateString}T${timeSlot}`);
+          if (isBefore(slotTime, now)) {
+            delete availableSlots[timeSlot];
+            hasChanges = true;
+          }
+        });
+        
+        // Remove the date if there are no available slots left
+        if (Object.keys(availableSlots).length === 0) {
+          delete updatedAvailability[dateString];
+          hasChanges = true;
+        }
+      }
+    });
+
+    if (hasChanges) {
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  // Call removePastTimeSlotsAndEmptyDates when the component mounts and every minute
+  useEffect(() => {
+    removePastTimeSlotsAndEmptyDates();
+    const interval = setInterval(removePastTimeSlotsAndEmptyDates, 60000);
+    return () => clearInterval(interval);
+  }, [availability]);
+
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
       return appointment.date === format(selectedDate, 'yyyy-MM-dd');
@@ -355,6 +640,58 @@ function AdminDashboard() {
     const today = new Date();
     return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
   }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+
+  const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
+    const [displayValue, setDisplayValue] = useState('');
+  
+    useEffect(() => {
+      if (value) {
+        setDisplayValue(value);
+      } else {
+        setDisplayValue('');
+      }
+    }, [value]);
+  
+    const handleInputChange = (e) => {
+      let input = e.target.value.replace(/\D/g, '');
+      
+      if (input.length > 4) {
+        input = input.slice(0, 4);
+      }
+  
+      let formattedInput = '';
+      if (input.length > 2) {
+        formattedInput = `${input.slice(0, 2)}:${input.slice(2)}`;
+      } else {
+        formattedInput = input;
+      }
+  
+      setDisplayValue(formattedInput);
+  
+      if (input.length === 4) {
+        const hours = parseInt(input.slice(0, 2));
+        const minutes = parseInt(input.slice(2));
+        if (hours < 24 && minutes < 60) {
+          onChange({ target: { value: formattedInput } });
+        }
+      } else {
+        onChange({ target: { value: '' } });
+      }
+    };
+  
+    return (
+      <TimeInputWrapper>
+        <TimeInput
+          type={isMobile ? "time" : "text"}
+          value={displayValue}
+          onChange={handleInputChange}
+          onClick={onClick}
+          placeholder={placeholder}
+          maxLength={5}
+        />
+      </TimeInputWrapper>
+    );
+  };
 
   return (
     <DashboardContainer>
@@ -381,23 +718,66 @@ function AdminDashboard() {
       {selectedDate && (
         <AvailabilityContainer>
           <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
+          <CreateAppointmentButton onClick={handleCreateAppointment}>
+            Create Appointment
+          </CreateAppointmentButton>
           <TimeSlotContainer>
-            <TimeInput
-              type="time"
+            <CustomTimeInput
               value={newTimeSlot}
               onChange={(e) => setNewTimeSlot(e.target.value)}
+              onClick={handleTimeInputClick}
+              placeholder="Select time"
             />
             <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
           </TimeSlotContainer>
+          {showClock && !isMobile && (
+            <ClockContainer>
+              <ClockInstruction>
+                {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
+              </ClockInstruction>
+              <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
+              <AMPMSwitch>
+                <AMPMLabel active={isAM}>AM</AMPMLabel>
+                <Switch isAM={isAM} onClick={toggleAMPM} />
+                <AMPMLabel active={!isAM}>PM</AMPMLabel>
+              </AMPMSwitch>
+              <ClockFace ref={clockRef} onClick={handleClockClick}>
+                <HourHand
+                  angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                  show={clockPhase === 'hour'}
+                />
+                <MinuteHand
+                  angle={selectedTime.getMinutes() * 6}
+                  show={clockPhase === 'minute'}
+                />
+                {[...Array(12)].map((_, index) => (
+                  <ClockNumber key={index} rotation={index * 30}>
+                    {index === 0 ? 12 : index}
+                  </ClockNumber>
+                ))}
+              </ClockFace>
+              <div>
+                <ClockButton onClick={handleClockConfirm}>
+                  {clockPhase === 'hour' ? 'Next' : 'Confirm'}
+                </ClockButton>
+                <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
+              </div>
+            </ClockContainer>
+          )}
+
           {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
             Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
               .filter(([_, isAvailable]) => isAvailable)
               .map(([time, _]) => (
                 <TimeSlotContainer key={time}>
                   <TimeInput
-                    type="time"
+                    type={isMobile ? "time" : "text"}
                     value={time}
                     onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
+                    onClick={isMobile ? undefined : () => {
+                      setSelectedTime(parseISO(`${format(selectedDate, 'yyyy-MM-dd')}T${time}`));
+                      setShowClock(true);
+                    }}
                   />
                   <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
                 </TimeSlotContainer>
@@ -431,790 +811,6 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-
-File: pages/CollapsibleAppointment.jsx
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaWhatsapp, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
-
-const CollapsibleContainer = styled.div`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  margin-bottom: 1rem;
-  border-radius: 4px;
-  overflow: hidden;
-`;
-
-const AppointmentHeader = styled.div`
-  padding: 1rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ClientNameContainer = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const ClientName = styled.strong`
-  margin-right: 0.5rem;
-`;
-
-const EditButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 1rem;
-  padding: 0;
-  margin-right: 0.5rem;
-`;
-
-const NameInput = styled.input`
-  padding: 0.25rem;
-  margin-right: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 4px;
-  font-size: 1rem;
-`;
-
-const ExpandButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-`;
-
-const AppointmentDetails = styled(motion.div)`
-  padding: 1rem;
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
-`;
-
-const Button = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-right: 0.5rem;
-  margin-top: 0.5rem;
-`;
-
-const WhatsAppButton = styled(Button)`
-  background-color: #25D366;
-  display: flex;
-  align-items: center;
-`;
-
-const NoteContainer = styled.div`
-  margin-bottom: 1rem;
-`;
-
-const NoteItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: ${({ theme }) => theme.colors.background};
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-`;
-
-const RemoveNoteButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.secondary};
-  color: white;
-  border: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-`;
-
-const ImageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const InspirationImage = styled.img`
-  max-width: 200px;
-  max-height: 200px;
-  margin-bottom: 0.5rem;
-`;
-
-const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel, onComplete, onDownloadImage, onUpdateName }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editableName, setEditableName] = useState(appointment.clientName);
-
-  const getWhatsAppLink = (phone, message) => {
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-  };
-
-  const sendAppointmentMessage = () => {
-    const appointmentDetails = `Appointment Details:\nDate: ${appointment.date}\nTime: ${appointment.time}\nClient: ${appointment.clientName}`;
-    const appointmentLink = getWhatsAppLink(appointment.phone, appointmentDetails);
-    window.open(appointmentLink, '_blank');
-  };
-
-  const handleNameChange = (e) => {
-    setEditableName(e.target.value);
-  };
-
-  const handleNameUpdate = () => {
-    onUpdateName(appointment.id, editableName);
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    setEditableName(appointment.clientName);
-    setIsEditing(false);
-  };
-
-  const toggleExpand = (e) => {
-    if (!isEditing) {
-      setIsExpanded(!isExpanded);
-    }
-    e.stopPropagation();
-  };
-
-  return (
-    <CollapsibleContainer>
-      <AppointmentHeader onClick={toggleExpand}>
-        <ClientNameContainer>
-          {isEditing ? (
-            <>
-              <NameInput
-                type="text"
-                value={editableName}
-                onChange={handleNameChange}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <EditButton onClick={handleNameUpdate}><FaCheck /></EditButton>
-              <EditButton onClick={handleCancelEdit}><FaTimes /></EditButton>
-            </>
-          ) : (
-            <>
-              <ClientName>{appointment.clientName}</ClientName>
-              <EditButton onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}><FaEdit /></EditButton>
-            </>
-          )}
-          - {appointment.date} {appointment.time}
-        </ClientNameContainer>
-        <ExpandButton>{isExpanded ? '▲' : '▼'}</ExpandButton>
-      </AppointmentHeader>
-      <AnimatePresence>
-        {isExpanded && (
-          <AppointmentDetails
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <p>Phone: {appointment.phone}</p>
-            <p>Status: {appointment.status}</p>
-            {appointment.status === 'completed' && (
-              <>
-                <p>Profit: {appointment.profit}</p>
-                <p>Materials: {appointment.materials}</p>
-              </>
-            )}
-            {appointment.image && (
-              <ImageContainer>
-                <p>Inspiration Image:</p>
-                <InspirationImage src={appointment.image} alt="Inspiration" />
-                <Button onClick={() => onDownloadImage(appointment.image)}>Download Image</Button>
-              </ImageContainer>
-            )}
-            <NoteContainer>
-              {appointment.notes && appointment.notes.map((note, index) => (
-                <NoteItem key={index}>
-                  <span>{note}</span>
-                  <RemoveNoteButton onClick={() => onRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
-                </NoteItem>
-              ))}
-            </NoteContainer>
-            <Button onClick={() => onAddNote(appointment.id, prompt('Enter note:'))}>Add Note</Button>
-            <Button onClick={() => onCancel(appointment.id)}>Cancel</Button>
-            {appointment.status !== 'completed' && (
-              <Button onClick={() => {
-                const profit = prompt('Enter profit:');
-                const materials = prompt('Enter materials used:');
-                onComplete(appointment.id, profit, materials);
-              }}>Mark as Complete</Button>
-            )}
-            <WhatsAppButton onClick={sendAppointmentMessage}>
-              <FaWhatsapp style={{ marginRight: '5px' }} />
-              Send WhatsApp Message
-            </WhatsAppButton>
-          </AppointmentDetails>
-        )}
-      </AnimatePresence>
-    </CollapsibleContainer>
-  );
-};
-
-export default CollapsibleAppointment;
-
-File: pages/clientscheduling.jsx
-// src/pages/ClientScheduling.jsx
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { format, addDays, isAfter, parseISO, startOfDay, isBefore } from 'date-fns';
-import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-
-const StepContainer = styled(motion.div)`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
-`;
-
-const SchedulingContainer = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-`;
-
-const Title = styled.h1`
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const StepTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-`;
-
-const StepIcon = styled.span`
-  margin-right: 0.5rem;
-  font-size: 1.2rem;
-`;
-
-const DateGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 1rem;
-  min-height: 150px;
-  justify-content: center;
-  align-items: center;
-`;
-
-const DateButton = styled(motion.button)`
-  padding: 1rem;
-  border: none;
-  background-color: ${({ isSelected, theme }) => isSelected ? theme.colors.primary : theme.colors.secondary};
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const TimeGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const TimeSlot = styled(motion.button)`
-  padding: 0.5rem;
-  border: none;
-  background-color: ${({ isAvailable, isSelected, theme }) => 
-    isSelected ? theme.colors.primary : 
-    isAvailable ? theme.colors.secondary : 
-    theme.colors.background};
-  color: ${({ isAvailable, theme }) => isAvailable ? 'white' : theme.colors.text};
-  border-radius: 8px;
-  cursor: ${({ isAvailable }) => isAvailable ? 'pointer' : 'not-allowed'};
-  opacity: ${({ isAvailable }) => isAvailable ? 1 : 0.5};
-  font-weight: bold;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: ${({ isAvailable }) => isAvailable ? 'translateY(-2px)' : 'none'};
-    box-shadow: ${({ isAvailable }) => isAvailable ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'};
-  }
-`;
-
-const NoDatesMessage = styled.p`
-  text-align: center;
-  width: 100%;
-  padding: 1rem;
-  font-style: italic;
-  color: ${({ theme }) => theme.colors.text};
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 4px;
-`;
-
-const Button = styled.button`
-  padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-  }
-`;
-
-const ImageUploadContainer = styled.div`
-  margin-top: 1rem;
-`;
-
-const ImagePreview = styled.img`
-  max-width: 100%;
-  max-height: 200px;
-  margin-top: 1rem;
-`;
-
-const ClientScheduling = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [image, setImage] = useState(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [availableDates, setAvailableDates] = useState([]);
-  const [step, setStep] = useState('date');
-  const navigate = useNavigate();
-
-  const loadAvailability = () => {
-    try {
-      const availability = JSON.parse(localStorage.getItem('availability')) || {};
-      const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-
-      const today = startOfDay(new Date());
-      const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
-      
-      const availableDatesWithSlots = nextThirtyDays.filter(date => {
-        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-        const availableSlots = Object.entries(dateAvailability.availableSlots)
-          .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
-        
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0 && (parseISO(date) >= today || date === format(today, 'yyyy-MM-dd'));
-        return isDateAvailable;
-      });
-
-      setAvailableDates(availableDatesWithSlots);
-
-      if (selectedDate) {
-        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments
-          .filter(appointment => appointment.date === selectedDate)
-          .map(appointment => appointment.time);
-
-        const currentTime = new Date();
-        const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => {
-            const slotTime = parseISO(`${selectedDate}T${slot}`);
-            return {
-              time: slot,
-              isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
-            };
-          })
-          .filter(slot => slot.isAvailable);
-
-        setAvailableSlots(slotsWithAvailability);
-      }
-    } catch (error) {
-      console.error('Error loading availability:', error);
-    }
-  };
-
-  useEffect(() => {
-    loadAvailability();
-
-    const handleStorageChange = (e) => {
-      if (e.key === 'availability' || e.key === 'appointments') {
-        loadAvailability();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedDate]);
-
-  const handleDateSelection = (date) => {
-    setSelectedDate(date);
-    setSelectedTime('');
-    setStep('time');
-  };
-
-  const handleTimeSelection = (time) => {
-    setSelectedTime(time);
-    setStep('info');
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleConfirmAppointment = () => {
-    if (!name || !phone) {
-      alert('Please enter your name and phone number');
-      return;
-    }
-
-    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-    const newAppointment = {
-      id: Date.now(),
-      date: selectedDate,
-      time: selectedTime,
-      clientName: name,
-      phone: phone,
-      status: 'scheduled',
-      image: image
-    };
-    appointments.push(newAppointment);
-    localStorage.setItem('appointments', JSON.stringify(appointments));
-    
-    const availability = JSON.parse(localStorage.getItem('availability')) || {};
-    if (availability[selectedDate] && availability[selectedDate].availableSlots) {
-      availability[selectedDate].availableSlots[selectedTime] = false;
-      localStorage.setItem('availability', JSON.stringify(availability));
-    }
-
-    window.dispatchEvent(new Event('storage'));
-
-    navigate(`/appointment-confirmation/${newAppointment.id}`);
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.5 } }
-  };
-
-  return (
-    <SchedulingContainer>
-      <Title>Schedule Your Nail Appointment</Title>
-      <LayoutGroup>
-        <AnimatePresence mode="wait">
-          {step === 'date' && (
-            <StepContainer
-              key="date-selection"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              layout
-            >
-              <StepTitle>
-                <StepIcon><FaCalendarAlt /></StepIcon>
-                Select a Date
-              </StepTitle>
-              <DateGrid>
-                {availableDates.length > 0 ? (
-                  availableDates.map((date) => (
-                    <DateButton
-                      key={date}
-                      isSelected={date === selectedDate}
-                      onClick={() => handleDateSelection(date)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      layout
-                    >
-                      {format(parseISO(date), 'MMM d')}
-                    </DateButton>
-                  ))
-                ) : (
-                  <NoDatesMessage>No available dates. Please check back later.</NoDatesMessage>
-                )}
-              </DateGrid>
-            </StepContainer>
-          )}
-
-          {step === 'time' && (
-            <StepContainer
-              key="time-selection"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              layout
-            >
-              <StepTitle>
-                <StepIcon><FaClock /></StepIcon>
-                Select a Time
-              </StepTitle>
-              <TimeGrid>
-                {availableSlots.map((slot, index) => (
-                  <TimeSlot
-                    key={index}
-                    isAvailable={slot.isAvailable}
-                    isSelected={selectedTime === slot.time}
-                    onClick={() => slot.isAvailable && handleTimeSelection(slot.time)}
-                    whileHover={{ scale: slot.isAvailable ? 1.05 : 1 }}
-                    whileTap={{ scale: slot.isAvailable ? 0.95 : 1 }}
-                    layout
-                  >
-                    {slot.time}
-                  </TimeSlot>
-                ))}
-              </TimeGrid>
-            </StepContainer>
-          )}
-
-          {step === 'info' && (
-            <StepContainer
-              key="info-collection"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              layout
-            >
-              <StepTitle>
-                <StepIcon><FaUser /></StepIcon>
-                Your Information
-              </StepTitle>
-              <Input
-                type="text"
-                placeholder="Your Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              <Input
-                type="tel"
-                placeholder="Your Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-              <ImageUploadContainer>
-                <StepTitle>
-                  <StepIcon><FaImage /></StepIcon>
-                  Upload Design Inspiration (Optional)
-                </StepTitle>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-                {image && <ImagePreview src={image} alt="Design Inspiration" />}
-              </ImageUploadContainer>
-              <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
-            </StepContainer>
-          )}
-        </AnimatePresence>
-      </LayoutGroup>
-    </SchedulingContainer>
-  );
-};
-
-export default ClientScheduling;
-
-File: src/components/AdminCalendar.jsx
-// AdminCalendar.jsx
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-
-const CalendarContainer = styled.div`
-  margin-bottom: 2rem;
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-`;
-
-const CalendarHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const MonthNavButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const CalendarGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background-color: ${({ theme }) => theme.colors.secondary};
-  @media (max-width: 768px) {
-    font-size: 0.8rem;
-  }
-`;
-
-const CalendarCell = styled.div`
-  background-color: ${({ theme }) => theme.colors.cardBackground};
-  padding: 1rem;
-  text-align: center;
-  position: relative;
-  cursor: pointer;
-  ${({ $isCurrentMonth, $isSelected, theme }) => `
-    color: ${$isCurrentMonth ? theme.colors.text : theme.colors.secondary};
-    ${$isSelected ? `
-      background-color: ${theme.colors.primary};
-      color: white;
-    ` : ''}
-  `}
-  @media (max-width: 768px) {
-    padding: 0.5rem;
-  }
-`;
-
-const AppointmentCount = styled.div`
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  @media (max-width: 768px) {
-    width: 16px;
-    height: 16px;
-    font-size: 0.6rem;
-    top: 2px;
-    right: 2px;
-  }
-`;
-
-const AvailabilityIndicator = styled.div`
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background-color: ${({ theme }) => theme.colors.secondary};
-  color: white;
-  border-radius: 4px;
-  padding: 2px 4px;
-  font-size: 0.7rem;
-  @media (max-width: 768px) {
-    font-size: 0.6rem;
-    bottom: 2px;
-    right: 2px;
-  }
-`;
-
-const AdminCalendar = ({ appointments, onDaySelect }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [availability, setAvailability] = useState({});
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const updatedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-      setAvailability(updatedAvailability);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    handleStorageChange(); // Initial load
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  const getAppointmentCount = (date) => {
-    const dateString = format(date, 'yyyy-MM-dd');
-    return appointments.filter(appointment => appointment.date === dateString).length;
-  };
-
-  const isDateAvailable = (date) => {
-    const dateString = format(date, 'yyyy-MM-dd');
-    const dateAvailability = availability[dateString];
-    return dateAvailability && dateAvailability.isAvailable && Object.values(dateAvailability.availableSlots).some(slot => slot);
-  };
-
-  const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-
-  const handleDayClick = (day) => {
-    setSelectedDate(day);
-    onDaySelect(day);
-  };
-
-  return (
-    <CalendarContainer>
-      <CalendarHeader>
-        <MonthNavButton onClick={handlePrevMonth}><FaChevronLeft /></MonthNavButton>
-        <h2>{format(currentDate, 'MMMM yyyy')}</h2>
-        <MonthNavButton onClick={handleNextMonth}><FaChevronRight /></MonthNavButton>
-      </CalendarHeader>
-      <CalendarGrid>
-        {daysInMonth.map((day, index) => {
-          const appointmentCount = getAppointmentCount(day);
-          const isAvailable = isDateAvailable(day);
-          return (
-            <CalendarCell
-              key={index}
-              $isCurrentMonth={isSameMonth(day, currentDate)}
-              $isSelected={selectedDate && isSameDay(day, selectedDate)}
-              onClick={() => handleDayClick(day)}
-            >
-              {format(day, 'd')}
-              {appointmentCount > 0 && (
-                <AppointmentCount>{appointmentCount}</AppointmentCount>
-              )}
-              {isAvailable && (
-                <AvailabilityIndicator>Available</AvailabilityIndicator>
-              )}
-            </CalendarCell>
-          );
-        })}
-      </CalendarGrid>
-    </CalendarContainer>
-  );
-};
-
-export default AdminCalendar;
 
 Make sure You Will not remove any existing used features, it is imperative..
 Fix it please and return fully updated file version ONLY as required. Ready to copy and paste.

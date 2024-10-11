@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import { format, parseISO, isBefore, startOfDay } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
@@ -29,6 +29,40 @@ const AppointmentList = styled.ul`
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const AMPMSwitch = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const AMPMLabel = styled.span`
+  font-size: 0.9rem;
+  margin: 0 0.5rem;
+  color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.text};
+`;
+
+const Switch = styled.div`
+  width: 40px;
+  height: 20px;
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: ${({ isAM }) => isAM ? '2px' : '22px'};
+    width: 16px;
+    height: 16px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    border-radius: 50%;
+    transition: left 0.3s;
   }
 `;
 
@@ -101,11 +135,40 @@ const TimeSlotContainer = styled.div`
   margin-bottom: 0.5rem;
 `;
 
+const TimeInputPlaceholder = styled.label`
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${({ theme }) => theme.colors.textLight};
+  pointer-events: none;
+  transition: all 0.3s ease;
+  opacity: ${({ hasValue }) => (hasValue ? 0 : 1)};
+`;
+
+const TimeInputWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
 const TimeInput = styled.input`
-  margin-right: 0.5rem;
   padding: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 4px;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100px;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primaryLight};
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.textLight};
+  }
 `;
 
 const TabContainer = styled.div`
@@ -150,6 +213,91 @@ const SubHeader = styled.h2`
   color: ${({ theme }) => theme.colors.secondary};
 `;
 
+const CreateAppointmentButton = styled(Button)`
+  margin-bottom: 1rem;
+`;
+
+const ClockContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+`;
+
+const ClockInstruction = styled.p`
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: ${({ theme }) => theme.colors.secondary};
+`;
+
+const ClockFace = styled.div`
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 2px solid ${({ theme }) => theme.colors.primary};
+  position: relative;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ClockNumber = styled.div`
+  position: absolute;
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.text};
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  line-height: 30px;
+  transform: ${({ rotation }) => `rotate(${rotation}deg) translate(0, -80px) rotate(-${rotation}deg)`};
+`;
+
+const ClockHand = styled.div`
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom;
+  background-color: ${({ theme }) => theme.colors.primary};
+  transition: transform 0.2s;
+`;
+
+const HourHand = styled(ClockHand)`
+  width: 4px;
+  height: 60px;
+  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
+  display: ${({ show }) => (show ? 'block' : 'none')};
+`;
+
+const MinuteHand = styled(ClockHand)`
+  width: 2px;
+  height: 80px;
+  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
+  display: ${({ show }) => (show ? 'block' : 'none')};
+`;
+
+const TimeDisplay = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ClockButton = styled(Button)`
+  margin: 0.5rem;
+`;
+
+const ClockMarker = styled.div`
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  border-radius: 50%;
+  transform: ${({ angle }) => `rotate(${angle}deg) translateY(-90px)`};
+`;
+
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -158,6 +306,12 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('ALL');
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showClock, setShowClock] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const clockRef = useRef(null);
+  const isMobile = window.innerWidth <= 768;
+  const [clockPhase, setClockPhase] = useState('hour');
+  const [isAM, setIsAM] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -176,6 +330,15 @@ function AdminDashboard() {
     );
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
+  const toggleAMPM = () => {
+    setIsAM(!isAM);
+    setSelectedTime(prevTime => {
+      const hours = prevTime.getHours();
+      const newHours = (hours + 12) % 24;
+      return set(prevTime, { hours: newHours });
+    });
   };
 
   const handleRemoveNote = (appointmentId, noteIndex) => {
@@ -307,28 +470,86 @@ function AdminDashboard() {
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
-  const filteredAppointments = appointments.filter(appointment => {
+  const handleCreateAppointment = () => {
     if (selectedDate) {
-      return appointment.date === format(selectedDate, 'yyyy-MM-dd');
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const newAppointment = {
+        id: Date.now(),
+        date: dateString,
+        time: '',
+        clientName: '',
+        phone: '',
+        status: 'scheduled',
+        notes: []
+      };
+      const updatedAppointments = [...appointments, newAppointment];
+      setAppointments(updatedAppointments);
+      localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    } else {
+      alert('Please select a date first');
     }
-    return true;
-  }).sort((a, b) => {
-    if (a.status === 'completed' && b.status !== 'completed') return 1;
-    if (a.status !== 'completed' && b.status === 'completed') return -1;
-    return new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time);
-  });
+  };
 
-  const displayedAppointments = filteredAppointments.filter(appointment => {
-    if (activeTab === 'ALL') return true;
-    if (activeTab === 'UPCOMING') return appointment.status !== 'completed';
-    if (activeTab === 'COMPLETED') return appointment.status === 'completed';
-    return true;
-  });
+  const handleTimeInputClick = () => {
+    if (!isMobile) {
+      setShowClock(true);
+    }
+  };
 
-  const todayAppointments = appointments.filter(appointment => {
-    const today = new Date();
-    return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
-  }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+  const handleClockClick = (event) => {
+    if (!clockRef.current) return;
+  
+    const rect = clockRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const x = event.clientX - centerX;
+    const y = centerY - event.clientY; // Invert Y-axis
+  
+    // Calculate angle from 12 o'clock position
+    let angle = Math.atan2(x, y) * (180 / Math.PI);
+    
+    // Normalize angle to be between 0 and 360
+    angle = (angle + 360) % 360;
+  
+    // Add a small offset to align with visual number positions
+    angle = (angle + 15) % 360;
+  
+    if (clockPhase === 'hour') {
+      let hours = Math.floor(angle / 30) % 12;
+      hours = hours === 0 ? 12 : hours;
+      setSelectedTime(prevTime => set(prevTime, { hours }));
+    } else {
+      const minutes = Math.floor(angle / 6) % 60;
+      setSelectedTime(prevTime => {
+        const newDate = set(prevTime, { minutes });
+        // Ensure we're not changing the hour
+        return set(newDate, { hours: prevTime.getHours() });
+      });
+    }
+  };
+
+  const handleClockConfirm = () => {
+    if (clockPhase === 'hour') {
+      setClockPhase('minute');
+    } else {
+      let hours = selectedTime.getHours();
+      if (!isAM && hours < 12) {
+        hours += 12;
+      } else if (isAM && hours === 12) {
+        hours = 0;
+      }
+      const finalTime = set(selectedTime, { hours });
+      setNewTimeSlot(format(finalTime, 'HH:mm'));
+      setShowClock(false);
+      setClockPhase('hour');
+    }
+  };
+
+  const handleClockCancel = () => {
+    setShowClock(false);
+    setNewTimeSlot('');
+    setClockPhase('hour'); // Reset to hour phase for next use
+  };
 
   const removePastTimeSlotsAndEmptyDates = () => {
     const now = new Date();
@@ -374,6 +595,86 @@ function AdminDashboard() {
     return () => clearInterval(interval);
   }, [availability]);
 
+  const filteredAppointments = appointments.filter(appointment => {
+    if (selectedDate) {
+      return appointment.date === format(selectedDate, 'yyyy-MM-dd');
+    }
+    return true;
+  }).sort((a, b) => {
+    if (a.status === 'completed' && b.status !== 'completed') return 1;
+    if (a.status !== 'completed' && b.status === 'completed') return -1;
+    return new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time);
+  });
+
+  const displayedAppointments = filteredAppointments.filter(appointment => {
+    if (activeTab === 'ALL') return true;
+    if (activeTab === 'UPCOMING') return appointment.status !== 'completed';
+    if (activeTab === 'COMPLETED') return appointment.status === 'completed';
+    return true;
+  });
+
+  const todayAppointments = appointments.filter(appointment => {
+    const today = new Date();
+    return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
+  }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
+
+    const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
+      const [displayValue, setDisplayValue] = useState('');
+    
+      useEffect(() => {
+        if (value) {
+          setDisplayValue(value);
+        } else {
+          setDisplayValue('');
+        }
+      }, [value]);
+    
+      const handleInputChange = (e) => {
+        let input = e.target.value.replace(/\D/g, '');
+        
+        if (input.length > 4) {
+          input = input.slice(0, 4);
+        }
+    
+        let formattedInput = '';
+        if (input.length > 2) {
+          formattedInput = `${input.slice(0, 2)}:${input.slice(2)}`;
+        } else {
+          formattedInput = input;
+        }
+    
+        setDisplayValue(formattedInput);
+    
+        if (input.length === 4) {
+          const hours = parseInt(input.slice(0, 2));
+          const minutes = parseInt(input.slice(2));
+          if (hours < 24 && minutes < 60) {
+            onChange({ target: { value: formattedInput } });
+          }
+        } else {
+          onChange({ target: { value: '' } });
+        }
+      };
+    
+      return (
+        <TimeInputWrapper>
+          <TimeInput
+            type={isMobile ? "time" : "text"}
+            value={displayValue}
+            onChange={handleInputChange}
+            onClick={onClick}
+            placeholder={placeholder}
+            maxLength={5}
+          />
+          {!displayValue && (
+            <TimeInputPlaceholder hasValue={!!displayValue}>
+              {placeholder}
+            </TimeInputPlaceholder>
+          )}
+        </TimeInputWrapper>
+      );
+    };
+
   return (
     <DashboardContainer>
       <Header>Admin Dashboard</Header>
@@ -399,23 +700,66 @@ function AdminDashboard() {
       {selectedDate && (
         <AvailabilityContainer>
           <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
+          <CreateAppointmentButton onClick={handleCreateAppointment}>
+            Create Appointment
+          </CreateAppointmentButton>
           <TimeSlotContainer>
-            <TimeInput
-              type="time"
+            <CustomTimeInput
               value={newTimeSlot}
               onChange={(e) => setNewTimeSlot(e.target.value)}
+              onClick={handleTimeInputClick}
+              placeholder="Select time"
             />
             <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
           </TimeSlotContainer>
+          {showClock && !isMobile && (
+            <ClockContainer>
+              <ClockInstruction>
+                {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
+              </ClockInstruction>
+              <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
+              <AMPMSwitch>
+                <AMPMLabel active={isAM}>AM</AMPMLabel>
+                <Switch isAM={isAM} onClick={toggleAMPM} />
+                <AMPMLabel active={!isAM}>PM</AMPMLabel>
+              </AMPMSwitch>
+              <ClockFace ref={clockRef} onClick={handleClockClick}>
+                <HourHand
+                  angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                  show={clockPhase === 'hour'}
+                />
+                <MinuteHand
+                  angle={selectedTime.getMinutes() * 6}
+                  show={clockPhase === 'minute'}
+                />
+                {[...Array(12)].map((_, index) => (
+                  <ClockNumber key={index} rotation={index * 30}>
+                    {index === 0 ? 12 : index}
+                  </ClockNumber>
+                ))}
+              </ClockFace>
+              <div>
+                <ClockButton onClick={handleClockConfirm}>
+                  {clockPhase === 'hour' ? 'Next' : 'Confirm'}
+                </ClockButton>
+                <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
+              </div>
+            </ClockContainer>
+          )}
+
           {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
             Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
               .filter(([_, isAvailable]) => isAvailable)
               .map(([time, _]) => (
                 <TimeSlotContainer key={time}>
                   <TimeInput
-                    type="time"
+                    type={isMobile ? "time" : "text"}
                     value={time}
                     onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
+                    onClick={isMobile ? undefined : () => {
+                      setSelectedTime(parseISO(`${format(selectedDate, 'yyyy-MM-dd')}T${time}`));
+                      setShowClock(true);
+                    }}
                   />
                   <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
                 </TimeSlotContainer>

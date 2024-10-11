@@ -129,29 +129,15 @@ const AvailabilityContainer = styled.div`
   margin-top: 2rem;
 `;
 
-const TimeSlotContainer = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.5rem;
-`;
-
-const TimeInputPlaceholder = styled.label`
-  position: absolute;
-  left: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: ${({ theme }) => theme.colors.textLight};
-  pointer-events: none;
-  transition: all 0.3s ease;
-  opacity: ${({ hasValue }) => (hasValue ? 0 : 1)};
-`;
 
 const TimeInputWrapper = styled.div`
   position: relative;
   display: inline-block;
+  width: 120px;
 `;
 
 const TimeInput = styled.input`
+  width: 100%;
   padding: 0.5rem;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 4px;
@@ -160,14 +146,52 @@ const TimeInput = styled.input`
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  width: 100px;
+  text-align: center;
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.primaryLight};
   }
 
   &::placeholder {
+    color: transparent;
+  }
+
+  &:focus::placeholder {
     color: ${({ theme }) => theme.colors.textLight};
+  }
+`;
+
+const NonClickableTimeDisplay = styled.div`
+  width: 120px;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: 1rem;
+  text-align: center;
+`;
+
+const TimeInputPlaceholder = styled.label`
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  color: ${({ theme }) => theme.colors.textLight};
+  pointer-events: none;
+  transition: all 0.3s ease;
+  opacity: ${({ hasValue }) => (hasValue ? 0 : 1)};
+  text-align: center;
+`;
+
+const TimeSlotContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  ${TimeInput} {
+    margin-right: 0.5rem;
   }
 `;
 
@@ -403,16 +427,26 @@ function AdminDashboard() {
           isAvailable: true,
           availableSlots: {
             ...availability[dateString]?.availableSlots,
-            [newTimeSlot]: true
           }
         }
       };
+      
+      // Check if the time slot already exists
+      if (updatedAvailability[dateString].availableSlots[newTimeSlot]) {
+        alert('This time slot already exists.');
+        return;
+      }
+      
+      // Add the new time slot
+      updatedAvailability[dateString].availableSlots[newTimeSlot] = true;
+      
       setAvailability(updatedAvailability);
       localStorage.setItem('availability', JSON.stringify(updatedAvailability));
       setNewTimeSlot('');
       window.dispatchEvent(new Event('storage'));
     }
   };
+
 
   const handleRemoveTimeSlot = (time) => {
     if (selectedDate) {
@@ -503,26 +537,23 @@ function AdminDashboard() {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const x = event.clientX - centerX;
-    const y = centerY - event.clientY; // Invert Y-axis
+    const y = centerY - event.clientY;
   
     // Calculate angle from 12 o'clock position
     let angle = Math.atan2(x, y) * (180 / Math.PI);
-    
-    // Normalize angle to be between 0 and 360
-    angle = (angle + 360) % 360;
-  
-    // Add a small offset to align with visual number positions
-    angle = (angle + 15) % 360;
+    angle = (angle + 360) % 360; // Normalize to 0-360
   
     if (clockPhase === 'hour') {
-      let hours = Math.floor(angle / 30) % 12;
+      let hours = Math.round(angle / 30) % 12;
       hours = hours === 0 ? 12 : hours;
       setSelectedTime(prevTime => set(prevTime, { hours }));
     } else {
-      const minutes = Math.floor(angle / 6) % 60;
+      // Convert angle to minutes with a 5-minute snap
+      let minutes = Math.round(angle / 6);
+      minutes = Math.round(minutes / 5) * 5; // Snap to nearest 5 minutes
+      minutes = minutes === 60 ? 0 : minutes; // Handle edge case for 60 minutes
       setSelectedTime(prevTime => {
         const newDate = set(prevTime, { minutes });
-        // Ensure we're not changing the hour
         return set(newDate, { hours: prevTime.getHours() });
       });
     }
@@ -618,62 +649,60 @@ function AdminDashboard() {
     return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
   }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
 
-    const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
-      const [displayValue, setDisplayValue] = useState('');
-    
-      useEffect(() => {
-        if (value) {
-          setDisplayValue(value);
-        } else {
-          setDisplayValue('');
+  const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
+    const [displayValue, setDisplayValue] = useState('');
+  
+    useEffect(() => {
+      if (value) {
+        setDisplayValue(value);
+      } else {
+        setDisplayValue('');
+      }
+    }, [value]);
+  
+    const handleInputChange = (e) => {
+      let input = e.target.value.replace(/\D/g, '');
+      
+      if (input.length > 4) {
+        input = input.slice(0, 4);
+      }
+  
+      let formattedInput = '';
+      if (input.length > 2) {
+        formattedInput = `${input.slice(0, 2)}:${input.slice(2)}`;
+      } else {
+        formattedInput = input;
+      }
+  
+      setDisplayValue(formattedInput);
+  
+      if (input.length === 4) {
+        const hours = parseInt(input.slice(0, 2));
+        const minutes = parseInt(input.slice(2));
+        if (hours < 24 && minutes < 60) {
+          onChange({ target: { value: formattedInput } });
         }
-      }, [value]);
-    
-      const handleInputChange = (e) => {
-        let input = e.target.value.replace(/\D/g, '');
-        
-        if (input.length > 4) {
-          input = input.slice(0, 4);
-        }
-    
-        let formattedInput = '';
-        if (input.length > 2) {
-          formattedInput = `${input.slice(0, 2)}:${input.slice(2)}`;
-        } else {
-          formattedInput = input;
-        }
-    
-        setDisplayValue(formattedInput);
-    
-        if (input.length === 4) {
-          const hours = parseInt(input.slice(0, 2));
-          const minutes = parseInt(input.slice(2));
-          if (hours < 24 && minutes < 60) {
-            onChange({ target: { value: formattedInput } });
-          }
-        } else {
-          onChange({ target: { value: '' } });
-        }
-      };
-    
-      return (
-        <TimeInputWrapper>
-          <TimeInput
-            type={isMobile ? "time" : "text"}
-            value={displayValue}
-            onChange={handleInputChange}
-            onClick={onClick}
-            placeholder={placeholder}
-            maxLength={5}
-          />
-          {!displayValue && (
-            <TimeInputPlaceholder hasValue={!!displayValue}>
-              {placeholder}
-            </TimeInputPlaceholder>
-          )}
-        </TimeInputWrapper>
-      );
+      } else {
+        onChange({ target: { value: '' } });
+      }
     };
+  
+    return (
+      <TimeInputWrapper>
+        <TimeInput
+          type={isMobile ? "time" : "text"}
+          value={displayValue}
+          onChange={handleInputChange}
+          onClick={onClick}
+          placeholder={placeholder}
+          maxLength={5}
+        />
+        <TimeInputPlaceholder hasValue={!!displayValue}>
+          {placeholder}
+        </TimeInputPlaceholder>
+      </TimeInputWrapper>
+    );
+  };
 
   return (
     <DashboardContainer>
@@ -747,20 +776,14 @@ function AdminDashboard() {
             </ClockContainer>
           )}
 
-          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots && 
+          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
             Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
               .filter(([_, isAvailable]) => isAvailable)
               .map(([time, _]) => (
                 <TimeSlotContainer key={time}>
-                  <TimeInput
-                    type={isMobile ? "time" : "text"}
-                    value={time}
-                    onChange={(e) => handleChangeTimeSlot(time, e.target.value)}
-                    onClick={isMobile ? undefined : () => {
-                      setSelectedTime(parseISO(`${format(selectedDate, 'yyyy-MM-dd')}T${time}`));
-                      setShowClock(true);
-                    }}
-                  />
+                  <NonClickableTimeDisplay>
+                    {time}
+                  </NonClickableTimeDisplay>
                   <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
                 </TimeSlotContainer>
               ))

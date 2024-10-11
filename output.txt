@@ -6,12 +6,7 @@ Appointment summary - Inventory flow
 Monthly earnings report.
 Multi Language.
 
-Select time button should be a little more wide 
-Clock PC widget is +2 minutes missaligned when selecting
-minutes.
-Select time placeholder overlaps with a lighter placeholder.
-
-Create appointment button does así for appointment relevant information before
+Create appointment button does ask for appointment relevant information before
 creating it.
 Appointment confirmation PAGE BUTTONS, and animations.
 From client, can SEE real time appointment status creating a route based on

@@ -129,7 +129,6 @@ const AvailabilityContainer = styled.div`
   margin-top: 2rem;
 `;
 
-
 const TimeInputWrapper = styled.div`
   position: relative;
   display: inline-block;
@@ -321,6 +320,50 @@ const ClockMarker = styled.div`
   transform: ${({ angle }) => `rotate(${angle}deg) translateY(-90px)`};
 `;
 
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: ${({ theme }) => theme.colors.cardBackground};
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+`;
+
+const ModalTitle = styled.h2`
+  margin-bottom: 1rem;
+`;
+
+const ModalInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+`;
+
+const ModalSelect = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+`;
+
+const ModalButton = styled(Button)`
+  margin-right: 0.5rem;
+`;
 
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -336,6 +379,12 @@ function AdminDashboard() {
   const isMobile = window.innerWidth <= 768;
   const [clockPhase, setClockPhase] = useState('hour');
   const [isAM, setIsAM] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [newAppointment, setNewAppointment] = useState({
+    clientName: '',
+    phone: '',
+    time: '',
+  });
 
   useEffect(() => {
     if (!user || user.role !== 'admin') {
@@ -447,7 +496,6 @@ function AdminDashboard() {
     }
   };
 
-
   const handleRemoveTimeSlot = (time) => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
@@ -506,22 +554,50 @@ function AdminDashboard() {
 
   const handleCreateAppointment = () => {
     if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const newAppointment = {
-        id: Date.now(),
-        date: dateString,
-        time: '',
-        clientName: '',
-        phone: '',
-        status: 'scheduled',
-        notes: []
-      };
-      const updatedAppointments = [...appointments, newAppointment];
-      setAppointments(updatedAppointments);
-      localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+      setShowModal(true);
     } else {
       alert('Please select a date first');
     }
+  };
+
+  const handleModalSubmit = () => {
+    if (!newAppointment.clientName || !newAppointment.phone || !newAppointment.time) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+    const newAppointmentObj = {
+      id: Date.now(),
+      date: dateString,
+      time: newAppointment.time,
+      clientName: newAppointment.clientName,
+      phone: newAppointment.phone,
+      status: 'scheduled',
+      notes: []
+    };
+
+    const updatedAppointments = [...appointments, newAppointmentObj];
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+
+    // Update availability
+    const updatedAvailability = {
+      ...availability,
+      [dateString]: {
+        ...availability[dateString],
+        availableSlots: {
+          ...availability[dateString]?.availableSlots,
+          [newAppointment.time]: false
+        }
+      }
+    };
+    setAvailability(updatedAvailability);
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+
+    setShowModal(false);
+    setNewAppointment({ clientName: '', phone: '', time: '' });
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleTimeInputClick = () => {
@@ -811,6 +887,41 @@ function AdminDashboard() {
           />
         ))}
       </AppointmentList>
+
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <ModalTitle>Create New Appointment</ModalTitle>
+            <ModalInput
+              type="text"
+              placeholder="Client Name"
+              value={newAppointment.clientName}
+              onChange={(e) => setNewAppointment({ ...newAppointment, clientName: e.target.value })}
+            />
+            <ModalInput
+              type="tel"
+              placeholder="Phone Number"
+              value={newAppointment.phone}
+              onChange={(e) => setNewAppointment({ ...newAppointment, phone: e.target.value })}
+            />
+            <ModalSelect
+              value={newAppointment.time}
+              onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+            >
+              <option value="">Select Time</option>
+              {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
+                Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+                  .filter(([_, isAvailable]) => isAvailable)
+                  .map(([time, _]) => (
+                    <option key={time} value={time}>{time}</option>
+                  ))
+              }
+            </ModalSelect>
+            <ModalButton onClick={handleModalSubmit}>Create</ModalButton>
+            <ModalButton onClick={() => setShowModal(false)}>Cancel</ModalButton>
+          </ModalContent>
+        </Modal>
+      )}
     </DashboardContainer>
   );
 }

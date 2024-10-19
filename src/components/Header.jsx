@@ -147,7 +147,6 @@ function Header() {
           <NavLink to="/services">Services</NavLink>
           <NavLink to="/schedule">Schedule Appointment</NavLink>
           <NavLink to="/gallery">Nail Gallery</NavLink>
-          <NavLink to="/admin">Admin Dashboard</NavLink>
           <ThemeToggleWrapper>
             <ThemeToggle />
           </ThemeToggleWrapper>
@@ -165,7 +164,6 @@ function Header() {
             <MobileNavLink to="/services" onClick={closeMenu}>Services</MobileNavLink>
             <MobileNavLink to="/schedule" onClick={closeMenu}>Schedule Appointment</MobileNavLink>
             <MobileNavLink to="/gallery" onClick={closeMenu}>Nail Gallery</MobileNavLink>
-            <MobileNavLink to="/admin" onClick={closeMenu}>Admin Dashboard</MobileNavLink>
             <ThemeToggleWrapper className="theme-toggle">
               <ThemeToggle />
             </ThemeToggleWrapper>

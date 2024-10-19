@@ -1,22 +1,16 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
-Community - Trends
-Inventory control.
-Appointment summary - Inventory flow
-Monthly earnings report.
-Multi Language.
-
-Appointment confirmation PAGE BUTTONS, and animations.
-From client, can SEE real time appointment status creating a route based on
-appointment number.
-
 TOPBAR:
 Home
 Services
 Nail Gallery
 Schedule Appointment CALL TO ACTION
 
-DISCREETIZE ADMIN DASHBOARD ACCESS WITH A PARTICULR ACTION.
+Community - Trends
+Inventory control.
+Appointment summary - Inventory flow.
+Monthly earnings report.
+Multi Language.
 
 ADD LANGUAGE: Spanish/English.
 

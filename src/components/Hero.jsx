@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const HeroContainer = styled(motion.section)`
   display: flex;
@@ -46,6 +46,8 @@ const Title = styled(motion.h1)`
   margin-bottom: 1rem;
   color: ${({ theme }) => theme.colors.primary};
   font-family: ${({ theme }) => theme.fonts.heading};
+  cursor: default;
+  user-select: none;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     font-size: 2.5rem;
@@ -104,11 +106,40 @@ const itemVariants = {
 };
 
 function Hero() {
+  const navigate = useNavigate();
+  const [clickCount, setClickCount] = useState(0);
+  const [clickTimer, setClickTimer] = useState(null);
+
+  const handleTitleClick = useCallback(() => {
+    setClickCount(prev => prev + 1);
+
+    // Clear existing timer
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+    }
+
+    // Set new timer
+    const timer = setTimeout(() => {
+      setClickCount(0);
+    }, 1000); // Reset after 1 second of inactivity
+
+    setClickTimer(timer);
+
+    // Check if we've reached 3 clicks
+    if (clickCount === 6) { // We check for 2 because this click will make it 3
+      navigate('/admin');
+      setClickCount(0);
+    }
+  }, [clickCount, clickTimer, navigate]);
+
   return (
     <HeroContainer variants={containerVariants} initial="hidden" animate="visible">
       <BackgroundPattern />
       <Content>
-        <Title variants={itemVariants}>
+        <Title 
+          variants={itemVariants}
+          onClick={handleTitleClick}
+        >
           Elegant Touch Nail Salon
         </Title>
         <Subtitle variants={itemVariants}>

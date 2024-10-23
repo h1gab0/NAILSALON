@@ -18,197 +18,20 @@ In this section, provide the complete answer for the user based on your thinking
 </output>
 
 MAIN INSTRUCTION 
-REMOVE admin dashboard from TOPBAR menú and
-DISCREETIZE ADMIN DASHBOARD ACCESS WITH A PARTICULR ACTION within homepage.
+
+Schedule Appointment CALL TO ACTION
+button is visually on the center of header, however if I hover 
+at the same height but outside-left from the visble button it acts as if
+the button was there, but visually is not
 MAIN INSTRUCTION
 
 Here is the relevant file:
-File: pages/header.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import ThemeToggle from './ThemeToggle';
-
-const StyledHeader = styled.header`
-  background-color: ${({ theme }) => theme.colors.headerBackground};
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  transition: all 0.3s ease;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const Logo = styled(Link)`
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-`;
-
-const NavLinks = styled(motion.div)`
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: none;
-  }
-`;
-
-const NavLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.text};
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-const ThemeToggleWrapper = styled.div`
-  margin-left: 1rem;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    margin-left: 0;
-    margin-top: 1rem;
-  }
-`;
-
-const MenuButton = styled.button`
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text};
-  cursor: pointer;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: block;
-  }
-`;
-
-const MobileMenu = styled(motion.div)`
-  display: none;
-  position: fixed;
-  top: 60px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: ${({ theme }) => theme.colors.headerBackground};
-  padding: 1rem;
-  z-index: 999;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
-`;
-
-const MobileNavLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.text};
-  font-size: 1.2rem;
-  padding: 1rem;
-  width: 100%;
-  text-align: center;
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-    background-color: ${({ theme }) => theme.colors.cardBackground};
-  }
-`;
-
-function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
-
-  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
-
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isMenuOpen]);
-
-  const handleClickOutside = useCallback((event) => {
-    if (isMenuOpen && !event.target.closest('nav') && !event.target.closest('.theme-toggle')) {
-      closeMenu();
-    }
-  }, [isMenuOpen, closeMenu]);
-
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [handleClickOutside]);
-
-  return (
-    <StyledHeader>
-      <Nav>
-        <Logo to="/" onClick={closeMenu}>Nail Salon Scheduler</Logo>
-        <MenuButton onClick={toggleMenu} aria-label="Toggle menu">
-          {isMenuOpen ? '✕' : '☰'}
-        </MenuButton>
-        <NavLinks>
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/services">Services</NavLink>
-          <NavLink to="/schedule">Schedule Appointment</NavLink>
-          <NavLink to="/gallery">Nail Gallery</NavLink>
-          <NavLink to="/admin">Admin Dashboard</NavLink>
-          <ThemeToggleWrapper>
-            <ThemeToggle />
-          </ThemeToggleWrapper>
-        </NavLinks>
-      </Nav>
-      <AnimatePresence>
-        {isMenuOpen && (
-          <MobileMenu
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <MobileNavLink to="/" onClick={closeMenu}>Home</MobileNavLink>
-            <MobileNavLink to="/services" onClick={closeMenu}>Services</MobileNavLink>
-            <MobileNavLink to="/schedule" onClick={closeMenu}>Schedule Appointment</MobileNavLink>
-            <MobileNavLink to="/gallery" onClick={closeMenu}>Nail Gallery</MobileNavLink>
-            <MobileNavLink to="/admin" onClick={closeMenu}>Admin Dashboard</MobileNavLink>
-            <ThemeToggleWrapper className="theme-toggle">
-              <ThemeToggle />
-            </ThemeToggleWrapper>
-          </MobileMenu>
-        )}
-      </AnimatePresence>
-    </StyledHeader>
-  );
-}
-
-export default Header;
 
 Hero.jsx:
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const HeroContainer = styled(motion.section)`
   display: flex;
@@ -253,6 +76,8 @@ const Title = styled(motion.h1)`
   margin-bottom: 1rem;
   color: ${({ theme }) => theme.colors.primary};
   font-family: ${({ theme }) => theme.fonts.heading};
+  cursor: default;
+  user-select: none;
   
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     font-size: 2.5rem;
@@ -311,11 +136,40 @@ const itemVariants = {
 };
 
 function Hero() {
+  const navigate = useNavigate();
+  const [clickCount, setClickCount] = useState(0);
+  const [clickTimer, setClickTimer] = useState(null);
+
+  const handleTitleClick = useCallback(() => {
+    setClickCount(prev => prev + 1);
+
+    // Clear existing timer
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+    }
+
+    // Set new timer
+    const timer = setTimeout(() => {
+      setClickCount(0);
+    }, 1000); // Reset after 1 second of inactivity
+
+    setClickTimer(timer);
+
+    // Check if we've reached 3 clicks
+    if (clickCount === 6) { // We check for 2 because this click will make it 3
+      navigate('/admin');
+      setClickCount(0);
+    }
+  }, [clickCount, clickTimer, navigate]);
+
   return (
     <HeroContainer variants={containerVariants} initial="hidden" animate="visible">
       <BackgroundPattern />
       <Content>
-        <Title variants={itemVariants}>
+        <Title 
+          variants={itemVariants}
+          onClick={handleTitleClick}
+        >
           Elegant Touch Nail Salon
         </Title>
         <Subtitle variants={itemVariants}>

@@ -1,11 +1,5 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
-TOPBAR:
-Home
-Services
-Nail Gallery
-Schedule Appointment CALL TO ACTION
-
 Community - Trends
 Inventory control.
 Appointment summary - Inventory flow.

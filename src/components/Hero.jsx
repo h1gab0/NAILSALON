@@ -2,6 +2,58 @@ import React, { useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+// In Hero.jsx, update the CallToAction component
+const CallToAction = styled(motion(Link))`
+  padding: 1rem 2rem;
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.radii.medium};
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: ${({ theme }) => theme.shadows.medium};
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      120deg,
+      transparent,
+      ${({ theme }) => `${theme.colors.background}0a`},
+      transparent
+    );
+    transform: translateX(-100%);
+    transition: 0.6s;
+    z-index: -1;
+  }
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.secondary};
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadows.large};
+
+    &:before {
+      transform: translateX(100%);
+    }
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: ${({ theme }) => theme.shadows.small};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.95rem;
+  }
+`;
 
 const HeroContainer = styled(motion.section)`
   display: flex;
@@ -62,24 +114,6 @@ const Subtitle = styled(motion.p)`
   
   @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
     font-size: 1.2rem;
-  }
-`;
-
-const CallToAction = styled(motion(Link))`
-  padding: 0.75rem 1.5rem;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.radii.medium};
-  text-decoration: none;
-  font-weight: bold;
-  transition: all ${({ theme }) => theme.transitions.default};
-  font-family: ${({ theme }) => theme.fonts.body};
-  box-shadow: ${({ theme }) => theme.shadows.medium};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.secondary};
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.large};
   }
 `;
 

@@ -1,4 +1,8 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
+LOGIN for admin ALWAYS
+link redirecting
+CTA button hover has to show TEXT but with a highlighting 
+Fx
 
 Community - Trends
 Inventory control.

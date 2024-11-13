@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPaintBrush, FaPalette, FaGem, FaLeaf, FaMagic, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const ShowcaseContainer = styled.section`
   padding: 5rem 0;
@@ -158,6 +159,7 @@ const trends = [
 ];
 
 function NailTrendShowcase() {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -221,6 +223,24 @@ function NailTrendShowcase() {
     handleManualInteraction();
   }, [currentIndex, handleManualInteraction]);
 
+  const handleCardClick = useCallback((e, index) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    // Calculate center area (80%)
+    const centerWidth = rect.width * 0.8;
+    const centerHeight = rect.height * 0.8;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    if (Math.abs(clickX - centerX) <= centerWidth / 2 && 
+        Math.abs(clickY - centerY) <= centerHeight / 2) {
+      navigate(`/carousel/${index}`);
+    }
+  }, [navigate]);
+
   const CurrentIcon = trends[currentIndex].icon;
 
   const variants = {
@@ -241,7 +261,7 @@ function NailTrendShowcase() {
   };
 
   return (
-    <ShowcaseContainer>
+    <ShowcaseContainer id="trend-showcase">
       <Title>Trending Nail Styles</Title>
       <CarouselWrapper
         onTouchStart={handleTouchStart}
@@ -266,6 +286,7 @@ function NailTrendShowcase() {
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 },
             }}
+            onClick={(e) => handleCardClick(e, currentIndex)}
           >
             <TrendIcon>
               <CurrentIcon />

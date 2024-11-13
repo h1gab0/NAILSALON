@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -119,34 +119,43 @@ const itemVariants = {
 function Hero() {
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
-  const [clickTimer, setClickTimer] = useState(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
 
   const handleTitleClick = useCallback(() => {
-    setClickCount(prev => prev + 1);
-
-    if (clickTimer) {
-      clearTimeout(clickTimer);
+    const currentTime = Date.now();
+    
+    // Reset count if more than 2 seconds have passed since last click
+    if (currentTime - lastClickTime > 2000) {
+      setClickCount(1);
+    } else {
+      setClickCount(prev => prev + 1);
     }
+    
+    setLastClickTime(currentTime);
+  }, [lastClickTime]);
 
-    const timer = setTimeout(() => {
-      setClickCount(0);
-    }, 1000);
-
-    setClickTimer(timer);
-
-    if (clickCount === 6) {
+  // Check for 7 clicks
+  useEffect(() => {
+    if (clickCount === 7) {
       navigate('/admin');
       setClickCount(0);
     }
-  }, [clickCount, clickTimer, navigate]);
+  }, [clickCount, navigate]);
+
+  const handleBooking = useCallback((e) => {
+    e.preventDefault();
+    navigate('/schedule');
+    window.scrollTo(0, 0);
+  }, [navigate]);
 
   return (
-    <HeroContainer variants={containerVariants} initial="hidden" animate="visible">
+    <HeroContainer id="hero-section" variants={containerVariants} initial="hidden" animate="visible">
       <BackgroundPattern />
       <Content>
         <Title 
           variants={itemVariants}
           onClick={handleTitleClick}
+          style={{ cursor: 'default' }}
         >
           Elegant Touch Nail Salon
         </Title>
@@ -157,6 +166,7 @@ function Hero() {
         <CallToActionWrapper variants={itemVariants}>
           <CallToAction
             to="/schedule"
+            onClick={handleBooking}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

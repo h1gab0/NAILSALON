@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
 
@@ -107,12 +107,18 @@ const TrendButton = styled(motion(Link))`
 const AppointmentConfirmation = () => {
   const { id } = useParams();
   const theme = useTheme();
+  const navigate = useNavigate();
   const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
   const appointment = appointments.find(app => app.id === parseInt(id));
 
   if (!appointment) {
     return <ConfirmationContainer theme={theme}>Appointment not found.</ConfirmationContainer>;
   }
+
+  const handleTrendClick = (e) => {
+    e.preventDefault();
+    navigate('/', { state: { scrollToTrends: true } });
+  };
 
   return (
     <ConfirmationContainer theme={theme}>
@@ -135,6 +141,7 @@ const AppointmentConfirmation = () => {
       </CouponButton>
       <TrendButton
         to="/trends"
+        onClick={handleTrendClick}
         whileHover={{ translateY: -4 }}
         whileTap={{ translateY: 0 }}
       >

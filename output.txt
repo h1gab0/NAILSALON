@@ -1,6 +1,12 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
 link redirecting
+
+Develop missing pages:
+/cupons
+/services
+/GALLERY
+
 CTA button hover has to show TEXT
 
 Community - Trends

@@ -1,6 +1,6 @@
 // header.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
@@ -205,6 +205,8 @@ const MobileScheduleButton = styled(Link)`
 `;
 
 function Header() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
@@ -236,19 +238,41 @@ function Header() {
     };
   }, [handleClickOutside]);
 
+  const scrollToTop = useCallback((e) => {
+    e.preventDefault();
+    
+    // If we're on the home page, scroll to top
+    if (location.pathname === '/') {
+      document.getElementById('hero-section')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // If we're on any other page, navigate to home and scroll to top
+      navigate('/');
+      window.scrollTo(0, 0);
+    }
+    closeMenu();
+  }, [location.pathname, navigate, closeMenu]);
+
+  const handleScheduleClick = useCallback((e) => {
+    e.preventDefault();
+    navigate('/schedule');
+    window.scrollTo(0, 0);
+    closeMenu();
+  }, [navigate, closeMenu]);
+
   return (
     <StyledHeader>
       <Nav>
-        <Logo to="/" onClick={closeMenu}>Nail Salon Scheduler</Logo>
+        <Logo to="/" onClick={scrollToTop}>Nail Salon Scheduler</Logo>
         <MenuButton onClick={toggleMenu} aria-label="Toggle menu">
           {isMenuOpen ? '✕' : '☰'}
         </MenuButton>
         <NavLinks>
-          <NavLink to="/">Home</NavLink>
+          <NavLink to="/" onClick={scrollToTop}>Home</NavLink>
           <NavLink to="/services">Services</NavLink>
           <NavLink to="/gallery">Nail Gallery</NavLink>
           <ScheduleButton
             to="/schedule"
+            onClick={handleScheduleClick}
             aria-label="Schedule an appointment"
           >
             Schedule Appointment
@@ -266,12 +290,12 @@ function Header() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <MobileNavLink to="/" onClick={closeMenu}>Home</MobileNavLink>
+            <MobileNavLink to="/" onClick={scrollToTop}>Home</MobileNavLink>
             <MobileNavLink to="/services" onClick={closeMenu}>Services</MobileNavLink>
             <MobileNavLink to="/gallery" onClick={closeMenu}>Nail Gallery</MobileNavLink>
             <MobileScheduleButton 
               to="/schedule" 
-              onClick={closeMenu}
+              onClick={handleScheduleClick}
               aria-label="Schedule an appointment"
             >
               Schedule Appointment

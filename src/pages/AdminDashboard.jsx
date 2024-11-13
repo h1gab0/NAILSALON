@@ -387,15 +387,34 @@ function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
-    } else {
-      const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
-      setAppointments(storedAppointments);
-      const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-      setAvailability(storedAvailability);
-    }
-  }, [user, navigate]);
+    const verifyAdmin = async () => {
+      try {
+        const response = await fetch('/api/admin/verify', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          navigate('/login');
+          return;
+        }
+
+        const data = await response.json();
+        if (!data) {
+          navigate('/login');
+          return;
+        }
+
+        const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
+        setAppointments(storedAppointments);
+        const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+        setAvailability(storedAvailability);
+      } catch (error) {
+        navigate('/login');
+      }
+    };
+
+    verifyAdmin();
+  }, [navigate]);
 
   const handleAddNote = (id, note) => {
     const updatedAppointments = appointments.map(appointment => 

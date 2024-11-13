@@ -106,32 +106,48 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In a real app, you would validate credentials against a backend
-    if (username === 'admin' && password === 'password') {
-      login({ username, role: 'admin' });
+    try {
+      // Always require authentication
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
+
+      const data = await response.json();
+      login(data);
       navigate('/admin');
-    } else {
+    } catch (error) {
       alert('Invalid credentials');
     }
   };
 
   return (
     <LoginContainer>
-      <Title>Login</Title>
+      <Title>Administrator Login</Title>
       <LoginForm onSubmit={handleSubmit}>
         <Input
           type="text"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          required
         />
         <Input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
         <Button type="submit">Login</Button>
       </LoginForm>

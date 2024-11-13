@@ -54,12 +54,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
+    <BrowserRouter>
       <ThemeProvider>
-        <BrowserRouter>
+        <AuthProvider>
           <AppContent />
-        </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
-    </AuthProvider>
+    </BrowserRouter>
   );
 }

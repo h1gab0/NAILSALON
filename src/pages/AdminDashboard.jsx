@@ -365,6 +365,23 @@ const ModalButton = styled(Button)`
   margin-right: 0.5rem;
 `;
 
+const TimeSelectionContainer = styled.div`
+  margin-bottom: 1rem;
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -385,6 +402,8 @@ function AdminDashboard() {
     phone: '',
     time: '',
   });
+  const [timeSelectionType, setTimeSelectionType] = useState('existing');
+  const [modalClockVisible, setModalClockVisible] = useState(false);
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -580,16 +599,21 @@ function AdminDashboard() {
   };
 
   const handleModalSubmit = () => {
-    if (!newAppointment.clientName || !newAppointment.phone || !newAppointment.time) {
+    if (!newAppointment.clientName || !newAppointment.phone || 
+        (timeSelectionType === 'existing' && !newAppointment.time) ||
+        (timeSelectionType === 'new' && !newTimeSlot)) {
       alert('Please fill in all fields');
       return;
     }
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
+    const appointmentTime = timeSelectionType === 'existing' ? 
+      newAppointment.time : newTimeSlot;
+
     const newAppointmentObj = {
       id: Date.now(),
       date: dateString,
-      time: newAppointment.time,
+      time: appointmentTime,
       clientName: newAppointment.clientName,
       phone: newAppointment.phone,
       status: 'scheduled',
@@ -600,22 +624,27 @@ function AdminDashboard() {
     setAppointments(updatedAppointments);
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
 
-    // Update availability
-    const updatedAvailability = {
-      ...availability,
-      [dateString]: {
-        ...availability[dateString],
-        availableSlots: {
-          ...availability[dateString]?.availableSlots,
-          [newAppointment.time]: false
+    // Only update availability if using an existing time slot
+    if (timeSelectionType === 'existing') {
+      const updatedAvailability = {
+        ...availability,
+        [dateString]: {
+          ...availability[dateString],
+          availableSlots: {
+            ...availability[dateString]?.availableSlots,
+            [appointmentTime]: false
+          }
         }
-      }
-    };
-    setAvailability(updatedAvailability);
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      };
+      setAvailability(updatedAvailability);
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    }
 
     setShowModal(false);
     setNewAppointment({ clientName: '', phone: '', time: '' });
+    setNewTimeSlot('');
+    setModalClockVisible(false);
+    setTimeSelectionType('existing');
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -923,21 +952,93 @@ function AdminDashboard() {
               value={newAppointment.phone}
               onChange={(e) => setNewAppointment({ ...newAppointment, phone: e.target.value })}
             />
-            <ModalSelect
-              value={newAppointment.time}
-              onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
-            >
-              <option value="">Select Time</option>
-              {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
-                Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
-                  .filter(([_, isAvailable]) => isAvailable)
-                  .map(([time, _]) => (
-                    <option key={time} value={time}>{time}</option>
-                  ))
-              }
-            </ModalSelect>
+            
+            <TimeSelectionContainer>
+              <RadioGroup>
+                <RadioLabel>
+                  <input
+                    type="radio"
+                    value="existing"
+                    checked={timeSelectionType === 'existing'}
+                    onChange={(e) => {
+                      setTimeSelectionType(e.target.value);
+                      setModalClockVisible(false);
+                    }}
+                  />
+                  Use Existing Time Slot
+                </RadioLabel>
+                <RadioLabel>
+                  <input
+                    type="radio"
+                    value="new"
+                    checked={timeSelectionType === 'new'}
+                    onChange={(e) => {
+                      setTimeSelectionType(e.target.value);
+                      setModalClockVisible(true);
+                    }}
+                  />
+                  Create New Time Slot
+                </RadioLabel>
+              </RadioGroup>
+
+              {timeSelectionType === 'existing' ? (
+                <ModalSelect
+                  value={newAppointment.time}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                >
+                  <option value="">Select Time</option>
+                  {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
+                    Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+                      .filter(([_, isAvailable]) => isAvailable)
+                      .map(([time, _]) => (
+                        <option key={time} value={time}>{time}</option>
+                      ))
+                  }
+                </ModalSelect>
+              ) : (
+                modalClockVisible && (
+                  <ClockContainer>
+                    <ClockInstruction>
+                      {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
+                    </ClockInstruction>
+                    <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
+                    <AMPMSwitch>
+                      <AMPMLabel active={isAM}>AM</AMPMLabel>
+                      <Switch isAM={isAM} onClick={toggleAMPM} />
+                      <AMPMLabel active={!isAM}>PM</AMPMLabel>
+                    </AMPMSwitch>
+                    <ClockFace ref={clockRef} onClick={handleClockClick}>
+                      <HourHand
+                        angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                        show={clockPhase === 'hour'}
+                      />
+                      <MinuteHand
+                        angle={selectedTime.getMinutes() * 6}
+                        show={clockPhase === 'minute'}
+                      />
+                      {[...Array(12)].map((_, index) => (
+                        <ClockNumber key={index} rotation={index * 30}>
+                          {index === 0 ? 12 : index}
+                        </ClockNumber>
+                      ))}
+                    </ClockFace>
+                    <div>
+                      <ClockButton onClick={handleClockConfirm}>
+                        {clockPhase === 'hour' ? 'Next' : 'Confirm'}
+                      </ClockButton>
+                      <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
+                    </div>
+                  </ClockContainer>
+                )
+              )}
+            </TimeSelectionContainer>
+
             <ModalButton onClick={handleModalSubmit}>Create</ModalButton>
-            <ModalButton onClick={() => setShowModal(false)}>Cancel</ModalButton>
+            <ModalButton onClick={() => {
+              setShowModal(false);
+              setModalClockVisible(false);
+              setTimeSelectionType('existing');
+            }}>Cancel</ModalButton>
           </ModalContent>
         </Modal>
       )}

@@ -111,10 +111,26 @@ const InspirationImage = styled.img`
   margin-bottom: 0.5rem;
 `;
 
-const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel, onComplete, onDownloadImage, onUpdateName }) => {
+const NoteInput = styled.input`
+  flex: 1;
+  padding: 0.25rem;
+  margin-right: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
+  font-size: 1rem;
+`;
+
+const EditNoteButton = styled(RemoveNoteButton)`
+  background-color: ${({ theme }) => theme.colors.primary};
+  margin-right: 0.5rem;
+`;
+
+const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onEditNote, onCancel, onComplete, onDownloadImage, onUpdateName }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editableName, setEditableName] = useState(appointment.clientName);
+  const [editingNoteIndex, setEditingNoteIndex] = useState(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
 
   const getWhatsAppLink = (phone, message) => {
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -145,6 +161,22 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel
       setIsExpanded(!isExpanded);
     }
     e.stopPropagation();
+  };
+
+  const handleCancelNoteEdit = () => {
+    setEditingNoteIndex(null);
+    setEditingNoteText('');
+  };
+
+  const handleStartEdit = (index, noteText) => {
+    setEditingNoteIndex(index);
+    setEditingNoteText(noteText);
+  };
+
+  const handleSaveEdit = (index) => {
+    onEditNote(appointment.id, index, editingNoteText);
+    setEditingNoteIndex(null);
+    setEditingNoteText('');
   };
 
   return (
@@ -198,8 +230,34 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onCancel
             <NoteContainer>
               {appointment.notes && appointment.notes.map((note, index) => (
                 <NoteItem key={index}>
-                  <span>{note}</span>
-                  <RemoveNoteButton onClick={() => onRemoveNote(appointment.id, index)}>Remove</RemoveNoteButton>
+                  {editingNoteIndex === index ? (
+                    <>
+                      <NoteInput
+                        type="text"
+                        value={editingNoteText}
+                        onChange={(e) => setEditingNoteText(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit(index)}
+                      />
+                      <EditNoteButton onClick={() => handleSaveEdit(index)}>
+                        <FaCheck />
+                      </EditNoteButton>
+                      <RemoveNoteButton onClick={handleCancelNoteEdit}>
+                        <FaTimes />
+                      </RemoveNoteButton>
+                    </>
+                  ) : (
+                    <>
+                      <span>{note}</span>
+                      <div>
+                        <EditNoteButton onClick={() => handleStartEdit(index, note)}>
+                          <FaEdit />
+                        </EditNoteButton>
+                        <RemoveNoteButton onClick={() => onRemoveNote(appointment.id, index)}>
+                          <FaTimes />
+                        </RemoveNoteButton>
+                      </div>
+                    </>
+                  )}
                 </NoteItem>
               ))}
             </NoteContainer>

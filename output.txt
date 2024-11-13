@@ -1,6 +1,5 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
-Edit Admin Appointment notes.
 link redirecting
 CTA button hover has to show TEXT
 

@@ -464,6 +464,19 @@ function AdminDashboard() {
     localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
+  const handleEditNote = (appointmentId, noteIndex, newNoteText) => {
+    const updatedAppointments = appointments.map(appointment => {
+      if (appointment.id === appointmentId) {
+        const updatedNotes = [...appointment.notes];
+        updatedNotes[noteIndex] = newNoteText;
+        return { ...appointment, notes: updatedNotes };
+      }
+      return appointment;
+    });
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  };
+
   const handleCancel = (id) => {
     const appointmentToCancel = appointments.find(appointment => appointment.id === id);
     const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
@@ -842,6 +855,7 @@ function AdminDashboard() {
             appointment={appointment}
             onAddNote={handleAddNote}
             onRemoveNote={handleRemoveNote}
+            onEditNote={handleEditNote}
             onCancel={handleCancel}
             onComplete={handleComplete}
             onDownloadImage={handleDownloadImage}
@@ -928,6 +942,7 @@ function AdminDashboard() {
             appointment={appointment}
             onAddNote={handleAddNote}
             onRemoveNote={handleRemoveNote}
+            onEditNote={handleEditNote}
             onCancel={handleCancel}
             onComplete={handleComplete}
             onDownloadImage={handleDownloadImage}

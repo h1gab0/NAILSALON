@@ -14,6 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const logout = async () => {
     try {
@@ -101,20 +102,24 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await fetch('/api/admin/verify', {
           credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
         });
         
-        if (!response.ok) {
+        if (response.status === 401) {
+          setIsAuthenticated(false);
           setUser(null);
           return;
         }
 
-        const userData = await response.json();
-        setUser(userData);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setIsAuthenticated(true);
+        setUser(data.user);
       } catch (error) {
-        console.error('Verify session failed:', error);
+        console.error('Session verification error:', error);
+        setIsAuthenticated(false);
         setUser(null);
       }
     };

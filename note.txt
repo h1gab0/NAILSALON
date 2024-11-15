@@ -17,7 +17,7 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>  
 
-Help me to update color scheme with an IMPLEMENTATION OF ELEGANT BLACK COLOR, APPLY IT STRONGLY IN DARK MODE.
+Help me to update my project, I need to add a new GALLERY PAGE based on the trenddetail file design add image interaction for a better UX  
 
 Make sure You Will not remove any existing used features, it is imperative..
 Fix it please and return fully updated file version ONLY as required. Ready to copy and paste.

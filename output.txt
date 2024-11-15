@@ -1,12 +1,8 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
 Develop missing pages:
-/cupons
-/services
 /GALLERY
 Try loading an inspirational image and ask to recreate
-
-
 
 HOW IS THE CLIENT RELATIONSHIP MANAGED?
 CUPONS - MARKETING - DATA GATHERING

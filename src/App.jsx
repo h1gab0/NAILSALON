@@ -20,7 +20,7 @@ import AppointmentConfirmation from './pages/AppointmentConfirmation';
 import TrendDetails from './pages/TrendDetails';
 import CouponPage from './pages/CouponPage';
 import Services from './pages/Services';
-
+import Gallery from './pages/Gallery';
 const MainContent = styled.main`
   padding-top: 60px;
   min-height: calc(100vh - 60px);
@@ -69,6 +69,7 @@ function AppContent() {
           <Route path="/carousel/:id" element={<TrendDetails />} />
           <Route path="/coupon" element={<CouponPage />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/gallery" element={<Gallery />} />
         </Routes>
       </MainContent>
       <Chat />

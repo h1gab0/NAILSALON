@@ -1,5 +1,5 @@
 // src/components/CollapsibleAppointment.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaWhatsapp, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
@@ -9,6 +9,7 @@ const CollapsibleContainer = styled.div`
   margin-bottom: 1rem;
   border-radius: 4px;
   overflow: hidden;
+  transition: all 0.3s ease;
 `;
 
 const AppointmentHeader = styled.div`
@@ -126,6 +127,7 @@ const EditNoteButton = styled(RemoveNoteButton)`
 `;
 
 const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onEditNote, onCancel, onComplete, onDownloadImage, onUpdateName }) => {
+  const appointmentRef = useRef(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editableName, setEditableName] = useState(appointment.clientName);
@@ -159,6 +161,20 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onEditNo
   const toggleExpand = (e) => {
     if (!isEditing) {
       setIsExpanded(!isExpanded);
+      if (!isExpanded && appointmentRef.current) {
+        setTimeout(() => {
+          const element = appointmentRef.current;
+          const elementRect = element.getBoundingClientRect();
+          const absoluteElementTop = elementRect.top + window.pageYOffset;
+          
+          const scrollPosition = absoluteElementTop + elementRect.height - window.innerHeight;
+          
+          window.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          });
+        }, 150);
+      }
     }
     e.stopPropagation();
   };
@@ -180,7 +196,7 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onEditNo
   };
 
   return (
-    <CollapsibleContainer>
+    <CollapsibleContainer ref={appointmentRef}>
       <AppointmentHeader onClick={toggleExpand}>
         <ClientNameContainer>
           {isEditing ? (

@@ -382,6 +382,10 @@ const RadioLabel = styled.label`
   cursor: pointer;
 `;
 
+const AppointmentListSection = styled.div`
+  width: 100%;
+`;
+
 function AdminDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -404,6 +408,8 @@ function AdminDashboard() {
   });
   const [timeSelectionType, setTimeSelectionType] = useState('existing');
   const [modalClockVisible, setModalClockVisible] = useState(false);
+  const timeWidgetRef = useRef(null);
+  const appointmentListRef = useRef(null);
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -515,6 +521,20 @@ function AdminDashboard() {
 
   const handleDaySelect = (date) => {
     setSelectedDate(date);
+    
+    setTimeout(() => {
+      if (appointmentListRef.current) {
+        const element = appointmentListRef.current;
+        const elementRect = element.getBoundingClientRect();
+        const absoluteElementTop = elementRect.top + window.pageYOffset;
+        const scrollPosition = absoluteElementTop + elementRect.height - window.innerHeight;
+        
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   const handleAddTimeSlot = () => {
@@ -664,6 +684,20 @@ function AdminDashboard() {
   const handleTimeInputClick = () => {
     if (!isMobile) {
       setShowClock(true);
+      // Wait for the clock widget to render
+      setTimeout(() => {
+        if (timeWidgetRef.current) {
+          const element = timeWidgetRef.current;
+          const elementRect = element.getBoundingClientRect();
+          const absoluteElementTop = elementRect.top + window.pageYOffset;
+          const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
+          
+          window.scrollTo({
+            top: middle,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
   };
 
@@ -847,25 +881,32 @@ function AdminDashboard() {
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
       
-      <SubHeader>Today's Upcoming Appointments</SubHeader>
-      <AppointmentList>
-        {todayAppointments.map((appointment) => (
-          <CollapsibleAppointment
-            key={appointment.id}
-            appointment={appointment}
-            onAddNote={handleAddNote}
-            onRemoveNote={handleRemoveNote}
-            onEditNote={handleEditNote}
-            onCancel={handleCancel}
-            onComplete={handleComplete}
-            onDownloadImage={handleDownloadImage}
-            onUpdateName={handleUpdateAppointmentName}
-          />
-        ))}
-      </AppointmentList>
+      <AppointmentListSection ref={appointmentListRef}>
+        <SubHeader>All Appointments</SubHeader>
+        <TabContainer>
+          <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
+          <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
+          <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
+        </TabContainer>
+        <AppointmentList>
+          {displayedAppointments.map((appointment) => (
+            <CollapsibleAppointment
+              key={appointment.id}
+              appointment={appointment}
+              onAddNote={handleAddNote}
+              onRemoveNote={handleRemoveNote}
+              onEditNote={handleEditNote}
+              onCancel={handleCancel}
+              onComplete={handleComplete}
+              onDownloadImage={handleDownloadImage}
+              onUpdateName={handleUpdateAppointmentName}
+            />
+          ))}
+        </AppointmentList>
+      </AppointmentListSection>
 
       {selectedDate && (
-        <AvailabilityContainer>
+        <AvailabilityContainer data-availability-section>
           <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
           <CreateAppointmentButton onClick={handleCreateAppointment}>
             Create Appointment
@@ -880,7 +921,7 @@ function AdminDashboard() {
             <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
           </TimeSlotContainer>
           {showClock && !isMobile && (
-            <ClockContainer>
+            <ClockContainer ref={timeWidgetRef}>
               <ClockInstruction>
                 {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
               </ClockInstruction>
@@ -929,28 +970,6 @@ function AdminDashboard() {
         </AvailabilityContainer>
       )}
       
-      <SubHeader>All Appointments</SubHeader>
-      <TabContainer>
-        <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
-        <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
-        <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
-      </TabContainer>
-      <AppointmentList>
-        {displayedAppointments.map((appointment) => (
-          <CollapsibleAppointment
-            key={appointment.id}
-            appointment={appointment}
-            onAddNote={handleAddNote}
-            onRemoveNote={handleRemoveNote}
-            onEditNote={handleEditNote}
-            onCancel={handleCancel}
-            onComplete={handleComplete}
-            onDownloadImage={handleDownloadImage}
-            onUpdateName={handleUpdateAppointmentName}
-          />
-        ))}
-      </AppointmentList>
-
       {showModal && (
         <Modal>
           <ModalContent>

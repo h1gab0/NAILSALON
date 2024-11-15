@@ -17,14 +17,7 @@ Always do reflection after making the plan to see if you missed something and al
 In this section, provide the complete answer for the user based on your thinking process. Do not refer to the thinking tag. Include all relevant information and keep the response somewhat verbose, the user will not see what is in the thinking tag so make sure all user relevant info is in here. Do not refer to the thinking tag.
 </output>  
 
-Help me to modify my project in order to achieve desired redirecting behaviour in the following way:
-
-When user located at main page:
-If clicks within the header: Nail Salon Scheduler or Home > Automatic scroll to the very top of hero page.
-If user clicks within a 80% area from the center of a nailtrendshowcase carrousel item > Route to /carrousel(ElementIndex)
-
-When user located at AppointmentConfirmation page:
-If clicks view nail trends > Redirect to main page very bottom where the trend carrousel is visible.
+Help me to update color scheme with an IMPLEMENTATION OF ELEGANT BLACK COLOR, APPLY IT STRONGLY IN DARK MODE.
 
 Make sure You Will not remove any existing used features, it is imperative..
 Fix it please and return fully updated file version ONLY as required. Ready to copy and paste.

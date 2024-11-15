@@ -50,13 +50,13 @@ export const darkTheme = {
     primary: '#FF1493', // Deep Pink
     secondary: '#FF69B4', // Hot Pink
     tertiary: '#DB7093', // Pale Violet Red
-    background: '#4B0082', // Indigo
-    cardBackground: '#8B008B', // Dark Magenta
-    text: '#FFF0F5', // Lavender Blush
-    subtext: '#DDA0DD', // Plum
-    headerBackground: '#800080', // Purple
-    border: '#C71585', // Medium Violet Red
-    hover: '#9932CC', // Dark Orchid
+    background: '#0A0A0A', // Nearly Black
+    cardBackground: '#1A1A1A', // Elegant Dark Gray
+    text: '#FFFFFF', // Pure White for contrast
+    subtext: '#E0E0E0', // Light Gray
+    headerBackground: '#141414', // Slightly lighter than background
+    border: '#2A2A2A', // Subtle border color
+    hover: '#2C2C2C', // Slightly lighter than border for hover states
     success: '#98FB98', // Pale Green
     warning: '#FFFACD', // Lemon Chiffon
     error: '#FFB6C1', // Light Pink

@@ -18,6 +18,8 @@ import LoginComponent from './components/LoginComponent';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppointmentConfirmation from './pages/AppointmentConfirmation';
 import TrendDetails from './pages/TrendDetails';
+import CouponPage from './pages/CouponPage';
+import Services from './pages/Services';
 
 const MainContent = styled.main`
   padding-top: 60px;
@@ -65,6 +67,8 @@ function AppContent() {
           <Route path="/login" element={<LoginComponent />} />
           <Route path="/appointment-confirmation/:id" element={<AppointmentConfirmation />} />
           <Route path="/carousel/:id" element={<TrendDetails />} />
+          <Route path="/coupon" element={<CouponPage />} />
+          <Route path="/services" element={<Services />} />
         </Routes>
       </MainContent>
       <Chat />

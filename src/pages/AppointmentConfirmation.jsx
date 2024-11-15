@@ -134,10 +134,10 @@ const AppointmentConfirmation = () => {
       )}
       <CouponButton
         to="/coupon"
-        whileHover={{ translateY: -4 }}
-        whileTap={{ translateY: 0 }}
+        whileHover={{ scale: 1.05, translateY: -4 }}
+        whileTap={{ scale: 0.95, translateY: 0 }}
       >
-        Claim Your Offer Coupon
+        Choose Your Special Offer
       </CouponButton>
       <TrendButton
         to="/trends"

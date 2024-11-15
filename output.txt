@@ -1,11 +1,23 @@
 GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
-link redirecting
-
 Develop missing pages:
 /cupons
 /services
 /GALLERY
+Try loading an inspirational image and ask to recreate
+
+
+
+HOW IS THE CLIENT RELATIONSHIP MANAGED?
+CUPONS - MARKETING - DATA GATHERING
+
+clientscheoling view -> WHAT SERVICE DO YOU NEED?
+-> SERVICE CUSTOMIZATION STAGE.
+Sellers and customers visually design products, select parts or components, and arrange settings and features in real-time based on their requirements, preset business rules, and product availability data.
+
+
+FOR TEXT ELEMENTS IN GENRAL, DISABLE CURSOR LINE VIEW WHEN
+CLICKING THEM
 
 CTA button hover has to show TEXT
 

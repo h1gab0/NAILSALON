@@ -1,7 +1,29 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const fs = require('fs').promises;
 const app = express();
+
+const DB_FILE = './database.json';
+
+const readDb = async () => {
+  try {
+    const data = await fs.readFile(DB_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // If the file doesn't exist, create it with a default structure
+      await fs.writeFile(DB_FILE, JSON.stringify({ appointments: [], availability: {} }), 'utf8');
+      return { appointments: [], availability: {} };
+    }
+    throw error;
+  }
+};
+
+const writeDb = async (data) => {
+  await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+};
+
 
 // Debug middleware - Log all requests
 app.use((req, res, next) => {
@@ -124,6 +146,60 @@ app.post('/api/admin/logout', (req, res) => {
       res.json({ message: 'Logged out successfully' });
     }
   });
+});
+
+// APPOINTMENTS API
+app.get('/api/appointments', async (req, res) => {
+  const db = await readDb();
+  res.json(db.appointments);
+});
+
+app.post('/api/appointments', async (req, res) => {
+  const db = await readDb();
+  const newAppointment = { ...req.body, id: Date.now() };
+  db.appointments.push(newAppointment);
+  await writeDb(db);
+  res.status(201).json(newAppointment);
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+  const db = await readDb();
+  const { id } = req.params;
+  const updatedAppointment = req.body;
+  const index = db.appointments.findIndex(a => a.id == id);
+  if (index !== -1) {
+    db.appointments[index] = { ...db.appointments[index], ...updatedAppointment };
+    await writeDb(db);
+    res.json(db.appointments[index]);
+  } else {
+    res.status(404).json({ message: 'Appointment not found' });
+  }
+});
+
+app.delete('/api/appointments/:id', async (req, res) => {
+  const db = await readDb();
+  const { id } = req.params;
+  const index = db.appointments.findIndex(a => a.id == id);
+  if (index !== -1) {
+    db.appointments.splice(index, 1);
+    await writeDb(db);
+    res.status(204).send();
+  } else {
+    res.status(404).json({ message: 'Appointment not found' });
+  }
+});
+
+// AVAILABILITY API
+app.get('/api/availability', async (req, res) => {
+  const db = await readDb();
+  res.json(db.availability);
+});
+
+app.post('/api/availability', async (req, res) => {
+  const db = await readDb();
+  db.availability = req.body;
+  await writeDb(db);
+  res.json(db.availability);
 });
 
 // Error handling middleware

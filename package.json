@@ -9,7 +9,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "server": "node server.cjs",
-    "dev:server": "nodemon server.cjs",
+    "dev:server": "node server.cjs",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\""
   },
   "dependencies": {

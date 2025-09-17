@@ -142,60 +142,27 @@ const ClientScheduling = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [availableDates, setAvailableDates] = useState([]);
   const [step, setStep] = useState('date');
+  const [couponCode, setCouponCode] = useState('');
+  const [discount, setDiscount] = useState(0);
   const navigate = useNavigate();
 
-  const removePastTimeSlotsAndEmptyDates = () => {
-    const now = new Date();
-    const availability = JSON.parse(localStorage.getItem('availability')) || {};
-    const updatedAvailability = { ...availability };
-    let hasChanges = false;
-
-    Object.keys(updatedAvailability).forEach(dateString => {
-      const date = parseISO(dateString);
-      const dateStart = startOfDay(date);
-      
-      if (isBefore(dateStart, startOfDay(now))) {
-        delete updatedAvailability[dateString];
-        hasChanges = true;
-      } else {
-        const availableSlots = updatedAvailability[dateString].availableSlots;
-        Object.keys(availableSlots).forEach(timeSlot => {
-          const slotTime = parseISO(`${dateString}T${timeSlot}`);
-          if (isBefore(slotTime, now)) {
-            delete availableSlots[timeSlot];
-            hasChanges = true;
-          }
-        });
-        
-        // Remove the date if there are no available slots left
-        if (Object.keys(availableSlots).length === 0) {
-          delete updatedAvailability[dateString];
-          hasChanges = true;
-        }
-      }
-    });
-
-    if (hasChanges) {
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
-    }
-
-    return updatedAvailability;
-  };
-
-  const loadAvailability = () => {
-    const updatedAvailability = removePastTimeSlotsAndEmptyDates();
-    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+  const loadAvailability = async () => {
+    const [availabilityRes, appointmentsRes] = await Promise.all([
+      fetch('/api/availability'),
+      fetch('/api/appointments')
+    ]);
+    const availability = await availabilityRes.json();
+    const appointments = await appointmentsRes.json();
 
     const today = startOfDay(new Date());
     const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
-    
+
     const availableDatesWithSlots = nextThirtyDays.filter(date => {
-      const dateAvailability = updatedAvailability[date] || { isAvailable: false, availableSlots: {} };
+      const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
       const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
       const availableSlots = Object.entries(dateAvailability.availableSlots)
         .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
-      
+
       const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0;
       return isDateAvailable;
     });
@@ -203,7 +170,7 @@ const ClientScheduling = () => {
     setAvailableDates(availableDatesWithSlots);
 
     if (selectedDate) {
-      const dateAvailability = updatedAvailability[selectedDate] || { isAvailable: false, availableSlots: {} };
+      const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
       const bookedSlots = appointments
         .filter(appointment => appointment.date === selectedDate)
         .map(appointment => appointment.time);
@@ -226,21 +193,6 @@ const ClientScheduling = () => {
 
   useEffect(() => {
     loadAvailability();
-
-    const handleStorageChange = (e) => {
-      if (e.key === 'availability' || e.key === 'appointments') {
-        loadAvailability();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    const interval = setInterval(loadAvailability, 60000); // Run every minute
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
   }, [selectedDate]);
 
   const handleDateSelection = (date) => {
@@ -254,6 +206,21 @@ const ClientScheduling = () => {
     setStep('info');
   };
 
+  const handleApplyCoupon = async () => {
+    const response = await fetch('/api/coupons/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: couponCode, appointmentId: null }) // appointmentId is not needed for validation
+    });
+    const data = await response.json();
+    if (data.success) {
+      setDiscount(data.appointment.discount);
+      alert(`Coupon applied! You get a ${data.appointment.discount}% discount.`);
+    } else {
+      alert('Invalid or expired coupon code.');
+    }
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -265,34 +232,50 @@ const ClientScheduling = () => {
     }
   };
 
-  const handleConfirmAppointment = () => {
+  const handleConfirmAppointment = async () => {
     if (!name || !phone) {
       alert('Please enter your name and phone number');
       return;
     }
 
-    const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
     const newAppointment = {
-      id: Date.now(),
       date: selectedDate,
       time: selectedTime,
       clientName: name,
       phone: phone,
       status: 'scheduled',
-      image: image
+      image: image,
+      couponCode: couponCode,
+      discount: discount
     };
-    appointments.push(newAppointment);
-    localStorage.setItem('appointments', JSON.stringify(appointments));
-    
-    const availability = JSON.parse(localStorage.getItem('availability')) || {};
-    if (availability[selectedDate] && availability[selectedDate].availableSlots) {
-      availability[selectedDate].availableSlots[selectedTime] = false;
-      localStorage.setItem('availability', JSON.stringify(availability));
+
+    const appointmentResponse = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAppointment)
+    });
+    const createdAppointment = await appointmentResponse.json();
+
+    if (couponCode) {
+      await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, appointmentId: createdAppointment.id })
+      });
     }
 
-    window.dispatchEvent(new Event('storage'));
+    const availabilityResponse = await fetch('/api/availability');
+    const availability = await availabilityResponse.json();
+    if (availability[selectedDate] && availability[selectedDate].availableSlots) {
+      availability[selectedDate].availableSlots[selectedTime] = false;
+      await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(availability)
+      });
+    }
 
-    navigate(`/appointment-confirmation/${newAppointment.id}`);
+    navigate(`/appointment-confirmation/${createdAppointment.id}`);
   };
 
   const containerVariants = {
@@ -319,7 +302,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaCalendarAlt /></StepIcon>
                 Select a Date
               </StepTitle>
-              <DateGrid>
+              <DateGrid data-testid="date-grid">
                 {availableDates.length > 0 ? (
                   availableDates.map((date) => (
                     <DateButton
@@ -353,7 +336,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaClock /></StepIcon>
                 Select a Time
               </StepTitle>
-              <TimeGrid>
+              <TimeGrid data-testid="time-grid">
                 {availableSlots.map((slot, index) => (
                   <TimeSlot
                     key={index}
@@ -408,6 +391,15 @@ const ClientScheduling = () => {
                 />
                 {image && <ImagePreview src={image} alt="Design Inspiration" />}
               </ImageUploadContainer>
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Coupon Code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                />
+                <Button onClick={handleApplyCoupon}>Apply Coupon</Button>
+              </div>
               <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
             </StepContainer>
           )}

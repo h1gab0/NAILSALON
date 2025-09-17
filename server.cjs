@@ -149,6 +149,16 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 // APPOINTMENTS API
+app.get('/api/appointments/:id', async (req, res) => {
+  const db = await readDb();
+  const appointment = db.appointments.find(a => a.id == req.params.id);
+  if (appointment) {
+    res.json(appointment);
+  } else {
+    res.status(404).json({ message: 'Appointment not found' });
+  }
+});
+
 app.get('/api/appointments', async (req, res) => {
   const db = await readDb();
   res.json(db.appointments);
@@ -200,6 +210,63 @@ app.post('/api/availability', async (req, res) => {
   db.availability = req.body;
   await writeDb(db);
   res.json(db.availability);
+});
+
+// CLIENTS API
+app.post('/api/clients', async (req, res) => {
+  const db = await readDb();
+  const { phone } = req.body;
+  let client = db.clients.find(c => c.phone === phone);
+  if (!client) {
+    client = { id: Date.now(), ...req.body };
+    db.clients.push(client);
+    await writeDb(db);
+  }
+  res.json(client);
+});
+
+// COUPONS API
+app.post('/api/coupons', async (req, res) => {
+  const db = await readDb();
+  const { clientId } = req.body;
+  const coupon = {
+    id: Date.now(),
+    clientId,
+    code: `PROMO${Date.now()}`,
+    discount: Math.floor(Math.random() * 20) + 5, // 5-25% discount
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days expiry
+    used: false
+  };
+  db.coupons.push(coupon);
+  await writeDb(db);
+  res.status(201).json(coupon);
+});
+
+app.get('/api/coupons/:clientId', async (req, res) => {
+  const db = await readDb();
+  const { clientId } = req.params;
+  const coupons = db.coupons.filter(c => c.clientId == clientId && !c.used);
+  res.json(coupons);
+});
+
+app.post('/api/coupons/apply', async (req, res) => {
+  const db = await readDb();
+  const { code, appointmentId } = req.body;
+  const coupon = db.coupons.find(c => c.code === code && !c.used);
+  if (coupon) {
+    const appointment = db.appointments.find(a => a.id == appointmentId);
+    if (appointment) {
+      appointment.discount = coupon.discount;
+      appointment.couponCode = code;
+      coupon.used = true;
+      await writeDb(db);
+      res.json({ success: true, appointment });
+    } else {
+      res.status(404).json({ message: 'Appointment not found' });
+    }
+  } else {
+    res.status(404).json({ message: 'Coupon not found or already used' });
+  }
 });
 
 // Error handling middleware

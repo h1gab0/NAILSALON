@@ -104,12 +104,52 @@ const TrendButton = styled(motion(Link))`
   }
 `;
 
+import { useState, useEffect } from 'react';
+
 const AppointmentConfirmation = () => {
   const { id } = useParams();
   const theme = useTheme();
   const navigate = useNavigate();
-  const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
-  const appointment = appointments.find(app => app.id === parseInt(id));
+  const [appointment, setAppointment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [coupon, setCoupon] = useState(null);
+
+  useEffect(() => {
+    const fetchAppointmentAndGenerateCoupon = async () => {
+      try {
+        const response = await fetch(`/api/appointments/${id}`);
+        const currentAppointment = await response.json();
+        setAppointment(currentAppointment);
+
+        if (currentAppointment) {
+          const clientResponse = await fetch('/api/clients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: currentAppointment.phone, name: currentAppointment.clientName })
+          });
+          const client = await clientResponse.json();
+
+          const couponResponse = await fetch('/api/coupons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: client.id })
+          });
+          const newCoupon = await couponResponse.json();
+          setCoupon(newCoupon);
+        }
+      } catch (error) {
+        console.error('Error fetching appointment or generating coupon:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointmentAndGenerateCoupon();
+  }, [id]);
+
+  if (loading) {
+    return <ConfirmationContainer theme={theme}>Loading...</ConfirmationContainer>;
+  }
 
   if (!appointment) {
     return <ConfirmationContainer theme={theme}>Appointment not found.</ConfirmationContainer>;
@@ -126,19 +166,29 @@ const AppointmentConfirmation = () => {
       <Details>Date: {appointment.date}</Details>
       <Details>Time: {appointment.time}</Details>
       <Details>Appointment ID: {appointment.id}</Details>
+      {appointment.discount > 0 && (
+        <Details>Discount Applied: {appointment.discount}%</Details>
+      )}
       {appointment.image && (
         <>
           <Details>Design Inspiration:</Details>
           <ImagePreview src={appointment.image} alt="Design Inspiration" />
         </>
       )}
-      <CouponButton
-        to="/coupon"
-        whileHover={{ scale: 1.05, translateY: -4 }}
-        whileTap={{ scale: 0.95, translateY: 0 }}
-      >
-        Choose Your Special Offer
-      </CouponButton>
+      {coupon && (
+        <>
+          <Title>Your Exclusive Offer!</Title>
+          <Details>
+            Here's a {coupon.discount}% discount for your next visit!
+          </Details>
+          <Details>
+            Your code is: <strong>{coupon.code}</strong>
+          </Details>
+          <Details>
+            Expires on: {new Date(coupon.expiresAt).toLocaleDateString()}
+          </Details>
+        </>
+      )}
       <TrendButton
         to="/trends"
         onClick={handleTrendClick}

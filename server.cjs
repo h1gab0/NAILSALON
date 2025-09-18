@@ -12,9 +12,8 @@ const readDb = async () => {
     return JSON.parse(data);
   } catch (error) {
     if (error.code === 'ENOENT') {
-      // If the file doesn't exist, create it with a default structure
-      await fs.writeFile(DB_FILE, JSON.stringify({ appointments: [], availability: {} }), 'utf8');
-      return { appointments: [], availability: {} };
+      await fs.writeFile(DB_FILE, JSON.stringify({ appointments: [], availability: {}, coupons: [], clients: [] }), 'utf8');
+      return { appointments: [], availability: {}, coupons: [], clients: [] };
     }
     throw error;
   }
@@ -23,7 +22,6 @@ const readDb = async () => {
 const writeDb = async (data) => {
   await fs.writeFile(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
 };
-
 
 // Debug middleware - Log all requests
 app.use((req, res, next) => {
@@ -253,19 +251,26 @@ app.post('/api/coupons/apply', async (req, res) => {
   const db = await readDb();
   const { code, appointmentId } = req.body;
   const coupon = db.coupons.find(c => c.code === code && !c.used);
-  if (coupon) {
+
+  if (!coupon) {
+    return res.status(404).json({ success: false, message: 'Coupon not found or already used' });
+  }
+
+  // If appointmentId is provided, it's the final application
+  if (appointmentId) {
     const appointment = db.appointments.find(a => a.id == appointmentId);
     if (appointment) {
       appointment.discount = coupon.discount;
       appointment.couponCode = code;
       coupon.used = true;
       await writeDb(db);
-      res.json({ success: true, appointment });
+      return res.json({ success: true, appointment });
     } else {
-      res.status(404).json({ message: 'Appointment not found' });
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
     }
   } else {
-    res.status(404).json({ message: 'Coupon not found or already used' });
+    // If no appointmentId, it's a validation request. Just return the discount.
+    return res.json({ success: true, discount: coupon.discount });
   }
 });
 

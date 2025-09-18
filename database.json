@@ -1,72 +1,5 @@
 {
-  "appointments": [
-    {
-      "date": "2025-09-18",
-      "time": "10:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "",
-      "discount": 0,
-      "id": 1758149410713
-    },
-    {
-      "date": "2025-09-18",
-      "time": "11:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "",
-      "discount": 0,
-      "id": 1758149934042
-    },
-    {
-      "date": "2025-09-18",
-      "time": "14:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "",
-      "discount": 0,
-      "id": 1758150021331
-    },
-    {
-      "date": "2025-09-19",
-      "time": "10:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "",
-      "discount": 0,
-      "id": 1758150116892
-    },
-    {
-      "date": "2025-09-19",
-      "time": "14:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "PROMO1758150116976",
-      "discount": 11,
-      "id": 1758150120605
-    },
-    {
-      "date": "2025-09-19",
-      "time": "11:00",
-      "clientName": "Test User",
-      "phone": "1234567890",
-      "status": "scheduled",
-      "image": null,
-      "couponCode": "",
-      "discount": 0,
-      "id": 1758150172143
-    }
-  ],
+  "appointments": [],
   "availability": {
     "2025-09-18": {
       "isAvailable": true,
@@ -79,60 +12,13 @@
     "2025-09-19": {
       "isAvailable": true,
       "availableSlots": {
-        "10:00": false,
-        "11:00": false,
-        "14:00": false,
+        "10:00": true,
+        "11:00": true,
+        "14:00": true,
         "15:00": true
       }
     }
   },
-  "coupons": [
-    {
-      "id": 1758150116965,
-      "clientId": 1758150116952,
-      "code": "PROMO1758150116965",
-      "discount": 22,
-      "expiresAt": "2025-10-17T23:01:56.965Z",
-      "used": false
-    },
-    {
-      "id": 1758150116976,
-      "clientId": 1758150116952,
-      "code": "PROMO1758150116976",
-      "discount": 11,
-      "expiresAt": "2025-10-17T23:01:56.976Z",
-      "used": true
-    },
-    {
-      "id": 1758150120702,
-      "clientId": 1758150116952,
-      "code": "PROMO1758150120702",
-      "discount": 11,
-      "expiresAt": "2025-10-17T23:02:00.702Z",
-      "used": false
-    },
-    {
-      "id": 1758150172206,
-      "clientId": 1758150116952,
-      "code": "PROMO1758150172206",
-      "discount": 15,
-      "expiresAt": "2025-10-17T23:02:52.206Z",
-      "used": false
-    },
-    {
-      "id": 1758150172214,
-      "clientId": 1758150116952,
-      "code": "PROMO1758150172214",
-      "discount": 20,
-      "expiresAt": "2025-10-17T23:02:52.214Z",
-      "used": false
-    }
-  ],
-  "clients": [
-    {
-      "id": 1758150116952,
-      "phone": "1234567890",
-      "name": "Test User"
-    }
-  ]
+  "coupons": [],
+  "clients": []
 }

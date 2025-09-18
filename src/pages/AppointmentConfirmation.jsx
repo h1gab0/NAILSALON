@@ -105,6 +105,7 @@ const TrendButton = styled(motion(Link))`
 `;
 
 import { useState, useEffect } from 'react';
+import CouponCard from '../components/CouponCard';
 
 const AppointmentConfirmation = () => {
   const { id } = useParams();
@@ -121,7 +122,7 @@ const AppointmentConfirmation = () => {
         const currentAppointment = await response.json();
         setAppointment(currentAppointment);
 
-        if (currentAppointment) {
+        if (currentAppointment && !currentAppointment.couponCode) {
           const clientResponse = await fetch('/api/clients', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -166,29 +167,16 @@ const AppointmentConfirmation = () => {
       <Details>Date: {appointment.date}</Details>
       <Details>Time: {appointment.time}</Details>
       <Details>Appointment ID: {appointment.id}</Details>
-      {appointment.discount > 0 && (
-        <Details>Discount Applied: {appointment.discount}%</Details>
-      )}
       {appointment.image && (
         <>
           <Details>Design Inspiration:</Details>
           <ImagePreview src={appointment.image} alt="Design Inspiration" />
         </>
       )}
-      {coupon && (
-        <>
-          <Title>Your Exclusive Offer!</Title>
-          <Details>
-            Here's a {coupon.discount}% discount for your next visit!
-          </Details>
-          <Details>
-            Your code is: <strong>{coupon.code}</strong>
-          </Details>
-          <Details>
-            Expires on: {new Date(coupon.expiresAt).toLocaleDateString()}
-          </Details>
-        </>
+      {appointment.discount > 0 && (
+        <Details>Discount Applied: {appointment.discount}%</Details>
       )}
+      <CouponCard coupon={coupon} />
       <TrendButton
         to="/trends"
         onClick={handleTrendClick}

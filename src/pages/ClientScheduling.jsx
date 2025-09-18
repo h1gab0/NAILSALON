@@ -147,47 +147,51 @@ const ClientScheduling = () => {
   const navigate = useNavigate();
 
   const loadAvailability = async () => {
-    const [availabilityRes, appointmentsRes] = await Promise.all([
-      fetch('/api/availability'),
-      fetch('/api/appointments')
-    ]);
-    const availability = await availabilityRes.json();
-    const appointments = await appointmentsRes.json();
+    try {
+      const [availabilityRes, appointmentsRes] = await Promise.all([
+        fetch('/api/availability'),
+        fetch('/api/appointments')
+      ]);
+      const availability = await availabilityRes.json();
+      const appointments = await appointmentsRes.json();
 
-    const today = startOfDay(new Date());
-    const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
+      const today = startOfDay(new Date());
+      const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
 
-    const availableDatesWithSlots = nextThirtyDays.filter(date => {
-      const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-      const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-      const availableSlots = Object.entries(dateAvailability.availableSlots)
-        .filter(([slot, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
+      const availableDatesWithSlots = nextThirtyDays.filter(date => {
+        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
+        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
+        const availableSlots = Object.entries(dateAvailability.availableSlots)
+          .filter(([_, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
 
-      const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0;
-      return isDateAvailable;
-    });
+        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0;
+        return isDateAvailable;
+      });
 
-    setAvailableDates(availableDatesWithSlots);
+      setAvailableDates(availableDatesWithSlots);
 
-    if (selectedDate) {
-      const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
-      const bookedSlots = appointments
-        .filter(appointment => appointment.date === selectedDate)
-        .map(appointment => appointment.time);
+      if (selectedDate) {
+        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
+        const bookedSlots = appointments
+          .filter(appointment => appointment.date === selectedDate)
+          .map(appointment => appointment.time);
 
-      const currentTime = new Date();
-      const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-        .filter(([_, isAvailable]) => isAvailable)
-        .map(([slot, _]) => {
-          const slotTime = parseISO(`${selectedDate}T${slot}`);
-          return {
-            time: slot,
-            isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
-          };
-        })
-        .filter(slot => slot.isAvailable);
+        const currentTime = new Date();
+        const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
+          .filter(([_, isAvailable]) => isAvailable)
+          .map(([slot, _]) => {
+            const slotTime = parseISO(`${selectedDate}T${slot}`);
+            return {
+              time: slot,
+              isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
+            };
+          })
+          .filter(slot => slot.isAvailable);
 
-      setAvailableSlots(slotsWithAvailability);
+        setAvailableSlots(slotsWithAvailability);
+      }
+    } catch (error) {
+      console.error('Error loading availability:', error);
     }
   };
 
@@ -207,17 +211,18 @@ const ClientScheduling = () => {
   };
 
   const handleApplyCoupon = async () => {
+    if (!couponCode) return;
     const response = await fetch('/api/coupons/apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: couponCode, appointmentId: null }) // appointmentId is not needed for validation
+      body: JSON.stringify({ code: couponCode })
     });
     const data = await response.json();
     if (data.success) {
-      setDiscount(data.appointment.discount);
-      alert(`Coupon applied! You get a ${data.appointment.discount}% discount.`);
+      setDiscount(data.discount);
+      alert(`Coupon applied! You get a ${data.discount}% discount.`);
     } else {
-      alert('Invalid or expired coupon code.');
+      alert(data.message || 'Invalid or expired coupon code.');
     }
   };
 
@@ -238,7 +243,7 @@ const ClientScheduling = () => {
       return;
     }
 
-    const newAppointment = {
+    const newAppointmentData = {
       date: selectedDate,
       time: selectedTime,
       clientName: name,
@@ -252,7 +257,7 @@ const ClientScheduling = () => {
     const appointmentResponse = await fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newAppointment)
+      body: JSON.stringify(newAppointmentData)
     });
     const createdAppointment = await appointmentResponse.json();
 
@@ -302,7 +307,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaCalendarAlt /></StepIcon>
                 Select a Date
               </StepTitle>
-              <DateGrid data-testid="date-grid">
+              <DateGrid>
                 {availableDates.length > 0 ? (
                   availableDates.map((date) => (
                     <DateButton
@@ -336,7 +341,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaClock /></StepIcon>
                 Select a Time
               </StepTitle>
-              <TimeGrid data-testid="time-grid">
+              <TimeGrid>
                 {availableSlots.map((slot, index) => (
                   <TimeSlot
                     key={index}

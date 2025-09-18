@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
-import CouponCard from '../components/CouponCard';
+import CouponCard from '../components/CouponCard.jsx';
 
 const ConfirmationContainer = styled.div`
   max-width: 600px;

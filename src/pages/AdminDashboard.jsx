@@ -7,28 +7,13 @@ import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-`;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
 
-const MainContent = styled.div`
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-`;
-
-const LeftPanel = styled.div`
-  width: 400px;
-  padding: 2rem;
-  border-right: 1px solid ${({ theme }) => theme.colors.border};
-  overflow-y: auto;
-`;
-
-const RightPanel = styled.div`
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const AppointmentList = styled.ul`
@@ -427,19 +412,15 @@ function AdminDashboard() {
   const appointmentListRef = useRef(null);
 
   useEffect(() => {
-    const verifyAdmin = async () => {
+    const verifyAdminAndFetchData = async () => {
       try {
-        const response = await fetch('/api/admin/verify', {
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
+        const verifyResponse = await fetch('/api/admin/verify', { credentials: 'include' });
+        if (!verifyResponse.ok) {
           navigate('/login');
           return;
         }
-
-        const data = await response.json();
-        if (!data) {
+        const user = await verifyResponse.json();
+        if (!user) {
           navigate('/login');
           return;
         }
@@ -448,10 +429,8 @@ function AdminDashboard() {
           fetch('/api/appointments'),
           fetch('/api/availability')
         ]);
-
         const appointmentsData = await appointmentsRes.json();
         const availabilityData = await availabilityRes.json();
-
         setAppointments(appointmentsData);
         setAvailability(availabilityData);
       } catch (error) {
@@ -460,7 +439,7 @@ function AdminDashboard() {
       }
     };
 
-    verifyAdmin();
+    verifyAdminAndFetchData();
   }, [navigate]);
 
   const handleAddNote = async (id, note) => {
@@ -926,100 +905,97 @@ function AdminDashboard() {
     <DashboardContainer>
       <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
-      <MainContent>
-        <LeftPanel>
-          <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
-          {selectedDate && (
-            <AvailabilityContainer data-availability-section>
-              <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
-              <CreateAppointmentButton onClick={handleCreateAppointment}>
-                Create Appointment
-              </CreateAppointmentButton>
-              <TimeSlotContainer>
-                <CustomTimeInput
-                  value={newTimeSlot}
-                  onChange={(e) => setNewTimeSlot(e.target.value)}
-                  onClick={handleTimeInputClick}
-                  placeholder="Select time"
-                />
-                <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
-              </TimeSlotContainer>
-              {showClock && !isMobile && (
-                <ClockContainer ref={timeWidgetRef}>
-                  <ClockInstruction>
-                    {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
-                  </ClockInstruction>
-                  <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
-                  <AMPMSwitch>
-                    <AMPMLabel active={isAM}>AM</AMPMLabel>
-                    <Switch isAM={isAM} onClick={toggleAMPM} />
-                    <AMPMLabel active={!isAM}>PM</AMPMLabel>
-                  </AMPMSwitch>
-                  <ClockFace ref={clockRef} onClick={handleClockClick}>
-                    <HourHand
-                      angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
-                      show={clockPhase === 'hour'}
-                    />
-                    <MinuteHand
-                      angle={selectedTime.getMinutes() * 6}
-                      show={clockPhase === 'minute'}
-                    />
-                    {[...Array(12)].map((_, index) => (
-                      <ClockNumber key={index} rotation={index * 30}>
-                        {index === 0 ? 12 : index}
-                      </ClockNumber>
-                    ))}
-                  </ClockFace>
-                  <div>
-                    <ClockButton onClick={handleClockConfirm}>
-                      {clockPhase === 'hour' ? 'Next' : 'Confirm'}
-                    </ClockButton>
-                    <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
-                  </div>
-                </ClockContainer>
-              )}
+      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
 
-              {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
-                Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
-                  .filter(([_, isAvailable]) => isAvailable)
-                  .map(([time, _]) => (
-                    <TimeSlotContainer key={time}>
-                      <NonClickableTimeDisplay>
-                        {time}
-                      </NonClickableTimeDisplay>
-                      <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
-                    </TimeSlotContainer>
-                  ))
-              }
-            </AvailabilityContainer>
-          )}
-        </LeftPanel>
-        <RightPanel>
-          <AppointmentListSection ref={appointmentListRef}>
-            <SubHeader>All Appointments</SubHeader>
-            <TabContainer>
-              <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
-              <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
-              <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
-            </TabContainer>
-            <AppointmentList>
-              {displayedAppointments.map((appointment) => (
-                <CollapsibleAppointment
-                  key={appointment.id}
-                  appointment={appointment}
-                  onAddNote={handleAddNote}
-                  onRemoveNote={handleRemoveNote}
-                  onEditNote={handleEditNote}
-                  onCancel={handleCancel}
-                  onComplete={handleComplete}
-                  onDownloadImage={handleDownloadImage}
-                  onUpdateName={handleUpdateAppointmentName}
+      <AppointmentListSection ref={appointmentListRef}>
+        <SubHeader>All Appointments</SubHeader>
+        <TabContainer>
+          <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
+          <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
+          <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
+        </TabContainer>
+        <AppointmentList>
+          {displayedAppointments.map((appointment) => (
+            <CollapsibleAppointment
+              key={appointment.id}
+              appointment={appointment}
+              onAddNote={handleAddNote}
+              onRemoveNote={handleRemoveNote}
+              onEditNote={handleEditNote}
+              onCancel={handleCancel}
+              onComplete={handleComplete}
+              onDownloadImage={handleDownloadImage}
+              onUpdateName={handleUpdateAppointmentName}
+            />
+          ))}
+        </AppointmentList>
+      </AppointmentListSection>
+
+      {selectedDate && (
+        <AvailabilityContainer data-availability-section>
+          <SubHeader>Availability for {format(selectedDate, 'MMMM d, yyyy')}</SubHeader>
+          <CreateAppointmentButton onClick={handleCreateAppointment}>
+            Create Appointment
+          </CreateAppointmentButton>
+          <TimeSlotContainer>
+            <CustomTimeInput
+              value={newTimeSlot}
+              onChange={(e) => setNewTimeSlot(e.target.value)}
+              onClick={handleTimeInputClick}
+              placeholder="Select time"
+            />
+            <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
+          </TimeSlotContainer>
+          {showClock && !isMobile && (
+            <ClockContainer ref={timeWidgetRef}>
+              <ClockInstruction>
+                {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
+              </ClockInstruction>
+              <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
+              <AMPMSwitch>
+                <AMPMLabel active={isAM}>AM</AMPMLabel>
+                <Switch isAM={isAM} onClick={toggleAMPM} />
+                <AMPMLabel active={!isAM}>PM</AMPMLabel>
+              </AMPMSwitch>
+              <ClockFace ref={clockRef} onClick={handleClockClick}>
+                <HourHand
+                  angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                  show={clockPhase === 'hour'}
                 />
-              ))}
-            </AppointmentList>
-          </AppointmentListSection>
-        </RightPanel>
-      </MainContent>
+                <MinuteHand
+                  angle={selectedTime.getMinutes() * 6}
+                  show={clockPhase === 'minute'}
+                />
+                {[...Array(12)].map((_, index) => (
+                  <ClockNumber key={index} rotation={index * 30}>
+                    {index === 0 ? 12 : index}
+                  </ClockNumber>
+                ))}
+              </ClockFace>
+              <div>
+                <ClockButton onClick={handleClockConfirm}>
+                  {clockPhase === 'hour' ? 'Next' : 'Confirm'}
+                </ClockButton>
+                <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
+              </div>
+            </ClockContainer>
+          )}
+
+          {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
+            Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
+              .filter(([_, isAvailable]) => isAvailable)
+              .map(([time, _]) => (
+                <TimeSlotContainer key={time}>
+                  <NonClickableTimeDisplay>
+                    {time}
+                  </NonClickableTimeDisplay>
+                  <Button onClick={() => handleRemoveTimeSlot(time)}>Remove</Button>
+                </TimeSlotContainer>
+              ))
+          }
+        </AvailabilityContainer>
+      )}
+
       {showModal && (
         <Modal>
           <ModalContent>

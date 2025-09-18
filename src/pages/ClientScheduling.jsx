@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { format, addDays, isAfter, parseISO, startOfDay, isBefore } from 'date-fns';
+import { format, addDays, isAfter, parseISO, startOfDay } from 'date-fns';
 import { FaCalendarAlt, FaClock, FaUser, FaImage } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -159,34 +159,39 @@ const ClientScheduling = () => {
       const nextThirtyDays = Array.from({ length: 30 }, (_, i) => format(addDays(today, i), 'yyyy-MM-dd'));
 
       const availableDatesWithSlots = nextThirtyDays.filter(date => {
-        const dateAvailability = availability[date] || { isAvailable: false, availableSlots: {} };
-        const bookedSlots = appointments.filter(appointment => appointment.date === date).map(appointment => appointment.time);
-        const availableSlots = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable && !bookedSlots.includes(slot));
+        const dateAvailability = availability[date];
+        if (!dateAvailability || !dateAvailability.isAvailable) {
+          return false;
+        }
 
-        const isDateAvailable = dateAvailability.isAvailable && availableSlots.length > 0;
-        return isDateAvailable;
+        const bookedSlots = appointments
+          .filter(appointment => appointment.date === date)
+          .map(appointment => appointment.time);
+
+        const hasAvailableSlots = Object.keys(dateAvailability.availableSlots).some(
+          (slot) => dateAvailability.availableSlots[slot] && !bookedSlots.includes(slot)
+        );
+
+        return hasAvailableSlots;
       });
 
       setAvailableDates(availableDatesWithSlots);
 
       if (selectedDate) {
-        const dateAvailability = availability[selectedDate] || { isAvailable: false, availableSlots: {} };
+        const dateAvailability = availability[selectedDate] || { availableSlots: {} };
         const bookedSlots = appointments
           .filter(appointment => appointment.date === selectedDate)
           .map(appointment => appointment.time);
 
         const currentTime = new Date();
         const slotsWithAvailability = Object.entries(dateAvailability.availableSlots)
-          .filter(([_, isAvailable]) => isAvailable)
-          .map(([slot, _]) => {
-            const slotTime = parseISO(`${selectedDate}T${slot}`);
+          .map(([time, isAvailable]) => {
+            const slotTime = parseISO(`${selectedDate}T${time}`);
             return {
-              time: slot,
-              isAvailable: dateAvailability.isAvailable && !bookedSlots.includes(slot) && isAfter(slotTime, currentTime)
+              time,
+              isAvailable: isAvailable && !bookedSlots.includes(time) && isAfter(slotTime, currentTime)
             };
-          })
-          .filter(slot => slot.isAvailable);
+          });
 
         setAvailableSlots(slotsWithAvailability);
       }
@@ -212,17 +217,23 @@ const ClientScheduling = () => {
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
-    const response = await fetch('/api/coupons/apply', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: couponCode })
-    });
-    const data = await response.json();
-    if (data.success) {
-      setDiscount(data.discount);
-      alert(`Coupon applied! You get a ${data.discount}% discount.`);
-    } else {
-      alert(data.message || 'Invalid or expired coupon code.');
+    try {
+      const response = await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setDiscount(data.discount);
+        alert(`Coupon applied! You get a ${data.discount}% discount.`);
+      } else {
+        setDiscount(0);
+        alert(data.message || 'Invalid or expired coupon code.');
+      }
+    } catch (error) {
+      console.error('Error applying coupon:', error);
+      alert('Could not apply coupon.');
     }
   };
 
@@ -250,7 +261,7 @@ const ClientScheduling = () => {
       phone: phone,
       status: 'scheduled',
       image: image,
-      couponCode: couponCode,
+      couponCode: discount > 0 ? couponCode : '',
       discount: discount
     };
 
@@ -261,11 +272,11 @@ const ClientScheduling = () => {
     });
     const createdAppointment = await appointmentResponse.json();
 
-    if (couponCode) {
+    if (createdAppointment.couponCode) {
       await fetch('/api/coupons/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, appointmentId: createdAppointment.id })
+        body: JSON.stringify({ code: createdAppointment.couponCode, appointmentId: createdAppointment.id })
       });
     }
 
@@ -307,7 +318,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaCalendarAlt /></StepIcon>
                 Select a Date
               </StepTitle>
-              <DateGrid>
+              <DateGrid data-testid="date-grid">
                 {availableDates.length > 0 ? (
                   availableDates.map((date) => (
                     <DateButton
@@ -341,7 +352,7 @@ const ClientScheduling = () => {
                 <StepIcon><FaClock /></StepIcon>
                 Select a Time
               </StepTitle>
-              <TimeGrid>
+              <TimeGrid data-testid="time-grid">
                 {availableSlots.map((slot, index) => (
                   <TimeSlot
                     key={index}

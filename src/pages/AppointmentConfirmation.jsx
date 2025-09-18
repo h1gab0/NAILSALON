@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
+import CouponCard from '../components/CouponCard';
 
 const ConfirmationContainer = styled.div`
   max-width: 600px;
@@ -55,31 +56,6 @@ const ImagePreview = styled.img`
   margin-right: auto;
 `;
 
-const CouponButton = styled(motion(Link))`
-  display: block;
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  background-color: ${({ theme }) => theme.colors.secondary};
-  color: white;
-  text-decoration: none;
-  border-radius: 50px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  width: fit-content;
-
-  &:hover {
-    transform: translateY(-2px);
-    background-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-`;
-
 const TrendButton = styled(motion(Link))`
   display: inline-block;
   margin-top: 1.5rem;
@@ -104,48 +80,27 @@ const TrendButton = styled(motion(Link))`
   }
 `;
 
-import { useState, useEffect } from 'react';
-import CouponCard from '../components/CouponCard';
-
 const AppointmentConfirmation = () => {
   const { id } = useParams();
   const theme = useTheme();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [coupon, setCoupon] = useState(null);
 
   useEffect(() => {
-    const fetchAppointmentAndGenerateCoupon = async () => {
+    const fetchAppointment = async () => {
       try {
         const response = await fetch(`/api/appointments/${id}`);
-        const currentAppointment = await response.json();
-        setAppointment(currentAppointment);
-
-        if (currentAppointment && !currentAppointment.couponCode) {
-          const clientResponse = await fetch('/api/clients', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: currentAppointment.phone, name: currentAppointment.clientName })
-          });
-          const client = await clientResponse.json();
-
-          const couponResponse = await fetch('/api/coupons', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clientId: client.id })
-          });
-          const newCoupon = await couponResponse.json();
-          setCoupon(newCoupon);
-        }
+        const appointmentData = await response.json();
+        setAppointment(appointmentData);
       } catch (error) {
-        console.error('Error fetching appointment or generating coupon:', error);
+        console.error('Error fetching appointment:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAppointmentAndGenerateCoupon();
+    fetchAppointment();
   }, [id]);
 
   if (loading) {
@@ -167,16 +122,16 @@ const AppointmentConfirmation = () => {
       <Details>Date: {appointment.date}</Details>
       <Details>Time: {appointment.time}</Details>
       <Details>Appointment ID: {appointment.id}</Details>
+      {appointment.discount > 0 && (
+        <Details>Discount Applied: {appointment.discount}%</Details>
+      )}
       {appointment.image && (
         <>
           <Details>Design Inspiration:</Details>
           <ImagePreview src={appointment.image} alt="Design Inspiration" />
         </>
       )}
-      {appointment.discount > 0 && (
-        <Details>Discount Applied: {appointment.discount}%</Details>
-      )}
-      <CouponCard coupon={coupon} />
+      {appointment.generatedCoupon && <CouponCard coupon={appointment.generatedCoupon} />}
       <TrendButton
         to="/trends"
         onClick={handleTrendClick}

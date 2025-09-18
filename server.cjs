@@ -6,14 +6,17 @@ const app = express();
 
 const DB_FILE = './database.json';
 
+// Helper functions to read and write to the JSON database
 const readDb = async () => {
   try {
     const data = await fs.readFile(DB_FILE, 'utf8');
     return JSON.parse(data);
   } catch (error) {
+    // If the file doesn't exist, create it with a default structure
     if (error.code === 'ENOENT') {
-      await fs.writeFile(DB_FILE, JSON.stringify({ appointments: [], availability: {}, coupons: [], clients: [] }), 'utf8');
-      return { appointments: [], availability: {}, coupons: [], clients: [] };
+      const defaultData = { appointments: [], availability: {}, coupons: [], clients: [] };
+      await fs.writeFile(DB_FILE, JSON.stringify(defaultData, null, 2), 'utf8');
+      return defaultData;
     }
     throw error;
   }
@@ -164,8 +167,46 @@ app.get('/api/appointments', async (req, res) => {
 
 app.post('/api/appointments', async (req, res) => {
   const db = await readDb();
-  const newAppointment = { ...req.body, id: Date.now() };
+  const { clientName, phone, ...appointmentData } = req.body;
+
+  // Find or create client
+  let client = db.clients.find(c => c.phone === phone);
+  if (!client) {
+    client = { id: Date.now(), name: clientName, phone };
+    db.clients.push(client);
+  }
+
+  const newAppointment = { ...appointmentData, id: Date.now(), clientName, phone, clientId: client.id };
+
+  // If a coupon was used, apply it
+  if (newAppointment.couponCode) {
+    const couponIndex = db.coupons.findIndex(c => c.code === newAppointment.couponCode && !c.used);
+    if (couponIndex !== -1) {
+      newAppointment.discount = db.coupons[couponIndex].discount;
+      db.coupons[couponIndex].used = true;
+    } else {
+      // Invalid coupon, remove it from the appointment
+      newAppointment.couponCode = '';
+      newAppointment.discount = 0;
+    }
+  }
+
   db.appointments.push(newAppointment);
+
+  // If no coupon was used for this appointment, generate a new one
+  if (!newAppointment.couponCode) {
+    const coupon = {
+      id: Date.now() + 1, // ensure unique id
+      clientId: client.id,
+      code: `PROMO${Date.now()}`,
+      discount: Math.floor(Math.random() * 20) + 5,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      used: false
+    };
+    db.coupons.push(coupon);
+    newAppointment.generatedCoupon = coupon; // Attach generated coupon to response
+  }
+
   await writeDb(db);
   res.status(201).json(newAppointment);
 });
@@ -173,10 +214,10 @@ app.post('/api/appointments', async (req, res) => {
 app.put('/api/appointments/:id', async (req, res) => {
   const db = await readDb();
   const { id } = req.params;
-  const updatedAppointment = req.body;
+  const updatedAppointmentData = req.body;
   const index = db.appointments.findIndex(a => a.id == id);
   if (index !== -1) {
-    db.appointments[index] = { ...db.appointments[index], ...updatedAppointment };
+    db.appointments[index] = { ...db.appointments[index], ...updatedAppointmentData };
     await writeDb(db);
     res.json(db.appointments[index]);
   } else {
@@ -273,6 +314,7 @@ app.post('/api/coupons/apply', async (req, res) => {
     return res.json({ success: true, discount: coupon.discount });
   }
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

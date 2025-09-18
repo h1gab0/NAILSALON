@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 import { motion } from 'framer-motion';
@@ -56,6 +56,31 @@ const ImagePreview = styled.img`
   margin-right: auto;
 `;
 
+const CouponButton = styled(motion(Link))`
+  display: block;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: ${({ theme }) => theme.colors.secondary};
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  width: fit-content;
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+`;
+
 const TrendButton = styled(motion(Link))`
   display: inline-block;
   margin-top: 1.5rem;
@@ -84,28 +109,8 @@ const AppointmentConfirmation = () => {
   const { id } = useParams();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [appointment, setAppointment] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAppointment = async () => {
-      try {
-        const response = await fetch(`/api/appointments/${id}`);
-        const appointmentData = await response.json();
-        setAppointment(appointmentData);
-      } catch (error) {
-        console.error('Error fetching appointment:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAppointment();
-  }, [id]);
-
-  if (loading) {
-    return <ConfirmationContainer theme={theme}>Loading...</ConfirmationContainer>;
-  }
+  const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+  const appointment = appointments.find(app => app.id === parseInt(id));
 
   if (!appointment) {
     return <ConfirmationContainer theme={theme}>Appointment not found.</ConfirmationContainer>;
@@ -122,16 +127,13 @@ const AppointmentConfirmation = () => {
       <Details>Date: {appointment.date}</Details>
       <Details>Time: {appointment.time}</Details>
       <Details>Appointment ID: {appointment.id}</Details>
-      {appointment.discount > 0 && (
-        <Details>Discount Applied: {appointment.discount}%</Details>
-      )}
       {appointment.image && (
         <>
           <Details>Design Inspiration:</Details>
           <ImagePreview src={appointment.image} alt="Design Inspiration" />
         </>
       )}
-      {appointment.generatedCoupon && <CouponCard coupon={appointment.generatedCoupon} />}
+      <CouponCard />
       <TrendButton
         to="/trends"
         onClick={handleTrendClick}

@@ -412,46 +412,41 @@ function AdminDashboard() {
   const appointmentListRef = useRef(null);
 
   useEffect(() => {
-    const verifyAdminAndFetchData = async () => {
+    const verifyAdmin = async () => {
       try {
-        const verifyResponse = await fetch('/api/admin/verify', { credentials: 'include' });
-        if (!verifyResponse.ok) {
-          navigate('/login');
-          return;
-        }
-        const user = await verifyResponse.json();
-        if (!user) {
+        const response = await fetch('/api/admin/verify', {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
           navigate('/login');
           return;
         }
 
-        const [appointmentsRes, availabilityRes] = await Promise.all([
-          fetch('/api/appointments'),
-          fetch('/api/availability')
-        ]);
-        const appointmentsData = await appointmentsRes.json();
-        const availabilityData = await availabilityRes.json();
-        setAppointments(appointmentsData);
-        setAvailability(availabilityData);
+        const data = await response.json();
+        if (!data) {
+          navigate('/login');
+          return;
+        }
+
+        const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
+        setAppointments(storedAppointments);
+        const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
+        setAvailability(storedAvailability);
       } catch (error) {
-        console.error('Error fetching data:', error);
         navigate('/login');
       }
     };
 
-    verifyAdminAndFetchData();
+    verifyAdmin();
   }, [navigate]);
 
-  const handleAddNote = async (id, note) => {
-    const appointment = appointments.find(a => a.id === id);
-    const updatedNotes = [note, ...(appointment.notes || [])];
-    const response = await fetch(`/api/appointments/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: updatedNotes })
-    });
-    const updatedAppointment = await response.json();
-    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
+  const handleAddNote = (id, note) => {
+    const updatedAppointments = appointments.map(appointment =>
+      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
   const toggleAMPM = () => {
@@ -463,35 +458,36 @@ function AdminDashboard() {
     });
   };
 
-  const handleRemoveNote = async (appointmentId, noteIndex) => {
-    const appointment = appointments.find(a => a.id === appointmentId);
-    const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
-    const response = await fetch(`/api/appointments/${appointmentId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: updatedNotes })
+  const handleRemoveNote = (appointmentId, noteIndex) => {
+    const updatedAppointments = appointments.map(appointment => {
+      if (appointment.id === appointmentId) {
+        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
+        return { ...appointment, notes: updatedNotes };
+      }
+      return appointment;
     });
-    const updatedAppointment = await response.json();
-    setAppointments(appointments.map(a => a.id === appointmentId ? updatedAppointment : a));
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
-  const handleEditNote = async (appointmentId, noteIndex, newNoteText) => {
-    const appointment = appointments.find(a => a.id === appointmentId);
-    const updatedNotes = [...appointment.notes];
-    updatedNotes[noteIndex] = newNoteText;
-    const response = await fetch(`/api/appointments/${appointmentId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes: updatedNotes })
+  const handleEditNote = (appointmentId, noteIndex, newNoteText) => {
+    const updatedAppointments = appointments.map(appointment => {
+      if (appointment.id === appointmentId) {
+        const updatedNotes = [...appointment.notes];
+        updatedNotes[noteIndex] = newNoteText;
+        return { ...appointment, notes: updatedNotes };
+      }
+      return appointment;
     });
-    const updatedAppointment = await response.json();
-    setAppointments(appointments.map(a => a.id === appointmentId ? updatedAppointment : a));
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
-  const handleCancel = async (id) => {
+  const handleCancel = (id) => {
     const appointmentToCancel = appointments.find(appointment => appointment.id === id);
-    await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
-    setAppointments(appointments.filter(appointment => appointment.id !== id));
+    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
 
     // Update availability
     const dateString = appointmentToCancel.date;
@@ -506,21 +502,16 @@ function AdminDashboard() {
       }
     };
     setAvailability(updatedAvailability);
-    await fetch('/api/availability', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedAvailability)
-    });
+    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const handleComplete = async (id, profit, materials) => {
-    const response = await fetch(`/api/appointments/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed', profit, materials })
-    });
-    const updatedAppointment = await response.json();
-    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
+  const handleComplete = (id, profit, materials) => {
+    const updatedAppointments = appointments.map(appointment =>
+      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
   const handleLogout = () => {
@@ -546,7 +537,7 @@ function AdminDashboard() {
     }, 100);
   };
 
-  const handleAddTimeSlot = async () => {
+  const handleAddTimeSlot = () => {
     if (selectedDate && newTimeSlot) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const updatedAvailability = {
@@ -556,27 +547,27 @@ function AdminDashboard() {
           isAvailable: true,
           availableSlots: {
             ...availability[dateString]?.availableSlots,
-            [newTimeSlot]: true
           }
         }
       };
 
-      if (availability[dateString]?.availableSlots?.[newTimeSlot]) {
+      // Check if the time slot already exists
+      if (updatedAvailability[dateString].availableSlots[newTimeSlot]) {
         alert('This time slot already exists.');
         return;
       }
 
+      // Add the new time slot
+      updatedAvailability[dateString].availableSlots[newTimeSlot] = true;
+
       setAvailability(updatedAvailability);
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAvailability)
-      });
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
       setNewTimeSlot('');
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
-  const handleRemoveTimeSlot = async (time) => {
+  const handleRemoveTimeSlot = (time) => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const updatedAvailability = {
@@ -590,15 +581,12 @@ function AdminDashboard() {
         }
       };
       setAvailability(updatedAvailability);
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAvailability)
-      });
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
-  const handleChangeTimeSlot = async (oldTime, newTime) => {
+  const handleChangeTimeSlot = (oldTime, newTime) => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const updatedAvailability = {
@@ -613,11 +601,8 @@ function AdminDashboard() {
         }
       };
       setAvailability(updatedAvailability);
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAvailability)
-      });
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
     }
   };
 
@@ -630,14 +615,12 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-  const handleUpdateAppointmentName = async (id, newName) => {
-    const response = await fetch(`/api/appointments/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientName: newName })
-    });
-    const updatedAppointment = await response.json();
-    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
+  const handleUpdateAppointmentName = (id, newName) => {
+    const updatedAppointments = appointments.map(appointment =>
+      appointment.id === id ? { ...appointment, clientName: newName } : appointment
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
   };
 
   const handleCreateAppointment = () => {
@@ -648,7 +631,7 @@ function AdminDashboard() {
     }
   };
 
-  const handleModalSubmit = async () => {
+  const handleModalSubmit = () => {
     if (!newAppointment.clientName || !newAppointment.phone ||
         (timeSelectionType === 'existing' && !newAppointment.time) ||
         (timeSelectionType === 'new' && !newTimeSlot)) {
@@ -661,6 +644,7 @@ function AdminDashboard() {
       newAppointment.time : newTimeSlot;
 
     const newAppointmentObj = {
+      id: Date.now(),
       date: dateString,
       time: appointmentTime,
       clientName: newAppointment.clientName,
@@ -669,13 +653,9 @@ function AdminDashboard() {
       notes: []
     };
 
-    const response = await fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newAppointmentObj)
-    });
-    const createdAppointment = await response.json();
-    setAppointments([...appointments, createdAppointment]);
+    const updatedAppointments = [...appointments, newAppointmentObj];
+    setAppointments(updatedAppointments);
+    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
 
     // Only update availability if using an existing time slot
     if (timeSelectionType === 'existing') {
@@ -690,11 +670,7 @@ function AdminDashboard() {
         }
       };
       setAvailability(updatedAvailability);
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAvailability)
-      });
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
     }
 
     setShowModal(false);
@@ -702,6 +678,7 @@ function AdminDashboard() {
     setNewTimeSlot('');
     setModalClockVisible(false);
     setTimeSelectionType('existing');
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleTimeInputClick = () => {
@@ -776,7 +753,7 @@ function AdminDashboard() {
     setClockPhase('hour'); // Reset to hour phase for next use
   };
 
-  const removePastTimeSlotsAndEmptyDates = async () => {
+  const removePastTimeSlotsAndEmptyDates = () => {
     const now = new Date();
     const updatedAvailability = { ...availability };
     let hasChanges = false;
@@ -808,11 +785,8 @@ function AdminDashboard() {
 
     if (hasChanges) {
       setAvailability(updatedAvailability);
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedAvailability)
-      });
+      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      window.dispatchEvent(new Event('storage'));
     }
   };
 

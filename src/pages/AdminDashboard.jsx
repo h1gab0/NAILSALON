@@ -7,13 +7,28 @@ import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 
 const DashboardContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+`;
 
-  @media (min-width: 768px) {
-    padding: 2rem;
-  }
+const MainContent = styled.div`
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+`;
+
+const LeftPanel = styled.div`
+  width: 400px;
+  padding: 2rem;
+  border-right: 1px solid ${({ theme }) => theme.colors.border};
+  overflow-y: auto;
+`;
+
+const RightPanel = styled.div`
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
 `;
 
 const AppointmentList = styled.ul`
@@ -410,6 +425,33 @@ function AdminDashboard() {
   const [modalClockVisible, setModalClockVisible] = useState(false);
   const timeWidgetRef = useRef(null);
   const appointmentListRef = useRef(null);
+  const [activeCoupons, setActiveCoupons] = useState([]);
+  const [newCoupon, setNewCoupon] = useState({
+    code: '',
+    description: '',
+    discount: 0,
+    type: 'discount',
+    service: ''
+  });
+
+  const fetchAllData = async () => {
+    try {
+      const [appointmentsRes, availabilityRes, couponsRes] = await Promise.all([
+        fetch('/api/appointments'),
+        fetch('/api/availability'),
+        fetch('/api/coupons')
+      ]);
+      const appointmentsData = await appointmentsRes.json();
+      const availabilityData = await availabilityRes.json();
+      const couponsData = await couponsRes.json();
+      setAppointments(appointmentsData);
+      setAvailability(availabilityData);
+      setActiveCoupons(couponsData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      navigate('/login');
+    }
+  };
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -417,36 +459,28 @@ function AdminDashboard() {
         const response = await fetch('/api/admin/verify', {
           credentials: 'include'
         });
-
         if (!response.ok) {
           navigate('/login');
-          return;
+        } else {
+          fetchAllData();
         }
-
-        const data = await response.json();
-        if (!data) {
-          navigate('/login');
-          return;
-        }
-
-        const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
-        setAppointments(storedAppointments);
-        const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-        setAvailability(storedAvailability);
       } catch (error) {
         navigate('/login');
       }
     };
-
     verifyAdmin();
   }, [navigate]);
 
-  const handleAddNote = (id, note) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleAddNote = async (id, note) => {
+    const appointment = appointments.find(a => a.id === id);
+    const updatedNotes = [note, ...(appointment.notes || [])];
+    const response = await fetch(`/api/appointments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: updatedNotes })
+    });
+    const updatedAppointment = await response.json();
+    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
   };
 
   const toggleAMPM = () => {
@@ -458,60 +492,57 @@ function AdminDashboard() {
     });
   };
 
-  const handleRemoveNote = (appointmentId, noteIndex) => {
-    const updatedAppointments = appointments.map(appointment => {
-      if (appointment.id === appointmentId) {
-        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
-        return { ...appointment, notes: updatedNotes };
-      }
-      return appointment;
+  const handleRemoveNote = async (appointmentId, noteIndex) => {
+    const appointment = appointments.find(a => a.id === appointmentId);
+    const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
+    const response = await fetch(`/api/appointments/${appointmentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: updatedNotes })
     });
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    const updatedAppointment = await response.json();
+    setAppointments(appointments.map(a => a.id === appointmentId ? updatedAppointment : a));
   };
 
-  const handleEditNote = (appointmentId, noteIndex, newNoteText) => {
-    const updatedAppointments = appointments.map(appointment => {
-      if (appointment.id === appointmentId) {
-        const updatedNotes = [...appointment.notes];
-        updatedNotes[noteIndex] = newNoteText;
-        return { ...appointment, notes: updatedNotes };
-      }
-      return appointment;
+  const handleEditNote = async (appointmentId, noteIndex, newNoteText) => {
+    const appointment = appointments.find(a => a.id === appointmentId);
+    const updatedNotes = [...appointment.notes];
+    updatedNotes[noteIndex] = newNoteText;
+    const response = await fetch(`/api/appointments/${appointmentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: updatedNotes })
     });
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    const updatedAppointment = await response.json();
+    setAppointments(appointments.map(a => a.id === appointmentId ? updatedAppointment : a));
   };
 
-  const handleCancel = (id) => {
+  const handleCancel = async (id) => {
     const appointmentToCancel = appointments.find(appointment => appointment.id === id);
-    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
+    setAppointments(appointments.filter(appointment => appointment.id !== id));
 
-    // Update availability
     const dateString = appointmentToCancel.date;
-    const updatedAvailability = {
-      ...availability,
-      [dateString]: {
-        ...availability[dateString],
-        availableSlots: {
-          ...availability[dateString]?.availableSlots,
-          [appointmentToCancel.time]: true
-        }
-      }
-    };
+    const updatedAvailability = { ...availability };
+    if (updatedAvailability[dateString] && updatedAvailability[dateString].availableSlots) {
+      updatedAvailability[dateString].availableSlots[appointmentToCancel.time] = true;
+    }
     setAvailability(updatedAvailability);
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-    window.dispatchEvent(new Event('storage'));
+    await fetch('/api/availability', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedAvailability)
+    });
   };
 
-  const handleComplete = (id, profit, materials) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleComplete = async (id, profit, materials) => {
+    const response = await fetch(`/api/appointments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed', profit, materials })
+    });
+    const updatedAppointment = await response.json();
+    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
   };
 
   const handleLogout = () => {
@@ -521,14 +552,12 @@ function AdminDashboard() {
 
   const handleDaySelect = (date) => {
     setSelectedDate(date);
-    
     setTimeout(() => {
       if (appointmentListRef.current) {
         const element = appointmentListRef.current;
         const elementRect = element.getBoundingClientRect();
         const absoluteElementTop = elementRect.top + window.pageYOffset;
         const scrollPosition = absoluteElementTop + elementRect.height - window.innerHeight;
-        
         window.scrollTo({
           top: scrollPosition,
           behavior: 'smooth'
@@ -537,72 +566,38 @@ function AdminDashboard() {
     }, 100);
   };
 
-  const handleAddTimeSlot = () => {
+  const handleAddTimeSlot = async () => {
     if (selectedDate && newTimeSlot) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          isAvailable: true,
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-          }
-        }
-      };
-
-      // Check if the time slot already exists
-      if (updatedAvailability[dateString].availableSlots[newTimeSlot]) {
-        alert('This time slot already exists.');
-        return;
+      const updatedAvailability = { ...availability };
+      if (!updatedAvailability[dateString]) {
+        updatedAvailability[dateString] = { isAvailable: true, availableSlots: {} };
       }
-
-      // Add the new time slot
       updatedAvailability[dateString].availableSlots[newTimeSlot] = true;
 
       setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAvailability)
+      });
       setNewTimeSlot('');
-      window.dispatchEvent(new Event('storage'));
     }
   };
 
-  const handleRemoveTimeSlot = (time) => {
+  const handleRemoveTimeSlot = async (time) => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [time]: false
-          }
-        }
-      };
+      const updatedAvailability = { ...availability };
+      if (updatedAvailability[dateString] && updatedAvailability[dateString].availableSlots) {
+        delete updatedAvailability[dateString].availableSlots[time];
+      }
       setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
-    }
-  };
-
-  const handleChangeTimeSlot = (oldTime, newTime) => {
-    if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [oldTime]: false,
-            [newTime]: true
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
+      await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAvailability)
+      });
     }
   };
 
@@ -615,12 +610,14 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-  const handleUpdateAppointmentName = (id, newName) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, clientName: newName } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleUpdateAppointmentName = async (id, newName) => {
+    const response = await fetch(`/api/appointments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientName: newName })
+    });
+    const updatedAppointment = await response.json();
+    setAppointments(appointments.map(a => a.id === id ? updatedAppointment : a));
   };
 
   const handleCreateAppointment = () => {
@@ -631,7 +628,7 @@ function AdminDashboard() {
     }
   };
 
-  const handleModalSubmit = () => {
+  const handleModalSubmit = async () => {
     if (!newAppointment.clientName || !newAppointment.phone ||
         (timeSelectionType === 'existing' && !newAppointment.time) ||
         (timeSelectionType === 'new' && !newTimeSlot)) {
@@ -640,11 +637,9 @@ function AdminDashboard() {
     }
 
     const dateString = format(selectedDate, 'yyyy-MM-dd');
-    const appointmentTime = timeSelectionType === 'existing' ?
-      newAppointment.time : newTimeSlot;
+    const appointmentTime = timeSelectionType === 'existing' ? newAppointment.time : newTimeSlot;
 
     const newAppointmentObj = {
-      id: Date.now(),
       date: dateString,
       time: appointmentTime,
       clientName: newAppointment.clientName,
@@ -653,81 +648,30 @@ function AdminDashboard() {
       notes: []
     };
 
-    const updatedAppointments = [...appointments, newAppointmentObj];
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newAppointmentObj)
+    });
+    const createdAppointment = await response.json();
+    setAppointments([...appointments, createdAppointment]);
 
-    // Only update availability if using an existing time slot
-    if (timeSelectionType === 'existing') {
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [appointmentTime]: false
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+    const updatedAvailability = { ...availability };
+    if (updatedAvailability[dateString] && updatedAvailability[dateString].availableSlots) {
+        updatedAvailability[dateString].availableSlots[appointmentTime] = false;
     }
+    setAvailability(updatedAvailability);
+    await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAvailability)
+    });
 
     setShowModal(false);
     setNewAppointment({ clientName: '', phone: '', time: '' });
     setNewTimeSlot('');
     setModalClockVisible(false);
     setTimeSelectionType('existing');
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const handleTimeInputClick = () => {
-    if (!isMobile) {
-      setShowClock(true);
-      // Wait for the clock widget to render
-      setTimeout(() => {
-        if (timeWidgetRef.current) {
-          const element = timeWidgetRef.current;
-          const elementRect = element.getBoundingClientRect();
-          const absoluteElementTop = elementRect.top + window.pageYOffset;
-          const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
-          
-          window.scrollTo({
-            top: middle,
-            behavior: 'smooth'
-          });
-        }
-      }, 100);
-    }
-  };
-
-  const handleClockClick = (event) => {
-    if (!clockRef.current) return;
-  
-    const rect = clockRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const x = event.clientX - centerX;
-    const y = centerY - event.clientY;
-  
-    // Calculate angle from 12 o'clock position
-    let angle = Math.atan2(x, y) * (180 / Math.PI);
-    angle = (angle + 360) % 360; // Normalize to 0-360
-  
-    if (clockPhase === 'hour') {
-      let hours = Math.round(angle / 30) % 12;
-      hours = hours === 0 ? 12 : hours;
-      setSelectedTime(prevTime => set(prevTime, { hours }));
-    } else {
-      // Convert angle to minutes with a 5-minute snap
-      let minutes = Math.round(angle / 6);
-      minutes = Math.round(minutes / 5) * 5; // Snap to nearest 5 minutes
-      minutes = minutes === 60 ? 0 : minutes; // Handle edge case for 60 minutes
-      setSelectedTime(prevTime => {
-        const newDate = set(prevTime, { minutes });
-        return set(newDate, { hours: prevTime.getHours() });
-      });
-    }
   };
 
   const handleClockConfirm = () => {
@@ -750,52 +694,30 @@ function AdminDashboard() {
   const handleClockCancel = () => {
     setShowClock(false);
     setNewTimeSlot('');
-    setClockPhase('hour'); // Reset to hour phase for next use
+    setClockPhase('hour');
   };
 
-  const removePastTimeSlotsAndEmptyDates = () => {
-    const now = new Date();
-    const updatedAvailability = { ...availability };
-    let hasChanges = false;
-
-    Object.keys(updatedAvailability).forEach(dateString => {
-      const date = parseISO(dateString);
-      const dateStart = startOfDay(date);
-
-      if (isBefore(dateStart, startOfDay(now))) {
-        delete updatedAvailability[dateString];
-        hasChanges = true;
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/admin/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCoupon)
+      });
+      if (response.ok) {
+        const createdCoupon = await response.json();
+        setActiveCoupons([...activeCoupons, createdCoupon]);
+        setNewCoupon({ code: '', description: '', discount: 0, type: 'discount', service: '' });
+        alert('Coupon created successfully!');
       } else {
-        const availableSlots = updatedAvailability[dateString].availableSlots;
-        Object.keys(availableSlots).forEach(timeSlot => {
-          const slotTime = parseISO(`${dateString}T${timeSlot}`);
-          if (isBefore(slotTime, now)) {
-            delete availableSlots[timeSlot];
-            hasChanges = true;
-          }
-        });
-
-        // Remove the date if there are no available slots left
-        if (Object.keys(availableSlots).length === 0) {
-          delete updatedAvailability[dateString];
-          hasChanges = true;
-        }
+        alert('Failed to create coupon.');
       }
-    });
-
-    if (hasChanges) {
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error creating coupon:', error);
+      alert('Error creating coupon.');
     }
   };
-
-  // Call removePastTimeSlotsAndEmptyDates when the component mounts and every minute
-  useEffect(() => {
-    removePastTimeSlotsAndEmptyDates();
-    const interval = setInterval(removePastTimeSlotsAndEmptyDates, 60000);
-    return () => clearInterval(interval);
-  }, [availability]);
 
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
@@ -809,84 +731,21 @@ function AdminDashboard() {
   });
 
   const displayedAppointments = filteredAppointments.filter(appointment => {
-    if (activeTab === 'ALL') return true;
+    if (activeTab === 'ALL_APPOINTMENTS') return true;
     if (activeTab === 'UPCOMING') return appointment.status !== 'completed';
     if (activeTab === 'COMPLETED') return appointment.status === 'completed';
     return true;
   });
 
-  const todayAppointments = appointments.filter(appointment => {
-    const today = new Date();
-    return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
-  }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
-
-  const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
-    const [displayValue, setDisplayValue] = useState('');
-  
-    useEffect(() => {
-      if (value) {
-        setDisplayValue(value);
-      } else {
-        setDisplayValue('');
-      }
-    }, [value]);
-  
-    const handleInputChange = (e) => {
-      let input = e.target.value.replace(/\D/g, '');
-      
-      if (input.length > 4) {
-        input = input.slice(0, 4);
-      }
-  
-      let formattedInput = '';
-      if (input.length > 2) {
-        formattedInput = `${input.slice(0, 2)}:${input.slice(2)}`;
-      } else {
-        formattedInput = input;
-      }
-  
-      setDisplayValue(formattedInput);
-  
-      if (input.length === 4) {
-        const hours = parseInt(input.slice(0, 2));
-        const minutes = parseInt(input.slice(2));
-        if (hours < 24 && minutes < 60) {
-          onChange({ target: { value: formattedInput } });
-        }
-      } else {
-        onChange({ target: { value: '' } });
-      }
-    };
-  
-    return (
-      <TimeInputWrapper>
-        <TimeInput
-          type={isMobile ? "time" : "text"}
-          value={displayValue}
-          onChange={handleInputChange}
-          onClick={onClick}
-          placeholder={placeholder}
-          maxLength={5}
-        />
-        <TimeInputPlaceholder hasValue={!!displayValue}>
-          {placeholder}
-        </TimeInputPlaceholder>
-      </TimeInputWrapper>
-    );
-  };
-
-  return (
-    <DashboardContainer>
-      <Header>Admin Dashboard</Header>
-      <Button onClick={handleLogout}>Logout</Button>
-      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
-
+  const MainAdminDashboard = () => (
+    <>
+      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} availability={availability} />
       <AppointmentListSection ref={appointmentListRef}>
-        <SubHeader>All Appointments</SubHeader>
+        <SubHeader>Appointments</SubHeader>
         <TabContainer>
-          <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
-          <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
-          <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
+          <Tab active={activeTab === 'ALL_APPOINTMENTS'} onClick={() => setActiveTab('ALL_APPOINTMENTS')}>All</Tab>
+          <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>Upcoming</Tab>
+          <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>Completed</Tab>
         </TabContainer>
         <AppointmentList>
           {displayedAppointments.map((appointment) => (
@@ -912,48 +771,13 @@ function AdminDashboard() {
             Create Appointment
           </CreateAppointmentButton>
           <TimeSlotContainer>
-            <CustomTimeInput
+            <TimeInput
+              type="time"
               value={newTimeSlot}
               onChange={(e) => setNewTimeSlot(e.target.value)}
-              onClick={handleTimeInputClick}
-              placeholder="Select time"
             />
             <Button onClick={handleAddTimeSlot}>Add Time Slot</Button>
           </TimeSlotContainer>
-          {showClock && !isMobile && (
-            <ClockContainer ref={timeWidgetRef}>
-              <ClockInstruction>
-                {clockPhase === 'hour' ? 'Select hour' : 'Select minute'}
-              </ClockInstruction>
-              <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
-              <AMPMSwitch>
-                <AMPMLabel active={isAM}>AM</AMPMLabel>
-                <Switch isAM={isAM} onClick={toggleAMPM} />
-                <AMPMLabel active={!isAM}>PM</AMPMLabel>
-              </AMPMSwitch>
-              <ClockFace ref={clockRef} onClick={handleClockClick}>
-                <HourHand
-                  angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
-                  show={clockPhase === 'hour'}
-                />
-                <MinuteHand
-                  angle={selectedTime.getMinutes() * 6}
-                  show={clockPhase === 'minute'}
-                />
-                {[...Array(12)].map((_, index) => (
-                  <ClockNumber key={index} rotation={index * 30}>
-                    {index === 0 ? 12 : index}
-                  </ClockNumber>
-                ))}
-              </ClockFace>
-              <div>
-                <ClockButton onClick={handleClockConfirm}>
-                  {clockPhase === 'hour' ? 'Next' : 'Confirm'}
-                </ClockButton>
-                <ClockButton onClick={handleClockCancel}>Cancel</ClockButton>
-              </div>
-            </ClockContainer>
-          )}
 
           {availability[format(selectedDate, 'yyyy-MM-dd')]?.availableSlots &&
             Object.entries(availability[format(selectedDate, 'yyyy-MM-dd')].availableSlots)
@@ -969,6 +793,75 @@ function AdminDashboard() {
           }
         </AvailabilityContainer>
       )}
+    </>
+  );
+
+  const CouponManagement = () => (
+    <div>
+        <SubHeader>Coupon Management</SubHeader>
+        <form onSubmit={handleCreateCoupon}>
+            <ModalInput
+                type="text"
+                placeholder="Coupon Code (e.g., SUMMER15)"
+                value={newCoupon.code}
+                onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value })}
+                required
+            />
+            <ModalInput
+                type="text"
+                placeholder="Description (e.g., 15% off)"
+                value={newCoupon.description}
+                onChange={(e) => setNewCoupon({ ...newCoupon, description: e.target.value })}
+                required
+            />
+            <ModalSelect
+                value={newCoupon.type}
+                onChange={(e) => setNewCoupon({ ...newCoupon, type: e.target.value, service: '', discount: 0 })}
+            >
+                <option value="discount">Percentage Discount</option>
+                <option value="free_service">Free Service</option>
+            </ModalSelect>
+            {newCoupon.type === 'discount' && (
+                <ModalInput
+                    type="number"
+                    placeholder="Discount Percentage"
+                    value={newCoupon.discount}
+                    onChange={(e) => setNewCoupon({ ...newCoupon, discount: parseInt(e.target.value) })}
+                />
+            )}
+            {newCoupon.type === 'free_service' && (
+                <ModalInput
+                    type="text"
+                    placeholder="Free Service (e.g., feet_gelish)"
+                    value={newCoupon.service}
+                    onChange={(e) => setNewCoupon({ ...newCoupon, service: e.target.value })}
+                />
+            )}
+            <Button type="submit">Create Coupon</Button>
+        </form>
+
+        <SubHeader>Active Coupons</SubHeader>
+        <ul>
+            {activeCoupons.map(coupon => (
+                <li key={coupon.id}>
+                    <strong>{coupon.code}</strong>: {coupon.description} - Expires: {new Date(coupon.expiresAt).toLocaleDateString()}
+                </li>
+            ))}
+        </ul>
+    </div>
+  );
+
+  return (
+    <DashboardContainer>
+      <Header>Admin Dashboard</Header>
+      <Button onClick={handleLogout}>Logout</Button>
+      <TabContainer>
+        <Tab active={activeTab.includes('APPOINTMENTS')} onClick={() => setActiveTab('ALL_APPOINTMENTS')}>Appointments & Availability</Tab>
+        <Tab active={activeTab === 'COUPONS'} onClick={() => setActiveTab('COUPONS')}>Coupon Management</Tab>
+      </TabContainer>
+      <MainContent>
+        {activeTab.includes('APPOINTMENTS') ? <MainAdminDashboard /> : <CouponManagement />}
+      </MainContent>
 
       {showModal && (
         <Modal>

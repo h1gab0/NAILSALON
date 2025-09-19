@@ -92,24 +92,9 @@ const AvailabilityIndicator = styled.div`
   }
 `;
 
-const AdminCalendar = ({ appointments, onDaySelect }) => {
+const AdminCalendar = ({ appointments, onDaySelect, availability }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [availability, setAvailability] = useState({});
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const updatedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-      setAvailability(updatedAvailability);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    handleStorageChange(); // Initial load
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);

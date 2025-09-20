@@ -135,7 +135,7 @@ const AppointmentConfirmation = () => {
         transition={{ duration: 0.5 }}
       >
         <Title>Appointment Confirmed!</Title>
-        <Details><strong>Name:</strong> {appointment.client.name}</Details>
+        <Details><strong>Name:</strong> {appointment.clientName}</Details>
         <Details><strong>Date:</strong> {format(parseISO(appointment.date), 'MMMM d, yyyy')}</Details>
         <Details><strong>Time:</strong> {appointment.time}</Details>
         {appointment.image && (

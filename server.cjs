@@ -54,6 +54,14 @@ app.use((req, res, next) => {
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
+let coupons = [
+    { code: 'SAVE10', discount: 10 },
+    { code: 'NAILS20', discount: 20 }
+];
+
+let appointments = [];
+let availability = {};
+
 // Login endpoint
 app.post('/api/admin/login', (req, res) => {
   console.log('Login attempt:', {
@@ -125,6 +133,155 @@ app.post('/api/admin/logout', (req, res) => {
     }
   });
 });
+
+// Middleware to protect admin routes
+const requireAdmin = (req, res, next) => {
+    if (req.session.isAuthenticated) {
+        next();
+    } else {
+        res.status(401).json({ message: 'Unauthorized' });
+    }
+};
+
+// Coupon Management Endpoints
+app.get('/api/coupons', requireAdmin, (req, res) => {
+    res.json(coupons);
+});
+
+app.post('/api/coupons', requireAdmin, (req, res) => {
+    const { code, discount } = req.body;
+    if (!code || !discount) {
+        return res.status(400).json({ message: 'Coupon code and discount are required' });
+    }
+    const newCoupon = { code, discount: parseInt(discount) };
+    coupons.push(newCoupon);
+    res.status(201).json(newCoupon);
+});
+
+app.delete('/api/coupons/:code', requireAdmin, (req, res) => {
+    const { code } = req.params;
+    coupons = coupons.filter(coupon => coupon.code !== code);
+    res.status(204).send();
+});
+
+// Availability and Appointment Endpoints
+app.get('/api/availability', requireAdmin, (req, res) => {
+    res.json(availability);
+});
+
+app.get('/api/availability/dates', (req, res) => {
+    const availableDates = Object.keys(availability).filter(date => {
+        const slots = availability[date].availableSlots;
+        return Object.values(slots).some(isAvailable => isAvailable);
+    });
+    res.json(availableDates);
+});
+
+app.get('/api/availability/slots/:date', (req, res) => {
+    const { date } = req.params;
+    if (availability[date]) {
+        const availableSlots = Object.entries(availability[date].availableSlots)
+            .filter(([_, isAvailable]) => isAvailable)
+            .map(([time, _]) => time);
+        res.json(availableSlots);
+    } else {
+        res.json([]);
+    }
+});
+
+app.post('/api/availability', requireAdmin, (req, res) => {
+    const { date, time } = req.body;
+    if (!date || !time) {
+        return res.status(400).json({ message: 'Date and time are required' });
+    }
+
+    if (!availability[date]) {
+        availability[date] = { isAvailable: true, availableSlots: {} };
+    }
+
+    availability[date].availableSlots[time] = true;
+    res.status(201).json({ date, time });
+});
+
+app.delete('/api/availability', requireAdmin, (req, res) => {
+    const { date, time } = req.body;
+    if (!date || !time) {
+        return res.status(400).json({ message: 'Date and time are required' });
+    }
+
+    if (availability[date] && availability[date].availableSlots[time]) {
+        delete availability[date].availableSlots[time];
+    }
+
+    res.status(204).send();
+});
+
+app.get('/api/appointments', requireAdmin, (req, res) => {
+    res.json(appointments);
+});
+
+app.post('/api/appointments', (req, res) => {
+    const { date, time, clientName, phone, status, image, couponCode } = req.body;
+
+    if (!date || !time || !clientName || !phone) {
+        return res.status(400).json({ message: 'Missing required appointment data' });
+    }
+
+    // Validate coupon code
+    if (couponCode) {
+        const coupon = coupons.find(c => c.code === couponCode);
+        if (!coupon) {
+            return res.status(400).json({ message: 'Invalid coupon code' });
+        }
+    }
+
+    const newAppointment = { id: Date.now(), date, time, clientName, phone, status, image, couponCode, notes: [] };
+    appointments.push(newAppointment);
+
+    // Mark time slot as unavailable
+    if (availability[date] && availability[date].availableSlots[time]) {
+        availability[date].availableSlots[time] = false;
+    }
+
+    res.status(201).json(newAppointment);
+});
+
+app.put('/api/appointments/:id', requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const { clientName, status, profit, materials, notes } = req.body;
+    const appointmentIndex = appointments.findIndex(appt => appt.id == id);
+
+    if (appointmentIndex === -1) {
+        return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    if (clientName) appointments[appointmentIndex].clientName = clientName;
+    if (status) appointments[appointmentIndex].status = status;
+    if (profit) appointments[appointmentIndex].profit = profit;
+    if (materials) appointments[appointmentIndex].materials = materials;
+    if (notes) appointments[appointmentIndex].notes = notes;
+
+    res.json(appointments[appointmentIndex]);
+});
+
+app.delete('/api/appointments/:id', requireAdmin, (req, res) => {
+    const { id } = req.params;
+    const appointmentIndex = appointments.findIndex(appt => appt.id == id);
+
+    if (appointmentIndex === -1) {
+        return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    const [deletedAppointment] = appointments.splice(appointmentIndex, 1);
+
+    // Make time slot available again
+    if (availability[deletedAppointment.date] && availability[deletedAppointment.date].availableSlots[deletedAppointment.time] === false) {
+        availability[deletedAppointment.date].availableSlots[deletedAppointment.time] = true;
+    }
+
+    res.status(204).send();
+});
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

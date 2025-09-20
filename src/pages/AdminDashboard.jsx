@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
 import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
+import CouponManagement from '../components/CouponManagement';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -429,10 +430,32 @@ function AdminDashboard() {
           return;
         }
 
-        const storedAppointments = JSON.parse(localStorage.getItem('appointments')) || [];
-        setAppointments(storedAppointments);
-        const storedAvailability = JSON.parse(localStorage.getItem('availability')) || {};
-        setAvailability(storedAvailability);
+        const fetchAppointments = async () => {
+          try {
+            const response = await fetch('/api/appointments', { credentials: 'include' });
+            if (response.ok) {
+              const data = await response.json();
+              setAppointments(data);
+            }
+          } catch (error) {
+            console.error('Error fetching appointments:', error);
+          }
+        };
+
+        const fetchAvailability = async () => {
+          try {
+            const response = await fetch('/api/availability', { credentials: 'include' });
+            if (response.ok) {
+              const data = await response.json();
+              setAvailability(data);
+            }
+          } catch (error) {
+            console.error('Error fetching availability:', error);
+          }
+        };
+
+        fetchAppointments();
+        fetchAvailability();
       } catch (error) {
         navigate('/login');
       }
@@ -441,12 +464,23 @@ function AdminDashboard() {
     verifyAdmin();
   }, [navigate]);
 
-  const handleAddNote = (id, note) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, notes: [note, ...(appointment.notes || [])] } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleAddNote = async (id, note) => {
+    const appointment = appointments.find(appt => appt.id === id);
+    const updatedNotes = [note, ...(appointment.notes || [])];
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: updatedNotes }),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const updatedAppointment = await response.json();
+        setAppointments(prev => prev.map(appt => appt.id === id ? updatedAppointment : appt));
+      }
+    } catch (error) {
+      console.error('Error adding note:', error);
+    }
   };
 
   const toggleAMPM = () => {
@@ -458,60 +492,76 @@ function AdminDashboard() {
     });
   };
 
-  const handleRemoveNote = (appointmentId, noteIndex) => {
-    const updatedAppointments = appointments.map(appointment => {
-      if (appointment.id === appointmentId) {
-        const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
-        return { ...appointment, notes: updatedNotes };
+  const handleRemoveNote = async (appointmentId, noteIndex) => {
+    const appointment = appointments.find(appt => appt.id === appointmentId);
+    const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: updatedNotes }),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const updatedAppointment = await response.json();
+        setAppointments(prev => prev.map(appt => appt.id === appointmentId ? updatedAppointment : appt));
       }
-      return appointment;
-    });
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    } catch (error) {
+      console.error('Error removing note:', error);
+    }
   };
 
-  const handleEditNote = (appointmentId, noteIndex, newNoteText) => {
-    const updatedAppointments = appointments.map(appointment => {
-      if (appointment.id === appointmentId) {
-        const updatedNotes = [...appointment.notes];
-        updatedNotes[noteIndex] = newNoteText;
-        return { ...appointment, notes: updatedNotes };
+  const handleEditNote = async (appointmentId, noteIndex, newNoteText) => {
+    const appointment = appointments.find(appt => appt.id === appointmentId);
+    const updatedNotes = [...appointment.notes];
+    updatedNotes[noteIndex] = newNoteText;
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: updatedNotes }),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const updatedAppointment = await response.json();
+        setAppointments(prev => prev.map(appt => appt.id === appointmentId ? updatedAppointment : appt));
       }
-      return appointment;
-    });
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    } catch (error) {
+      console.error('Error editing note:', error);
+    }
   };
 
-  const handleCancel = (id) => {
-    const appointmentToCancel = appointments.find(appointment => appointment.id === id);
-    const updatedAppointments = appointments.filter(appointment => appointment.id !== id);
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleCancel = async (id) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
 
-    // Update availability
-    const dateString = appointmentToCancel.date;
-    const updatedAvailability = {
-      ...availability,
-      [dateString]: {
-        ...availability[dateString],
-        availableSlots: {
-          ...availability[dateString]?.availableSlots,
-          [appointmentToCancel.time]: true
-        }
+      if (response.ok) {
+        setAppointments(prev => prev.filter(appt => appt.id !== id));
       }
-    };
-    setAvailability(updatedAvailability);
-    localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-    window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error canceling appointment:', error);
+    }
   };
 
-  const handleComplete = (id, profit, materials) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, status: 'completed', profit, materials } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleComplete = async (id, profit, materials) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed', profit, materials }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const updatedAppointment = await response.json();
+        setAppointments(prev => prev.map(appt => appt.id === id ? updatedAppointment : appt));
+      }
+    } catch (error) {
+      console.error('Error completing appointment:', error);
+    }
   };
 
   const handleLogout = () => {
@@ -537,72 +587,58 @@ function AdminDashboard() {
     }, 100);
   };
 
-  const handleAddTimeSlot = () => {
+  const handleAddTimeSlot = async () => {
     if (selectedDate && newTimeSlot) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          isAvailable: true,
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-          }
-        }
-      };
+      try {
+        const response = await fetch('/api/availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dateString, time: newTimeSlot }),
+          credentials: 'include'
+        });
 
-      // Check if the time slot already exists
-      if (updatedAvailability[dateString].availableSlots[newTimeSlot]) {
-        alert('This time slot already exists.');
-        return;
+        if (response.ok) {
+          const updatedSlot = await response.json();
+          setAvailability(prev => {
+            const newAvailability = { ...prev };
+            if (!newAvailability[updatedSlot.date]) {
+              newAvailability[updatedSlot.date] = { isAvailable: true, availableSlots: {} };
+            }
+            newAvailability[updatedSlot.date].availableSlots[updatedSlot.time] = true;
+            return newAvailability;
+          });
+          setNewTimeSlot('');
+        }
+      } catch (error) {
+        console.error('Error adding time slot:', error);
       }
-
-      // Add the new time slot
-      updatedAvailability[dateString].availableSlots[newTimeSlot] = true;
-
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      setNewTimeSlot('');
-      window.dispatchEvent(new Event('storage'));
     }
   };
 
-  const handleRemoveTimeSlot = (time) => {
+  const handleRemoveTimeSlot = async (time) => {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [time]: false
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
-    }
-  };
+      try {
+        const response = await fetch('/api/availability', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: dateString, time }),
+          credentials: 'include'
+        });
 
-  const handleChangeTimeSlot = (oldTime, newTime) => {
-    if (selectedDate) {
-      const dateString = format(selectedDate, 'yyyy-MM-dd');
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [oldTime]: false,
-            [newTime]: true
-          }
+        if (response.ok) {
+          setAvailability(prev => {
+            const newAvailability = { ...prev };
+            if (newAvailability[dateString] && newAvailability[dateString].availableSlots[time]) {
+              delete newAvailability[dateString].availableSlots[time];
+            }
+            return newAvailability;
+          });
         }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
+      } catch (error) {
+        console.error('Error removing time slot:', error);
+      }
     }
   };
 
@@ -615,12 +651,22 @@ function AdminDashboard() {
     document.body.removeChild(link);
   };
 
-  const handleUpdateAppointmentName = (id, newName) => {
-    const updatedAppointments = appointments.map(appointment =>
-      appointment.id === id ? { ...appointment, clientName: newName } : appointment
-    );
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+  const handleUpdateAppointmentName = async (id, newName) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientName: newName }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const updatedAppointment = await response.json();
+        setAppointments(prev => prev.map(appt => appt.id === id ? updatedAppointment : appt));
+      }
+    } catch (error) {
+      console.error('Error updating appointment name:', error);
+    }
   };
 
   const handleCreateAppointment = () => {
@@ -631,7 +677,7 @@ function AdminDashboard() {
     }
   };
 
-  const handleModalSubmit = () => {
+  const handleModalSubmit = async () => {
     if (!newAppointment.clientName || !newAppointment.phone ||
         (timeSelectionType === 'existing' && !newAppointment.time) ||
         (timeSelectionType === 'new' && !newTimeSlot)) {
@@ -643,42 +689,34 @@ function AdminDashboard() {
     const appointmentTime = timeSelectionType === 'existing' ?
       newAppointment.time : newTimeSlot;
 
-    const newAppointmentObj = {
-      id: Date.now(),
+    const appointmentData = {
       date: dateString,
       time: appointmentTime,
       clientName: newAppointment.clientName,
       phone: newAppointment.phone,
-      status: 'scheduled',
-      notes: []
+      status: 'scheduled'
     };
 
-    const updatedAppointments = [...appointments, newAppointmentObj];
-    setAppointments(updatedAppointments);
-    localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appointmentData),
+        credentials: 'include'
+      });
 
-    // Only update availability if using an existing time slot
-    if (timeSelectionType === 'existing') {
-      const updatedAvailability = {
-        ...availability,
-        [dateString]: {
-          ...availability[dateString],
-          availableSlots: {
-            ...availability[dateString]?.availableSlots,
-            [appointmentTime]: false
-          }
-        }
-      };
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
+      if (response.ok) {
+        const addedAppointment = await response.json();
+        setAppointments(prev => [...prev, addedAppointment]);
+        setShowModal(false);
+        setNewAppointment({ clientName: '', phone: '', time: '' });
+        setNewTimeSlot('');
+        setModalClockVisible(false);
+        setTimeSelectionType('existing');
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error);
     }
-
-    setShowModal(false);
-    setNewAppointment({ clientName: '', phone: '', time: '' });
-    setNewTimeSlot('');
-    setModalClockVisible(false);
-    setTimeSelectionType('existing');
-    window.dispatchEvent(new Event('storage'));
   };
 
   const handleTimeInputClick = () => {
@@ -753,49 +791,6 @@ function AdminDashboard() {
     setClockPhase('hour'); // Reset to hour phase for next use
   };
 
-  const removePastTimeSlotsAndEmptyDates = () => {
-    const now = new Date();
-    const updatedAvailability = { ...availability };
-    let hasChanges = false;
-
-    Object.keys(updatedAvailability).forEach(dateString => {
-      const date = parseISO(dateString);
-      const dateStart = startOfDay(date);
-
-      if (isBefore(dateStart, startOfDay(now))) {
-        delete updatedAvailability[dateString];
-        hasChanges = true;
-      } else {
-        const availableSlots = updatedAvailability[dateString].availableSlots;
-        Object.keys(availableSlots).forEach(timeSlot => {
-          const slotTime = parseISO(`${dateString}T${timeSlot}`);
-          if (isBefore(slotTime, now)) {
-            delete availableSlots[timeSlot];
-            hasChanges = true;
-          }
-        });
-
-        // Remove the date if there are no available slots left
-        if (Object.keys(availableSlots).length === 0) {
-          delete updatedAvailability[dateString];
-          hasChanges = true;
-        }
-      }
-    });
-
-    if (hasChanges) {
-      setAvailability(updatedAvailability);
-      localStorage.setItem('availability', JSON.stringify(updatedAvailability));
-      window.dispatchEvent(new Event('storage'));
-    }
-  };
-
-  // Call removePastTimeSlotsAndEmptyDates when the component mounts and every minute
-  useEffect(() => {
-    removePastTimeSlotsAndEmptyDates();
-    const interval = setInterval(removePastTimeSlotsAndEmptyDates, 60000);
-    return () => clearInterval(interval);
-  }, [availability]);
 
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
@@ -880,6 +875,7 @@ function AdminDashboard() {
       <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
+      <CouponManagement />
 
       <AppointmentListSection ref={appointmentListRef}>
         <SubHeader>All Appointments</SubHeader>

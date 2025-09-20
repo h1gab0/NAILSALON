@@ -144,25 +144,26 @@ const ClientScheduling = () => {
   const fetchAvailableDates = async () => {
     try {
       const response = await fetch('/api/availability/dates');
-      if (!response.ok) throw new Error('Failed to fetch dates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch available dates');
+      }
       const data = await response.json();
       setAvailableDates(data);
     } catch (error) {
-      console.error('Error fetching available dates:', error);
-      setAvailableDates([]);
+      console.error(error);
     }
   };
 
   const fetchAvailableSlots = async (date) => {
-    if (!date) return;
     try {
       const response = await fetch(`/api/availability/slots/${date}`);
-      if (!response.ok) throw new Error('Failed to fetch slots');
+      if (!response.ok) {
+        throw new Error('Failed to fetch available slots');
+      }
       const data = await response.json();
       setAvailableSlots(data);
     } catch (error) {
-      console.error('Error fetching available slots:', error);
-      setAvailableSlots([]);
+      console.error(error);
     }
   };
 
@@ -205,31 +206,30 @@ const ClientScheduling = () => {
     }
 
     try {
-      const response = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          date: selectedDate,
-          time: selectedTime,
-          clientName: name,
-          phone: phone,
-          image: image,
-          couponCode: couponCode,
-        }),
-      });
+        const response = await fetch('/api/appointments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: selectedDate,
+                time: selectedTime,
+                clientName: name,
+                phone: phone,
+                status: 'scheduled',
+                image: image,
+                couponCode: couponCode,
+            }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create appointment');
-      }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create appointment');
+        }
 
-      const newAppointment = await response.json();
-      navigate(`/appointment-confirmation/${newAppointment.id}`);
+        const newAppointment = await response.json();
+        navigate(`/appointment-confirmation/${newAppointment.id}`);
     } catch (error) {
-      console.error('Error creating appointment:', error);
-      alert(`Error: ${error.message}`);
+        console.error('Error creating appointment:', error);
+        alert(`Error: ${error.message}`);
     }
   };
 
@@ -333,16 +333,6 @@ const ClientScheduling = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <StepTitle>
-                <StepIcon><FaTicketAlt /></StepIcon>
-                Have a Coupon?
-              </StepTitle>
-              <Input
-                type="text"
-                placeholder="Enter Coupon Code"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-              />
               <ImageUploadContainer>
                 <StepTitle>
                   <StepIcon><FaImage /></StepIcon>
@@ -355,6 +345,16 @@ const ClientScheduling = () => {
                 />
                 {image && <ImagePreview src={image} alt="Design Inspiration" />}
               </ImageUploadContainer>
+              <StepTitle>
+                <StepIcon><FaTicketAlt /></StepIcon>
+                Have a Coupon?
+              </StepTitle>
+              <Input
+                type="text"
+                placeholder="Enter Coupon Code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+              />
               <Button onClick={handleConfirmAppointment}>Confirm Appointment</Button>
             </StepContainer>
           )}

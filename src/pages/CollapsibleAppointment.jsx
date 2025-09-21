@@ -230,6 +230,7 @@ const CollapsibleAppointment = ({ appointment, onAddNote, onRemoveNote, onEditNo
           >
             <p>Phone: {appointment.phone}</p>
             <p>Status: {appointment.status}</p>
+            {appointment.couponCode && <p>Coupon Used: <strong>{appointment.couponCode}</strong></p>}
             {appointment.status === 'completed' && (
               <>
                 <p>Profit: {appointment.profit}</p>

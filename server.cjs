@@ -1,7 +1,6 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
-const { add, isAfter } = require('date-fns');
 const app = express();
 
 // CORS must be before other middleware
@@ -33,8 +32,8 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
 let coupons = [
-    { code: 'SAVE10', discount: 10, createdAt: new Date(), usesLeft: 1 },
-    { code: 'NAILS20', discount: 20, createdAt: new Date(), usesLeft: 1 }
+    { code: 'SAVE10', discount: 10, usesLeft: 10, expiresAt: '2025-12-31' },
+    { code: 'NAILS20', discount: 20, usesLeft: 5, expiresAt: '2025-12-31' }
 ];
 
 let appointments = [];
@@ -93,15 +92,15 @@ app.get('/api/coupons', requireAdmin, (req, res) => {
 });
 
 app.post('/api/coupons', requireAdmin, (req, res) => {
-    const { code, discount } = req.body;
-    if (!code || !discount) {
-        return res.status(400).json({ message: 'Coupon code and discount are required' });
+    const { code, discount, usesLeft, expiresAt } = req.body;
+    if (!code || !discount || !usesLeft || !expiresAt) {
+        return res.status(400).json({ message: 'All coupon fields are required' });
     }
     const newCoupon = {
         code,
         discount: parseInt(discount),
-        createdAt: new Date(),
-        usesLeft: 1
+        usesLeft: parseInt(usesLeft),
+        expiresAt
     };
     coupons.push(newCoupon);
     res.status(201).json(newCoupon);
@@ -111,6 +110,26 @@ app.delete('/api/coupons/:code', requireAdmin, (req, res) => {
     const { code } = req.params;
     coupons = coupons.filter(coupon => coupon.code !== code);
     res.status(204).send();
+});
+
+app.put('/api/coupons/:code', requireAdmin, (req, res) => {
+    const { code } = req.params;
+    const { usesLeft, expiresAt } = req.body;
+    const couponIndex = coupons.findIndex(c => c.code === code);
+
+    if (couponIndex === -1) {
+        return res.status(404).json({ message: 'Coupon not found' });
+    }
+
+    if (usesLeft !== undefined) {
+        coupons[couponIndex].usesLeft = parseInt(usesLeft);
+    }
+
+    if (expiresAt) {
+        coupons[couponIndex].expiresAt = expiresAt;
+    }
+
+    res.json(coupons[couponIndex]);
 });
 
 // Availability and Appointment Endpoints
@@ -197,11 +216,12 @@ app.post('/api/appointments', (req, res) => {
 
         const coupon = coupons[couponIndex];
 
-        const expirationDate = add(coupon.createdAt, { weeks: 1 });
-        if (isAfter(new Date(), expirationDate)) {
+        // Check if coupon is expired
+        if (new Date() > new Date(coupon.expiresAt)) {
             return res.status(400).json({ message: 'Coupon has expired' });
         }
 
+        // Check if coupon has uses left
         if (coupon.usesLeft <= 0) {
             return res.status(400).json({ message: 'Coupon has already been used' });
         }

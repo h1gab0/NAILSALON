@@ -910,7 +910,7 @@ function AdminDashboard() {
     <DashboardContainer>
       <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
-      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} />
+      <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} selectedDate={selectedDate} />
       <CouponManagement />
 
       <AppointmentListSection ref={appointmentListRef}>

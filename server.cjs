@@ -4,19 +4,6 @@ const cors = require('cors');
 const { add, isAfter } = require('date-fns');
 const app = express();
 
-// Debug middleware - Log all requests
-app.use((req, res, next) => {
-  console.log('--------------------');
-  console.log('Request:', {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    headers: req.headers,
-    cookies: req.cookies
-  });
-  next();
-});
-
 // CORS must be before other middleware
 app.use(cors({
   origin: true, // Allow all origins in development
@@ -42,16 +29,6 @@ app.use(session({
   name: 'sessionId'
 }));
 
-// Log session middleware
-app.use((req, res, next) => {
-  console.log('Session data:', {
-    id: req.sessionID,
-    session: req.session,
-    isAuthenticated: req.session.isAuthenticated
-  });
-  next();
-});
-
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
@@ -65,41 +42,24 @@ let availability = {};
 
 // Login endpoint
 app.post('/api/admin/login', (req, res) => {
-  console.log('Login attempt:', {
-    body: req.body,
-    session: req.session
-  });
-
   const { username, password } = req.body;
-  
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAuthenticated = true;
     req.session.user = { username };
     req.session.lastActivity = Date.now();
-    
-    console.log('Login successful, session:', req.session);
-    
-    // Save session before sending response
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
         return res.status(500).json({ message: 'Session error' });
       }
       res.json({ username });
     });
   } else {
-    console.log('Login failed - invalid credentials');
     res.status(401).json({ message: 'Invalid credentials' });
   }
 });
 
 // Verify endpoint
 app.get('/api/admin/verify', (req, res) => {
-  console.log('Verify request:', {
-    session: req.session,
-    isAuthenticated: req.session.isAuthenticated
-  });
-
   if (req.session.isAuthenticated) {
     res.json(req.session.user);
   } else {
@@ -107,27 +67,10 @@ app.get('/api/admin/verify', (req, res) => {
   }
 });
 
-// Heartbeat endpoint
-app.post('/api/admin/heartbeat', (req, res) => {
-  console.log('Heartbeat:', {
-    session: req.session,
-    isAuthenticated: req.session.isAuthenticated
-  });
-
-  if (req.session.isAuthenticated) {
-    req.session.lastActivity = Date.now();
-    res.json({ status: 'active' });
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
-});
-
 // Logout endpoint
 app.post('/api/admin/logout', (req, res) => {
-  console.log('Logout request');
   req.session.destroy((err) => {
     if (err) {
-      console.error('Logout error:', err);
       res.status(500).json({ message: 'Error during logout' });
     } else {
       res.json({ message: 'Logged out successfully' });
@@ -233,7 +176,6 @@ app.post('/api/appointments', (req, res) => {
         return res.status(400).json({ message: 'Missing required appointment data' });
     }
 
-    // Validate coupon code
     if (couponCode) {
         const couponIndex = coupons.findIndex(c => c.code === couponCode);
         if (couponIndex === -1) {
@@ -242,25 +184,21 @@ app.post('/api/appointments', (req, res) => {
 
         const coupon = coupons[couponIndex];
 
-        // Check if coupon is expired (1 week)
         const expirationDate = add(coupon.createdAt, { weeks: 1 });
         if (isAfter(new Date(), expirationDate)) {
             return res.status(400).json({ message: 'Coupon has expired' });
         }
 
-        // Check if coupon has uses left
         if (coupon.usesLeft <= 0) {
             return res.status(400).json({ message: 'Coupon has already been used' });
         }
 
-        // Decrement usesLeft
         coupons[couponIndex].usesLeft -= 1;
     }
 
     const newAppointment = { id: Date.now(), date, time, clientName, phone, status, image, couponCode, notes: [] };
     appointments.push(newAppointment);
 
-    // Mark time slot as unavailable
     if (availability[date] && availability[date].availableSlots[time]) {
         availability[date].availableSlots[time] = false;
     }
@@ -296,14 +234,12 @@ app.delete('/api/appointments/:id', requireAdmin, (req, res) => {
 
     const [deletedAppointment] = appointments.splice(appointmentIndex, 1);
 
-    // Make time slot available again
     if (availability[deletedAppointment.date] && availability[deletedAppointment.date].availableSlots[deletedAppointment.time] === false) {
         availability[deletedAppointment.date].availableSlots[deletedAppointment.time] = true;
     }
 
     res.status(204).send();
 });
-
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -317,4 +253,4 @@ app.listen(PORT, () => {
   console.log(`Admin credentials for testing:`);
   console.log(`Username: ${ADMIN_USERNAME}`);
   console.log(`Password: ${ADMIN_PASSWORD}`);
-}); 
+});

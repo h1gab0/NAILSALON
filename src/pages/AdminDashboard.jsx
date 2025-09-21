@@ -474,7 +474,11 @@ function AdminDashboard() {
         }
     }, 60000); // Every 60 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+        clearInterval(interval);
+        // When the component unmounts, tell the server to shorten the session.
+        navigator.sendBeacon('/api/admin/session/expire-soon', new Blob());
+    };
   }, [navigate]);
 
   const handleAddNote = async (id, note) => {

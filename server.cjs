@@ -16,20 +16,22 @@ app.use(express.json());
 // Session configuration
 app.use(session({
   secret: 'your-secret-key',
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   rolling: true,
   cookie: {
     secure: false,
     httpOnly: true,
-    maxAge: 30 * 60 * 1000, // 30 minutes
     sameSite: 'lax'
+    // maxAge is now set dynamically
   },
   name: 'sessionId'
 }));
 
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
+const LONG_SESSION = 24 * 60 * 60 * 1000; // 24 hours
+const SHORT_SESSION = 5 * 60 * 1000; // 5 minutes
 
 let coupons = [
     { code: 'SAVE10', discount: 10, usesLeft: 10, expiresAt: '2025-12-31' },
@@ -45,13 +47,8 @@ app.post('/api/admin/login', (req, res) => {
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAuthenticated = true;
     req.session.user = { username };
-    req.session.lastActivity = Date.now();
-    req.session.save((err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Session error' });
-      }
-      res.json({ username });
-    });
+    req.session.cookie.maxAge = LONG_SESSION; // Set long session on login
+    res.json({ username });
   } else {
     res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -64,6 +61,26 @@ app.get('/api/admin/verify', (req, res) => {
   } else {
     res.status(401).json({ message: 'Not authenticated' });
   }
+});
+
+// Heartbeat endpoint to keep session alive
+app.post('/api/admin/heartbeat', (req, res) => {
+    if (req.session.isAuthenticated) {
+        req.session.cookie.maxAge = LONG_SESSION; // Extend session
+        res.json({ status: 'session extended' });
+    } else {
+        res.status(401).json({ message: 'Not authenticated' });
+    }
+});
+
+// Endpoint to shorten session when admin leaves dashboard
+app.post('/api/admin/session/expire-soon', (req, res) => {
+    if (req.session.isAuthenticated) {
+        req.session.cookie.maxAge = SHORT_SESSION; // Shorten session to 5 minutes
+        res.json({ status: 'session will expire soon' });
+    } else {
+        res.status(401).json({ message: 'Not authenticated' });
+    }
 });
 
 // Logout endpoint

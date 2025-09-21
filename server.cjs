@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const { add, isAfter } = require('date-fns');
 const app = express();
 
 // Debug middleware - Log all requests
@@ -55,8 +56,8 @@ const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin123';
 
 let coupons = [
-    { code: 'SAVE10', discount: 10 },
-    { code: 'NAILS20', discount: 20 }
+    { code: 'SAVE10', discount: 10, createdAt: new Date(), usesLeft: 1 },
+    { code: 'NAILS20', discount: 20, createdAt: new Date(), usesLeft: 1 }
 ];
 
 let appointments = [];
@@ -153,7 +154,12 @@ app.post('/api/coupons', requireAdmin, (req, res) => {
     if (!code || !discount) {
         return res.status(400).json({ message: 'Coupon code and discount are required' });
     }
-    const newCoupon = { code, discount: parseInt(discount) };
+    const newCoupon = {
+        code,
+        discount: parseInt(discount),
+        createdAt: new Date(),
+        usesLeft: 1
+    };
     coupons.push(newCoupon);
     res.status(201).json(newCoupon);
 });
@@ -229,10 +235,26 @@ app.post('/api/appointments', (req, res) => {
 
     // Validate coupon code
     if (couponCode) {
-        const coupon = coupons.find(c => c.code === couponCode);
-        if (!coupon) {
+        const couponIndex = coupons.findIndex(c => c.code === couponCode);
+        if (couponIndex === -1) {
             return res.status(400).json({ message: 'Invalid coupon code' });
         }
+
+        const coupon = coupons[couponIndex];
+
+        // Check if coupon is expired (1 week)
+        const expirationDate = add(coupon.createdAt, { weeks: 1 });
+        if (isAfter(new Date(), expirationDate)) {
+            return res.status(400).json({ message: 'Coupon has expired' });
+        }
+
+        // Check if coupon has uses left
+        if (coupon.usesLeft <= 0) {
+            return res.status(400).json({ message: 'Coupon has already been used' });
+        }
+
+        // Decrement usesLeft
+        coupons[couponIndex].usesLeft -= 1;
     }
 
     const newAppointment = { id: Date.now(), date, time, clientName, phone, status, image, couponCode, notes: [] };

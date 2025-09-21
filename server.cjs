@@ -22,7 +22,7 @@ app.use(session({
   cookie: {
     secure: false,
     httpOnly: true,
-    maxAge: 2 * 60 * 1000,
+    maxAge: 30 * 60 * 1000, // 30 minutes
     sameSite: 'lax'
   },
   name: 'sessionId'
@@ -122,7 +122,11 @@ app.put('/api/coupons/:code', requireAdmin, (req, res) => {
     }
 
     if (usesLeft !== undefined) {
-        coupons[couponIndex].usesLeft = parseInt(usesLeft);
+        const newUses = parseInt(usesLeft);
+        if (newUses < 0) {
+            return res.status(400).json({ message: 'Coupon uses cannot be negative.' });
+        }
+        coupons[couponIndex].usesLeft = newUses;
     }
 
     if (expiresAt) {

@@ -462,6 +462,19 @@ function AdminDashboard() {
     };
 
     verifyAdmin();
+
+    const interval = setInterval(async () => {
+        try {
+            await fetch('/api/admin/heartbeat', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Heartbeat failed:', error);
+        }
+    }, 60000); // Every 60 seconds
+
+    return () => clearInterval(interval);
   }, [navigate]);
 
   const handleAddNote = async (id, note) => {

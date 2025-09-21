@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Outlet, useParams } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { InstanceProvider } from './context/InstanceContext';
 import GlobalStyles from './styles/GlobalStyles';
 import { lightTheme, darkTheme } from './styles/Theme';
 import Header from './components/Header';
@@ -11,6 +12,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import ClientScheduling from './pages/ClientScheduling';
 import AdminDashboard from './pages/AdminDashboard';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import OrderSystem from './pages/OrderSystem';
 import Chat from './components/Chat';
 import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
@@ -21,6 +23,7 @@ import TrendDetails from './pages/TrendDetails';
 import CouponPage from './pages/CouponPage';
 import Services from './pages/Services';
 import Gallery from './pages/Gallery';
+
 const MainContent = styled.main`
   padding-top: 60px;
   min-height: calc(100vh - 60px);
@@ -31,20 +34,6 @@ function AppContent() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.state?.scrollToTrends) {
-      const trendShowcase = document.getElementById('trend-showcase');
-      if (trendShowcase) {
-        setTimeout(() => {
-          trendShowcase.scrollIntoView({ behavior: 'smooth' });
-          // Clean up the state
-          window.history.replaceState({}, document.title);
-        }, 100); // Small delay to ensure component is mounted
-      }
-    }
-  }, [location.state]);
-
-  // Add this effect to reset scroll on route change
-  useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
@@ -53,24 +42,7 @@ function AppContent() {
       <GlobalStyles />
       <Header />
       <MainContent>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/schedule" element={<ClientScheduling />} />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/order" element={<OrderSystem />} />            
-          <Route path="/login" element={<LoginComponent />} />
-          <Route path="/appointment-confirmation/:id" element={<AppointmentConfirmation />} />
-          <Route path="/carousel/:id" element={<TrendDetails />} />
-          <Route path="/coupon" element={<CouponPage />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/gallery" element={<Gallery />} />
-        </Routes>
+        <Outlet />
       </MainContent>
       <Chat />
       <Footer />
@@ -78,12 +50,53 @@ function AppContent() {
   );
 }
 
+const InstanceWrapper = ({ children }) => {
+    return (
+        <InstanceProvider>
+            {children}
+        </InstanceProvider>
+    );
+};
+
 export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <Routes>
+            <Route element={<InstanceWrapper><AppContent /></InstanceWrapper>}>
+                {/* Super admin routes are top-level and don't have an instanceId */}
+                <Route path="/login" element={<LoginComponent />} />
+                <Route path="/super-admin" element={
+                    <ProtectedRoute>
+                        <SuperAdminDashboard />
+                    </ProtectedRoute>
+                } />
+
+                {/* Instance routes are nested to inherit the instanceId from the URL */}
+                <Route path="/:instanceId">
+                    <Route index element={<Home />} />
+                    <Route path="about" element={<About />} />
+                    <Route path="contact" element={<Contact />} />
+                    <Route path="schedule" element={<ClientScheduling />} />
+                    <Route path="login" element={<LoginComponent />} />
+                    <Route path="admin" element={
+                        <ProtectedRoute>
+                            <AdminDashboard />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="order" element={<OrderSystem />} />
+                    <Route path="appointment-confirmation/:id" element={<AppointmentConfirmation />} />
+                    <Route path="carousel/:id" element={<TrendDetails />} />
+                    <Route path="coupon" element={<CouponPage />} />
+                    <Route path="services" element={<Services />} />
+                    <Route path="gallery" element={<Gallery />} />
+                </Route>
+
+                {/* Fallback for root path to show the default instance */}
+                <Route path="/" element={<Home />} />
+            </Route>
+          </Routes>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

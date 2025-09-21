@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { useInstance } from '../context/InstanceContext';
 
 const HeroContainer = styled(motion.section)`
   display: flex;
@@ -117,14 +118,16 @@ const itemVariants = {
 };
 
 function Hero() {
+  const { instanceId } = useInstance();
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(0);
   const [lastClickTime, setLastClickTime] = useState(0);
 
+  const base = instanceId === 'default' ? '' : `/${instanceId}`;
+
   const handleTitleClick = useCallback(() => {
     const currentTime = Date.now();
     
-    // Reset count if more than 2 seconds have passed since last click
     if (currentTime - lastClickTime > 2000) {
       setClickCount(1);
     } else {
@@ -134,19 +137,17 @@ function Hero() {
     setLastClickTime(currentTime);
   }, [lastClickTime]);
 
-  // Check for 7 clicks
   useEffect(() => {
     if (clickCount === 7) {
-      navigate('/admin');
+      navigate(`${base}/admin`);
       setClickCount(0);
     }
-  }, [clickCount, navigate]);
+  }, [clickCount, navigate, base]);
 
   const handleBooking = useCallback((e) => {
     e.preventDefault();
-    navigate('/schedule');
-    window.scrollTo(0, 0);
-  }, [navigate]);
+    navigate(`${base}/schedule`);
+  }, [navigate, base]);
 
   return (
     <HeroContainer id="hero-section" variants={containerVariants} initial="hidden" animate="visible">
@@ -165,7 +166,7 @@ function Hero() {
         <Divider variants={itemVariants} />
         <CallToActionWrapper variants={itemVariants}>
           <CallToAction
-            to="/schedule"
+            to={`${base}/schedule`}
             onClick={handleBooking}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

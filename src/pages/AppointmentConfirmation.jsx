@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
+import { useInstance } from '../context/InstanceContext';
 import CouponCard from '../components/CouponCard.jsx';
 
 const ConfirmationContainer = styled.div`
@@ -71,6 +72,7 @@ const Error = styled.p`
 
 const AppointmentConfirmation = () => {
   const { id } = useParams();
+  const { instanceId } = useInstance();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,9 +80,10 @@ const AppointmentConfirmation = () => {
 
   useEffect(() => {
     const fetchAppointment = async () => {
+      if (!instanceId) return;
       setLoading(true);
       try {
-        const response = await fetch(`/api/appointments/${id}`);
+        const response = await fetch(`/api/${instanceId}/appointments/${id}`);
         if (!response.ok) {
             let errorMessage = `Error: ${response.status} ${response.statusText}`;
             try {
@@ -107,7 +110,7 @@ const AppointmentConfirmation = () => {
 
   const handleTrendClick = (e) => {
     e.preventDefault();
-    navigate('/', { state: { scrollToTrends: true } });
+    navigate(`/${instanceId}`, { state: { scrollToTrends: true } });
   };
 
   if (loading) {

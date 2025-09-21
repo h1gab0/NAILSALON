@@ -105,7 +105,7 @@ const UpdateUsesContainer = styled.div`
     gap: 0.5rem;
 `;
 
-const CouponManagement = () => {
+const CouponManagement = ({ instanceId }) => {
   const [coupons, setCoupons] = useState([]);
   const [newCoupon, setNewCoupon] = useState({
     code: '',
@@ -116,8 +116,9 @@ const CouponManagement = () => {
 
   useEffect(() => {
     const fetchCoupons = async () => {
+      if (!instanceId) return;
       try {
-        const response = await fetch('/api/coupons', { credentials: 'include' });
+        const response = await fetch(`/api/${instanceId}/coupons`, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setCoupons(data);
@@ -127,7 +128,7 @@ const CouponManagement = () => {
       }
     };
     fetchCoupons();
-  }, []);
+  }, [instanceId]);
 
   const handleAddCoupon = async (e) => {
     e.preventDefault();
@@ -136,7 +137,7 @@ const CouponManagement = () => {
       return;
     }
     try {
-      const response = await fetch('/api/coupons', {
+      const response = await fetch(`/api/${instanceId}/coupons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCoupon),
@@ -154,7 +155,7 @@ const CouponManagement = () => {
 
   const handleRemoveCoupon = async (code) => {
     try {
-      const response = await fetch(`/api/coupons/${code}`, {
+      const response = await fetch(`/api/${instanceId}/coupons/${code}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -168,7 +169,7 @@ const CouponManagement = () => {
 
   const handleUpdateCouponUses = async (code, newUses) => {
     try {
-        const response = await fetch(`/api/coupons/${code}`, {
+        const response = await fetch(`/api/${instanceId}/coupons/${code}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usesLeft: newUses }),

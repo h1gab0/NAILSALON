@@ -2,9 +2,11 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
-import AdminCalendar from './AdminCalendar';
+import { useInstance } from '../context/InstanceContext';
+import { useInstance } from '../context/InstanceContext';
+import AdminCalendar from '../components/AdminCalendar';
 import { format, parseISO, isBefore, startOfDay, set, isAfter, isSameMonth, startOfToday } from 'date-fns';
-import CollapsibleAppointment from './CollapsibleAppointment';
+import CollapsibleAppointment from '../components/CollapsibleAppointment';
 import CouponManagement from '../components/CouponManagement';
 
 const DashboardContainer = styled.div`
@@ -388,6 +390,7 @@ const AppointmentListSection = styled.div`
 `;
 
 function AdminDashboard() {
+  const { instanceId } = useInstance();
   const [appointments, setAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [availability, setAvailability] = useState({});
@@ -430,9 +433,11 @@ function AdminDashboard() {
           return;
         }
 
+        if (!instanceId) return;
+
         const fetchAppointments = async () => {
           try {
-            const response = await fetch('/api/appointments', { credentials: 'include' });
+            const response = await fetch(`/api/${instanceId}/appointments`, { credentials: 'include' });
             if (response.ok) {
               const data = await response.json();
               setAppointments(data);
@@ -444,7 +449,7 @@ function AdminDashboard() {
 
         const fetchAvailability = async () => {
           try {
-            const response = await fetch('/api/availability', { credentials: 'include' });
+            const response = await fetch(`/api/${instanceId}/availability`, { credentials: 'include' });
             if (response.ok) {
               const data = await response.json();
               setAvailability(data);
@@ -476,16 +481,15 @@ function AdminDashboard() {
 
     return () => {
         clearInterval(interval);
-        // When the component unmounts, tell the server to shorten the session.
         navigator.sendBeacon('/api/admin/session/expire-soon', new Blob());
     };
-  }, [navigate]);
+  }, [navigate, instanceId]);
 
   const handleAddNote = async (id, note) => {
     const appointment = appointments.find(appt => appt.id === id);
     const updatedNotes = [note, ...(appointment.notes || [])];
     try {
-      const response = await fetch(`/api/appointments/${id}`, {
+      const response = await fetch(`/api/${instanceId}/appointments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: updatedNotes }),
@@ -513,7 +517,7 @@ function AdminDashboard() {
     const appointment = appointments.find(appt => appt.id === appointmentId);
     const updatedNotes = appointment.notes.filter((_, index) => index !== noteIndex);
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}`, {
+      const response = await fetch(`/api/${instanceId}/appointments/${appointmentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: updatedNotes }),
@@ -533,7 +537,7 @@ function AdminDashboard() {
     const updatedNotes = [...appointment.notes];
     updatedNotes[noteIndex] = newNoteText;
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}`, {
+      const response = await fetch(`/api/${instanceId}/appointments/${appointmentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: updatedNotes }),
@@ -551,7 +555,7 @@ function AdminDashboard() {
   const handleCancel = async (id) => {
     try {
         const appointmentToCancel = appointments.find(appointment => appointment.id === id);
-        const response = await fetch(`/api/appointments/${id}`, {
+        const response = await fetch(`/api/${instanceId}/appointments/${id}`, {
             method: 'DELETE',
             credentials: 'include'
         });
@@ -559,7 +563,6 @@ function AdminDashboard() {
         if (response.ok) {
             setAppointments(prev => prev.filter(appt => appt.id !== id));
 
-            // Immediately reflect the availability change on the frontend
             if (appointmentToCancel) {
                 const dateString = appointmentToCancel.date;
                 setAvailability(prev => {
@@ -578,7 +581,7 @@ function AdminDashboard() {
 
   const handleComplete = async (id, profit, materials) => {
     try {
-      const response = await fetch(`/api/appointments/${id}`, {
+      const response = await fetch(`/api/${instanceId}/appointments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed', profit, materials }),
@@ -600,7 +603,6 @@ function AdminDashboard() {
   };
 
   const handleDaySelect = (date) => {
-    // If the same date is clicked again, deselect it. Otherwise, select the new date.
     if (selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')) {
       setSelectedDate(null);
     } else {
@@ -626,7 +628,7 @@ function AdminDashboard() {
     if (selectedDate && newTimeSlot) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       try {
-        const response = await fetch('/api/availability', {
+        const response = await fetch(`/api/${instanceId}/availability`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ date: dateString, time: newTimeSlot }),
@@ -655,7 +657,7 @@ function AdminDashboard() {
     if (selectedDate) {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       try {
-        const response = await fetch('/api/availability', {
+        const response = await fetch(`/api/${instanceId}/availability`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ date: dateString, time }),
@@ -688,7 +690,7 @@ function AdminDashboard() {
 
   const handleUpdateAppointmentName = async (id, newName) => {
     try {
-      const response = await fetch(`/api/appointments/${id}`, {
+      const response = await fetch(`/api/${instanceId}/appointments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientName: newName }),
@@ -733,7 +735,7 @@ function AdminDashboard() {
     };
 
     try {
-      const response = await fetch('/api/appointments', {
+      const response = await fetch(`/api/${instanceId}/appointments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(appointmentData),
@@ -757,7 +759,6 @@ function AdminDashboard() {
   const handleTimeInputClick = () => {
     if (!isMobile) {
       setShowClock(true);
-      // Wait for the clock widget to render
       setTimeout(() => {
         if (timeWidgetRef.current) {
           const element = timeWidgetRef.current;
@@ -783,19 +784,17 @@ function AdminDashboard() {
     const x = event.clientX - centerX;
     const y = centerY - event.clientY;
 
-    // Calculate angle from 12 o'clock position
     let angle = Math.atan2(x, y) * (180 / Math.PI);
-    angle = (angle + 360) % 360; // Normalize to 0-360
+    angle = (angle + 360) % 360;
 
     if (clockPhase === 'hour') {
       let hours = Math.round(angle / 30) % 12;
       hours = hours === 0 ? 12 : hours;
       setSelectedTime(prevTime => set(prevTime, { hours }));
     } else {
-      // Convert angle to minutes with a 5-minute snap
       let minutes = Math.round(angle / 6);
-      minutes = Math.round(minutes / 5) * 5; // Snap to nearest 5 minutes
-      minutes = minutes === 60 ? 0 : minutes; // Handle edge case for 60 minutes
+      minutes = Math.round(minutes / 5) * 5;
+      minutes = minutes === 60 ? 0 : minutes;
       setSelectedTime(prevTime => {
         const newDate = set(prevTime, { minutes });
         return set(newDate, { hours: prevTime.getHours() });
@@ -823,16 +822,13 @@ function AdminDashboard() {
   const handleClockCancel = () => {
     setShowClock(false);
     setNewTimeSlot('');
-    setClockPhase('hour'); // Reset to hour phase for next use
+    setClockPhase('hour');
   };
-
 
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
-      // If a date is selected, show all appointments for that day.
       return appointment.date === format(selectedDate, 'yyyy-MM-dd');
     } else {
-      // If no date is selected, show upcoming appointments for the current month.
       const today = startOfToday();
       const appointmentDate = parseISO(appointment.date);
       return isSameMonth(appointmentDate, new Date()) && isAfter(appointmentDate, today);
@@ -849,11 +845,6 @@ function AdminDashboard() {
     if (activeTab === 'COMPLETED') return appointment.status === 'completed';
     return true;
   });
-
-  const todayAppointments = appointments.filter(appointment => {
-    const today = new Date();
-    return appointment.date === format(today, 'yyyy-MM-dd') && appointment.status !== 'completed';
-  }).sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
 
   const CustomTimeInput = ({ value, onChange, onClick, placeholder }) => {
     const [displayValue, setDisplayValue] = useState('');
@@ -915,7 +906,7 @@ function AdminDashboard() {
       <Header>Admin Dashboard</Header>
       <Button onClick={handleLogout}>Logout</Button>
       <AdminCalendar appointments={appointments} onDaySelect={handleDaySelect} selectedDate={selectedDate} />
-      <CouponManagement />
+      <CouponManagement instanceId={instanceId} />
 
       <AppointmentListSection ref={appointmentListRef}>
         <SubHeader>All Appointments</SubHeader>

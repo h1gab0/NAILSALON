@@ -10,6 +10,16 @@ const CouponContainer = styled.div`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
+const SectionHeader = styled.h3`
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: ${({ theme }) => theme.colors.primary};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  padding-bottom: 0.5rem;
+`;
+
 const SubHeader = styled.h2`
   text-align: center;
   margin-bottom: 1.5rem;
@@ -44,6 +54,11 @@ const Button = styled.button`
 
   &:hover {
     background-color: ${({ theme }) => theme.colors.primaryDark};
+  }
+
+  &:disabled {
+    background-color: ${({ theme }) => theme.colors.disabled};
+    cursor: not-allowed;
   }
 `;
 
@@ -168,6 +183,9 @@ const CouponManagement = () => {
     }
   };
 
+  const activeCoupons = coupons.filter(c => c.usesLeft > 0);
+  const pastCoupons = coupons.filter(c => c.usesLeft <= 0);
+
   return (
     <CouponContainer>
       <SubHeader>Coupon Management</SubHeader>
@@ -197,8 +215,10 @@ const CouponManagement = () => {
         />
         <Button type="submit">Add Coupon</Button>
       </CouponForm>
+
+      <SectionHeader>Active Coupons</SectionHeader>
       <CouponList>
-        {coupons.map((coupon) => (
+        {activeCoupons.map((coupon) => (
           <CouponItem key={coupon.code}>
             <CouponInfo>
                 <strong>{coupon.code}</strong>
@@ -210,7 +230,27 @@ const CouponManagement = () => {
             </CouponInfo>
             <UpdateUsesContainer>
                 <Button onClick={() => handleUpdateCouponUses(coupon.code, coupon.usesLeft + 1)}>+</Button>
-                <Button onClick={() => handleUpdateCouponUses(coupon.code, coupon.usesLeft - 1)}>-</Button>
+                <Button disabled={coupon.usesLeft <= 0} onClick={() => handleUpdateCouponUses(coupon.code, coupon.usesLeft - 1)}>-</Button>
+            </UpdateUsesContainer>
+            <RemoveButton onClick={() => handleRemoveCoupon(coupon.code)}>Remove</RemoveButton>
+          </CouponItem>
+        ))}
+      </CouponList>
+
+      <SectionHeader>Past Coupons</SectionHeader>
+      <CouponList>
+        {pastCoupons.map((coupon) => (
+          <CouponItem key={coupon.code}>
+            <CouponInfo>
+                <strong>{coupon.code}</strong>
+                <span>{coupon.discount}% off</span>
+            </CouponInfo>
+            <CouponInfo>
+                <span>Uses Left: {coupon.usesLeft}</span>
+                <span>Expires: {format(parseISO(coupon.expiresAt), 'MMMM d, yyyy')}</span>
+            </CouponInfo>
+            <UpdateUsesContainer>
+                <Button onClick={() => handleUpdateCouponUses(coupon.code, coupon.usesLeft + 1)}>Re-enable (+)</Button>
             </UpdateUsesContainer>
             <RemoveButton onClick={() => handleRemoveCoupon(coupon.code)}>Remove</RemoveButton>
           </CouponItem>

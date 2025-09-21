@@ -221,8 +221,15 @@ const ClientScheduling = () => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            const errorMessage = errorData.message || 'Failed to create appointment';
+            let errorMessage = 'Failed to create appointment. Please try again.';
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (e) {
+                console.error("Could not parse error response as JSON", e);
+            }
             console.error('Error creating appointment:', errorMessage);
             alert(`Error: ${errorMessage}`);
             return;

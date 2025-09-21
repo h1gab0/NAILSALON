@@ -119,7 +119,7 @@ const Indicator = styled.div`
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${props => props.isActive ? props.theme.colors.primary : props.theme.colors.subtext};
+  background: ${props => props.$isActive ? props.theme.colors.primary : props.theme.colors.subtext};
   margin: 0 5px;
   transition: background 0.3s;
   cursor: pointer;
@@ -301,7 +301,7 @@ function NailTrendShowcase() {
         {trends.map((_, index) => (
           <Indicator
             key={index}
-            isActive={index === currentIndex}
+            $isActive={index === currentIndex}
             onClick={() => handleIndicatorClick(index)}
           />
         ))}

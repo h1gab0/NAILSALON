@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPaintBrush, FaPalette, FaGem, FaLeaf, FaMagic, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useInstance } from '../context/InstanceContext';
 
 const ShowcaseContainer = styled.section`
   padding: 5rem 0;
@@ -159,12 +160,15 @@ const trends = [
 ];
 
 function NailTrendShowcase() {
+  const { instanceId } = useInstance();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
+
+  const base = instanceId === 'default' ? '' : `/${instanceId}`;
 
   const nextSlide = useCallback(() => {
     setDirection(1);
@@ -237,9 +241,9 @@ function NailTrendShowcase() {
     
     if (Math.abs(clickX - centerX) <= centerWidth / 2 && 
         Math.abs(clickY - centerY) <= centerHeight / 2) {
-      navigate(`/carousel/${index}`);
+      navigate(`${base}/carousel/${index}`);
     }
-  }, [navigate]);
+  }, [navigate, base]);
 
   const CurrentIcon = trends[currentIndex].icon;
 

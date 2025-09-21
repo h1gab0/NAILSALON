@@ -4,6 +4,7 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { FaCalendarAlt, FaClock, FaUser, FaImage, FaTicketAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useInstance } from '../context/InstanceContext';
 
 const StepContainer = styled(motion.div)`
   background-color: ${({ theme }) => theme.colors.cardBackground};
@@ -130,6 +131,7 @@ const ImagePreview = styled.img`
 `;
 
 const ClientScheduling = () => {
+  const { instanceId } = useInstance();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [name, setName] = useState('');
@@ -141,41 +143,42 @@ const ClientScheduling = () => {
   const [step, setStep] = useState('date');
   const navigate = useNavigate();
 
-  const fetchAvailableDates = async () => {
-    try {
-      const response = await fetch('/api/availability/dates');
-      if (!response.ok) {
-        throw new Error('Failed to fetch available dates');
+  useEffect(() => {
+    const fetchAvailableDates = async () => {
+      try {
+        const response = await fetch(`/api/${instanceId}/availability/dates`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch available dates');
+        }
+        const data = await response.json();
+        setAvailableDates(data);
+      } catch (error) {
+        console.error(error);
       }
-      const data = await response.json();
-      setAvailableDates(data);
-    } catch (error) {
-      console.error(error);
+    };
+    if (instanceId) {
+        fetchAvailableDates();
     }
-  };
-
-  const fetchAvailableSlots = async (date) => {
-    try {
-      const response = await fetch(`/api/availability/slots/${date}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch available slots');
-      }
-      const data = await response.json();
-      setAvailableSlots(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  }, [instanceId]);
 
   useEffect(() => {
-    fetchAvailableDates();
-  }, []);
+    const fetchAvailableSlots = async (date) => {
+      try {
+        const response = await fetch(`/api/${instanceId}/availability/slots/${date}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch available slots');
+        }
+        const data = await response.json();
+        setAvailableSlots(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
-  useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && instanceId) {
       fetchAvailableSlots(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, instanceId]);
 
   const handleDateSelection = (date) => {
     setSelectedDate(date);
@@ -206,7 +209,7 @@ const ClientScheduling = () => {
     }
 
     try {
-        const response = await fetch('/api/appointments', {
+        const response = await fetch(`/api/${instanceId}/appointments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -236,7 +239,7 @@ const ClientScheduling = () => {
         }
 
         const newAppointment = await response.json();
-        navigate(`/appointment-confirmation/${newAppointment.id}`);
+        navigate(`/${instanceId}/appointment-confirmation/${newAppointment.id}`);
     } catch (networkError) {
         console.error('Network or other error creating appointment:', networkError);
         alert(`An unexpected error occurred: ${networkError.message}`);

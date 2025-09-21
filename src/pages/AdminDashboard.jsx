@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { AuthContext } from '../context/AuthContext';
 import AdminCalendar from './AdminCalendar';
-import { format, parseISO, isBefore, startOfDay, set } from 'date-fns';
+import { format, parseISO, isBefore, startOfDay, set, isAfter, isSameMonth, startOfToday } from 'date-fns';
 import CollapsibleAppointment from './CollapsibleAppointment';
 import CouponManagement from '../components/CouponManagement';
 
@@ -596,7 +596,12 @@ function AdminDashboard() {
   };
 
   const handleDaySelect = (date) => {
-    setSelectedDate(date);
+    // If the same date is clicked again, deselect it. Otherwise, select the new date.
+    if (selectedDate && format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(date);
+    }
 
     setTimeout(() => {
       if (appointmentListRef.current) {
@@ -820,9 +825,14 @@ function AdminDashboard() {
 
   const filteredAppointments = appointments.filter(appointment => {
     if (selectedDate) {
+      // If a date is selected, show all appointments for that day.
       return appointment.date === format(selectedDate, 'yyyy-MM-dd');
+    } else {
+      // If no date is selected, show upcoming appointments for the current month.
+      const today = startOfToday();
+      const appointmentDate = parseISO(appointment.date);
+      return isSameMonth(appointmentDate, new Date()) && isAfter(appointmentDate, today);
     }
-    return true;
   }).sort((a, b) => {
     if (a.status === 'completed' && b.status !== 'completed') return 1;
     if (a.status !== 'completed' && b.status === 'completed') return -1;

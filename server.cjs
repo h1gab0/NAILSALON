@@ -171,6 +171,17 @@ app.get('/api/appointments', requireAdmin, (req, res) => {
     res.json(appointments);
 });
 
+// PUBLIC: Get a single appointment by ID
+app.get('/api/appointments/:id', (req, res) => {
+    const { id } = req.params;
+    const appointment = appointments.find(appt => appt.id == id);
+    if (appointment) {
+        res.json(appointment);
+    } else {
+        res.status(404).json({ message: 'Appointment not found' });
+    }
+});
+
 app.post('/api/appointments', (req, res) => {
     const { date, time, clientName, phone, status, image, couponCode } = req.body;
 

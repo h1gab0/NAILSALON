@@ -118,6 +118,7 @@ app.get('/api/availability', requireAdmin, (req, res) => {
     res.json(availability);
 });
 
+// PUBLIC: Get all dates that have at least one available slot
 app.get('/api/availability/dates', (req, res) => {
     const availableDates = Object.keys(availability).filter(date => {
         const slots = availability[date].availableSlots;
@@ -126,6 +127,7 @@ app.get('/api/availability/dates', (req, res) => {
     res.json(availableDates);
 });
 
+// PUBLIC: Get all available slots for a specific date
 app.get('/api/availability/slots/:date', (req, res) => {
     const { date } = req.params;
     if (availability[date]) {

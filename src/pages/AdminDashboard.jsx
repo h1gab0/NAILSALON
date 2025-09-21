@@ -533,16 +533,29 @@ function AdminDashboard() {
 
   const handleCancel = async (id) => {
     try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+        const appointmentToCancel = appointments.find(appointment => appointment.id === id);
+        const response = await fetch(`/api/appointments/${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
 
-      if (response.ok) {
-        setAppointments(prev => prev.filter(appt => appt.id !== id));
-      }
+        if (response.ok) {
+            setAppointments(prev => prev.filter(appt => appt.id !== id));
+
+            // Immediately reflect the availability change on the frontend
+            if (appointmentToCancel) {
+                const dateString = appointmentToCancel.date;
+                setAvailability(prev => {
+                    const newAvailability = { ...prev };
+                    if (newAvailability[dateString] && newAvailability[dateString].availableSlots) {
+                        newAvailability[dateString].availableSlots[appointmentToCancel.time] = true;
+                    }
+                    return newAvailability;
+                });
+            }
+        }
     } catch (error) {
-      console.error('Error canceling appointment:', error);
+        console.error('Error canceling appointment:', error);
     }
   };
 

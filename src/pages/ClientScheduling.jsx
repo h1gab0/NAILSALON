@@ -222,14 +222,17 @@ const ClientScheduling = () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to create appointment');
+            const errorMessage = errorData.message || 'Failed to create appointment';
+            console.error('Error creating appointment:', errorMessage);
+            alert(`Error: ${errorMessage}`);
+            return;
         }
 
         const newAppointment = await response.json();
         navigate(`/appointment-confirmation/${newAppointment.id}`);
-    } catch (error) {
-        console.error('Error creating appointment:', error);
-        alert(`Error: ${error.message}`);
+    } catch (networkError) {
+        console.error('Network or other error creating appointment:', networkError);
+        alert(`An unexpected error occurred: ${networkError.message}`);
     }
   };
 

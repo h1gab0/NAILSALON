@@ -42,7 +42,7 @@ const AMPMSwitch = styled.div`
 const AMPMLabel = styled.span`
   font-size: 0.9rem;
   margin: 0 0.5rem;
-  color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.text};
+  color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.text};
 `;
 
 const Switch = styled.div`
@@ -58,7 +58,7 @@ const Switch = styled.div`
     content: '';
     position: absolute;
     top: 2px;
-    left: ${({ isAM }) => isAM ? '2px' : '22px'};
+    left: ${({ $isAM }) => $isAM ? '2px' : '22px'};
     width: 16px;
     height: 16px;
     background-color: ${({ theme }) => theme.colors.primary};
@@ -181,7 +181,7 @@ const TimeInputPlaceholder = styled.label`
   color: ${({ theme }) => theme.colors.textLight};
   pointer-events: none;
   transition: all 0.3s ease;
-  opacity: ${({ hasValue }) => (hasValue ? 0 : 1)};
+  opacity: ${({ $hasValue }) => ($hasValue ? 0 : 1)};
   text-align: center;
 `;
 
@@ -207,8 +207,8 @@ const TabContainer = styled.div`
 `;
 
 const Tab = styled.button`
-  background-color: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.background};
-  color: ${({ active, theme }) => active ? 'white' : theme.colors.text};
+  background-color: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.background};
+  color: ${({ $active, theme }) => $active ? 'white' : theme.colors.text};
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 20px;
@@ -277,7 +277,7 @@ const ClockNumber = styled.div`
   height: 30px;
   text-align: center;
   line-height: 30px;
-  transform: ${({ rotation }) => `rotate(${rotation}deg) translate(0, -80px) rotate(-${rotation}deg)`};
+  transform: ${({ $rotation }) => `rotate(${$rotation}deg) translate(0, -80px) rotate(-${$rotation}deg)`};
 `;
 
 const ClockHand = styled.div`
@@ -292,15 +292,15 @@ const ClockHand = styled.div`
 const HourHand = styled(ClockHand)`
   width: 4px;
   height: 60px;
-  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
-  display: ${({ show }) => (show ? 'block' : 'none')};
+  transform: ${({ $angle }) => `translateX(-50%) rotate(${$angle}deg)`};
+  display: ${({ $show }) => ($show ? 'block' : 'none')};
 `;
 
 const MinuteHand = styled(ClockHand)`
   width: 2px;
   height: 80px;
-  transform: ${({ angle }) => `translateX(-50%) rotate(${angle}deg)`};
-  display: ${({ show }) => (show ? 'block' : 'none')};
+  transform: ${({ $angle }) => `translateX(-50%) rotate(${$angle}deg)`};
+  display: ${({ $show }) => ($show ? 'block' : 'none')};
 `;
 
 const TimeDisplay = styled.div`
@@ -318,7 +318,7 @@ const ClockMarker = styled.div`
   height: 10px;
   background-color: ${({ theme }) => theme.colors.primary};
   border-radius: 50%;
-  transform: ${({ angle }) => `rotate(${angle}deg) translateY(-90px)`};
+  transform: ${({ $angle }) => `rotate(${$angle}deg) translateY(-90px)`};
 `;
 
 const Modal = styled.div`
@@ -876,7 +876,7 @@ function AdminDashboard() {
           placeholder={placeholder}
           maxLength={5}
         />
-        <TimeInputPlaceholder hasValue={!!displayValue}>
+        <TimeInputPlaceholder $hasValue={!!displayValue}>
           {placeholder}
         </TimeInputPlaceholder>
       </TimeInputWrapper>
@@ -893,9 +893,9 @@ function AdminDashboard() {
       <AppointmentListSection ref={appointmentListRef}>
         <SubHeader>All Appointments</SubHeader>
         <TabContainer>
-          <Tab active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
-          <Tab active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
-          <Tab active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
+          <Tab $active={activeTab === 'ALL'} onClick={() => setActiveTab('ALL')}>ALL</Tab>
+          <Tab $active={activeTab === 'UPCOMING'} onClick={() => setActiveTab('UPCOMING')}>UPCOMING</Tab>
+          <Tab $active={activeTab === 'COMPLETED'} onClick={() => setActiveTab('COMPLETED')}>COMPLETED</Tab>
         </TabContainer>
         <AppointmentList>
           {displayedAppointments.map((appointment) => (
@@ -936,21 +936,21 @@ function AdminDashboard() {
               </ClockInstruction>
               <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
               <AMPMSwitch>
-                <AMPMLabel active={isAM}>AM</AMPMLabel>
-                <Switch isAM={isAM} onClick={toggleAMPM} />
-                <AMPMLabel active={!isAM}>PM</AMPMLabel>
+                <AMPMLabel $active={isAM}>AM</AMPMLabel>
+                <Switch $isAM={isAM} onClick={toggleAMPM} />
+                <AMPMLabel $active={!isAM}>PM</AMPMLabel>
               </AMPMSwitch>
               <ClockFace ref={clockRef} onClick={handleClockClick}>
                 <HourHand
-                  angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
-                  show={clockPhase === 'hour'}
+                  $angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                  $show={clockPhase === 'hour'}
                 />
                 <MinuteHand
-                  angle={selectedTime.getMinutes() * 6}
-                  show={clockPhase === 'minute'}
+                  $angle={selectedTime.getMinutes() * 6}
+                  $show={clockPhase === 'minute'}
                 />
                 {[...Array(12)].map((_, index) => (
-                  <ClockNumber key={index} rotation={index * 30}>
+                  <ClockNumber key={index} $rotation={index * 30}>
                     {index === 0 ? 12 : index}
                   </ClockNumber>
                 ))}
@@ -1046,21 +1046,21 @@ function AdminDashboard() {
                     </ClockInstruction>
                     <TimeDisplay>{format(selectedTime, 'hh:mm')}</TimeDisplay>
                     <AMPMSwitch>
-                      <AMPMLabel active={isAM}>AM</AMPMLabel>
-                      <Switch isAM={isAM} onClick={toggleAMPM} />
-                      <AMPMLabel active={!isAM}>PM</AMPMLabel>
+                      <AMPMLabel $active={isAM}>AM</AMPMLabel>
+                      <Switch $isAM={isAM} onClick={toggleAMPM} />
+                      <AMPMLabel $active={!isAM}>PM</AMPMLabel>
                     </AMPMSwitch>
                     <ClockFace ref={clockRef} onClick={handleClockClick}>
                       <HourHand
-                        angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
-                        show={clockPhase === 'hour'}
+                        $angle={selectedTime.getHours() * 30 + selectedTime.getMinutes() * 0.5}
+                        $show={clockPhase === 'hour'}
                       />
                       <MinuteHand
-                        angle={selectedTime.getMinutes() * 6}
-                        show={clockPhase === 'minute'}
+                        $angle={selectedTime.getMinutes() * 6}
+                        $show={clockPhase === 'minute'}
                       />
                       {[...Array(12)].map((_, index) => (
-                        <ClockNumber key={index} rotation={index * 30}>
+                        <ClockNumber key={index} $rotation={index * 30}>
                           {index === 0 ? 12 : index}
                         </ClockNumber>
                       ))}

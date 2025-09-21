@@ -78,17 +78,24 @@ const AppointmentConfirmation = () => {
 
   useEffect(() => {
     const fetchAppointment = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const response = await fetch(`/api/appointments/${id}`);
         if (!response.ok) {
-          throw new Error('Appointment not found');
+            let errorMessage = `Error: ${response.status} ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+                // Response was not JSON, use the status text.
+            }
+            throw new Error(errorMessage);
         }
         const data = await response.json();
         setAppointment(data);
         setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'An unexpected error occurred.');
         setAppointment(null);
       } finally {
         setLoading(false);
@@ -142,13 +149,6 @@ const AppointmentConfirmation = () => {
           <>
             <Details><strong>Design Inspiration:</strong></Details>
             <ImagePreview src={appointment.image} alt="Design Inspiration" />
-          </>
-        )}
-
-        {appointment.coupon && (
-          <>
-            <Title style={{ marginTop: '2rem', fontSize: '1.5rem' }}>Your Promotional Offer!</Title>
-            <CouponCard coupon={appointment.coupon} />
           </>
         )}
 

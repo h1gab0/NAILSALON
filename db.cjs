@@ -1,59 +1,31 @@
 const { Low } = require('lowdb');
 const { JSONFile } = require('lowdb/node');
-const Steno = require('steno');
 
-class JSONFileWithSteno {
-    constructor(filename) {
-        this.filename = filename;
-        this.writer = new Steno(filename);
+// Default data structure if db.json doesn't exist
+const defaultData = {
+  instances: {
+    "default": {
+      name: "Nail Scheduler Default",
+      admins: [{ username: 'admin', password: 'password' }],
+      coupons: [
+        { code: 'SAVE10', discount: 10, usesLeft: 10, expiresAt: '2025-12-31' }
+      ],
+      appointments: [],
+      availability: {}
     }
-
-    async read() {
-        try {
-            const data = await require('fs').promises.readFile(this.filename, 'utf-8');
-            return JSON.parse(data);
-        } catch (e) {
-            if (e.code === 'ENOENT') {
-                return null;
-            }
-            throw e;
-        }
-    }
-
-    async write(data) {
-        await this.writer.write(JSON.stringify(data, null, 2));
-    }
-}
-
-const adapter = new JSONFileWithSteno('db.json');
-const db = new Low(adapter);
-
-// Function to set default data if the database is empty
-const setDefaultData = async () => {
-    await db.read();
-    if (!db.data) {
-        db.data = {
-            instances: {
-                "default": {
-                    name: "Nail Scheduler Default",
-                    admins: [{ username: 'admin', password: 'password' }],
-                    coupons: [
-                        { code: 'SAVE10', discount: 10, usesLeft: 10, expiresAt: '2025-12-31' }
-                    ],
-                    appointments: [],
-                    availability: {}
-                }
-            }
-        };
-        await db.write();
-    }
+  }
 };
 
-// Initialize and set default data
-setDefaultData();
+const adapter = new JSONFile('db.json');
+const db = new Low(adapter, defaultData);
 
-module.exports = { db, getInstanceData: async (instanceId) => {
-    await db.read();
+// Read data from JSON file, this will set db.data.
+// If file doesn't exist, the defaultData will be used.
+db.read();
+
+// Helper to get or create instance data and ensure it's written to the db
+const getInstanceData = async (instanceId) => {
+    await db.read(); // Always read latest data from file
     if (!db.data.instances[instanceId]) {
         db.data.instances[instanceId] = {
             name: `${instanceId}'s Scheduler`,
@@ -62,7 +34,9 @@ module.exports = { db, getInstanceData: async (instanceId) => {
             appointments: [],
             availability: {}
         };
-        await db.write();
+        await db.write(); // Write back to file if a new instance was created
     }
     return db.data.instances[instanceId];
-}};
+};
+
+module.exports = { db, getInstanceData };

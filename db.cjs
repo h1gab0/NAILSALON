@@ -1,6 +1,6 @@
 const { Low } = require('lowdb');
 const { JSONFile } = require('lowdb/node');
-const { Steno } = require('steno');
+const Steno = require('steno');
 
 class JSONFileWithSteno {
     constructor(filename) {

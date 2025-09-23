@@ -1,7 +1,6 @@
 const { Low } = require('lowdb');
 const { JSONFile } = require('lowdb/node');
 
-// Default data structure if db.json doesn't exist
 const defaultData = {
   instances: {
     "default": {
@@ -19,13 +18,15 @@ const defaultData = {
 const adapter = new JSONFile('db.json');
 const db = new Low(adapter, defaultData);
 
-// Read data from JSON file, this will set db.data.
-// If file doesn't exist, the defaultData will be used.
-db.read();
+const initDb = async () => {
+    await db.read();
+    // If the file didn't exist, db.data will be null, so we need to set it
+    db.data = db.data || defaultData;
+    await db.write(); // Write the default data if the file was new
+};
 
-// Helper to get or create instance data and ensure it's written to the db
 const getInstanceData = async (instanceId) => {
-    await db.read(); // Always read latest data from file
+    await db.read();
     if (!db.data.instances[instanceId]) {
         db.data.instances[instanceId] = {
             name: `${instanceId}'s Scheduler`,
@@ -34,9 +35,9 @@ const getInstanceData = async (instanceId) => {
             appointments: [],
             availability: {}
         };
-        await db.write(); // Write back to file if a new instance was created
+        await db.write();
     }
     return db.data.instances[instanceId];
 };
 
-module.exports = { db, getInstanceData };
+module.exports = { db, getInstanceData, initDb };

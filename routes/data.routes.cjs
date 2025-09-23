@@ -147,4 +147,22 @@ router.delete('/appointments/:id', requireAdmin, async (req, res) => {
     res.status(204).send();
 });
 
+router.put('/appointments/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { clientName, status, profit, materials, notes } = req.body;
+    const appointmentIndex = req.instanceData.appointments.findIndex(appt => appt.id == id);
+
+    if (appointmentIndex === -1) {
+        return res.status(404).json({ message: 'Appointment not found' });
+    }
+    if (clientName) req.instanceData.appointments[appointmentIndex].clientName = clientName;
+    if (status) req.instanceData.appointments[appointmentIndex].status = status;
+    if (profit) req.instanceData.appointments[appointmentIndex].profit = profit;
+    if (materials) req.instanceData.appointments[appointmentIndex].materials = materials;
+    if (notes) req.instanceData.appointments[appointmentIndex].notes = notes;
+
+    await db.write();
+    res.json(req.instanceData.appointments[appointmentIndex]);
+});
+
 module.exports = router;

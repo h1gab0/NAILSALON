@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Outlet, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Outlet, useParams, Navigate } from 'react-router-dom';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { InstanceProvider } from './context/InstanceContext';
@@ -93,8 +93,8 @@ export default function App() {
                     <Route path="gallery" element={<Gallery />} />
                 </Route>
 
-                {/* Fallback for root path to show the default instance */}
-                <Route path="/" element={<Home />} />
+                {/* Redirect root path to the super admin login */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
             </Route>
           </Routes>
         </AuthProvider>

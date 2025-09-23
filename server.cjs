@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const app = express();
+const { initDb } = require('./db.cjs');
 
 const authRoutes = require('./routes/auth.routes.cjs');
 const instanceRoutes = require('./routes/instance.routes.cjs');
@@ -34,7 +35,12 @@ app.use((err, req, res, next) => {
 
 // Start Server
 const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Super Admin: ${process.env.SUPER_ADMIN_USERNAME}`);
-});
+const startServer = async () => {
+    await initDb();
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Super Admin: ${process.env.SUPER_ADMIN_USERNAME}`);
+    });
+};
+
+startServer();

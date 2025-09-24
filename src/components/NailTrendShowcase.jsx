@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaPaintBrush, FaPalette, FaGem, FaLeaf, FaMagic, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useInstance } from '../context/InstanceContext';
 
 const ShowcaseContainer = styled.section`
   padding: 5rem 0;
@@ -120,7 +119,7 @@ const Indicator = styled.div`
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: ${props => props.$isActive ? props.theme.colors.primary : props.theme.colors.subtext};
+  background: ${props => props.isActive ? props.theme.colors.primary : props.theme.colors.subtext};
   margin: 0 5px;
   transition: background 0.3s;
   cursor: pointer;
@@ -160,15 +159,12 @@ const trends = [
 ];
 
 function NailTrendShowcase() {
-  const { instanceId } = useInstance();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(true);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
-
-  const base = instanceId === 'default' ? '' : `/${instanceId}`;
 
   const nextSlide = useCallback(() => {
     setDirection(1);
@@ -241,9 +237,9 @@ function NailTrendShowcase() {
     
     if (Math.abs(clickX - centerX) <= centerWidth / 2 && 
         Math.abs(clickY - centerY) <= centerHeight / 2) {
-      navigate(`${base}/carousel/${index}`);
+      navigate(`/carousel/${index}`);
     }
-  }, [navigate, base]);
+  }, [navigate]);
 
   const CurrentIcon = trends[currentIndex].icon;
 
@@ -305,7 +301,7 @@ function NailTrendShowcase() {
         {trends.map((_, index) => (
           <Indicator
             key={index}
-            $isActive={index === currentIndex}
+            isActive={index === currentIndex}
             onClick={() => handleIndicatorClick(index)}
           />
         ))}

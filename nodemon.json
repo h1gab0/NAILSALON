@@ -1,3 +1,0 @@
-{
-  "ignore": ["*.log", "nodemon.json", "db.json"]
-}

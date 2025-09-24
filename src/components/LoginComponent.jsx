@@ -2,7 +2,6 @@ import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { useInstance } from '../context/InstanceContext';
 
 const LoginWrapper = styled.div`
   position: fixed;
@@ -87,7 +86,6 @@ const ErrorMessage = styled.div`
 `;
 
 const LoginComponent = () => {
-  const { instanceId } = useInstance();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -99,17 +97,10 @@ const LoginComponent = () => {
     setError('');
     
     try {
-      // Pass the instanceId to the login function.
-      // The login function will decide whether to perform a super admin or instance admin login.
-      const user = await login(username, password, instanceId);
-
-      if (user.isSuperAdmin) {
-        navigate('/super-admin');
-      } else {
-        navigate(`/${user.instanceId}/admin`);
-      }
+      await login(username, password);
+      navigate('/admin');
     } catch (error) {
-      setError(error.message || 'Invalid credentials. Please try again.');
+      setError('Invalid credentials. Please try again.');
       setPassword('');
     }
   };
@@ -117,7 +108,7 @@ const LoginComponent = () => {
   return (
     <LoginWrapper>
       <LoginContainer>
-        <Title>{instanceId && instanceId !== 'default' ? `${instanceId} Admin Login` : 'Super Admin Login'}</Title>
+        <Title>Admin Login</Title>
         <Form onSubmit={handleSubmit}>
           <InputGroup>
             <Input

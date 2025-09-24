@@ -1,19 +1,26 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
 const InstanceContext = createContext(null);
 
 export const useInstance = () => {
-    return useContext(InstanceContext);
+  const context = useContext(InstanceContext);
+  if (!context) {
+    throw new Error('useInstance must be used within an InstanceProvider');
+  }
+  return context;
 };
 
 export const InstanceProvider = ({ children }) => {
-    const { instanceId } = useParams();
-    const id = instanceId || 'default'; // Fallback to 'default' if no instanceId is in the URL
+  const { instanceId } = useParams();
 
-    return (
-        <InstanceContext.Provider value={{ instanceId: id }}>
-            {children}
-        </InstanceContext.Provider>
-    );
+  const value = useMemo(() => ({
+    instanceId: instanceId || 'default', // Fallback to 'default' if no instanceId is in URL
+  }), [instanceId]);
+
+  return (
+    <InstanceContext.Provider value={value}>
+      {children}
+    </InstanceContext.Provider>
+  );
 };

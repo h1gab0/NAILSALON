@@ -1,9 +1,9 @@
+// header.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
-import { useInstance } from '../context/InstanceContext';
 
 const StyledHeader = styled.header`
   background-color: ${({ theme }) => theme.colors.headerBackground};
@@ -147,6 +147,7 @@ const ScheduleButton = styled(Link)`
   }
 `;
 
+
 const ThemeToggleWrapper = styled.div`
   margin-left: 1rem;
 
@@ -204,14 +205,12 @@ const MobileScheduleButton = styled(Link)`
 `;
 
 function Header() {
-  const { instanceId } = useInstance();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const base = instanceId === 'default' ? '' : `/${instanceId}`;
-
   const toggleMenu = useCallback(() => setIsMenuOpen(prev => !prev), []);
+
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
   useEffect(() => {
@@ -220,41 +219,59 @@ function Header() {
     } else {
       document.body.style.overflow = 'unset';
     }
+
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isMenuOpen]);
 
+  const handleClickOutside = useCallback((event) => {
+    if (isMenuOpen && !event.target.closest('nav') && !event.target.closest('.theme-toggle')) {
+      closeMenu();
+    }
+  }, [isMenuOpen, closeMenu]);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [handleClickOutside]);
+
   const scrollToTop = useCallback((e) => {
     e.preventDefault();
-    const homePath = base || '/';
-    if (location.pathname === homePath) {
+
+    // If we're on the home page, scroll to top
+    if (location.pathname === '/') {
       document.getElementById('hero-section')?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      navigate(homePath);
+      // If we're on any other page, navigate to home and scroll to top
+      navigate('/');
+      window.scrollTo(0, 0);
     }
     closeMenu();
-  }, [location.pathname, navigate, closeMenu, base]);
+  }, [location.pathname, navigate, closeMenu]);
 
   const handleScheduleClick = useCallback((e) => {
     e.preventDefault();
-    navigate(`${base}/schedule`);
+    navigate('/schedule');
+    window.scrollTo(0, 0);
     closeMenu();
-  }, [navigate, closeMenu, base]);
+  }, [navigate, closeMenu]);
 
   return (
     <StyledHeader>
       <Nav>
-        <Logo to={base || '/'} onClick={scrollToTop}>Nail Salon Scheduler</Logo>
+        <Logo to="/" onClick={scrollToTop}>Nail Salon Scheduler</Logo>
         <MenuButton onClick={toggleMenu} aria-label="Toggle menu">
           {isMenuOpen ? '✕' : '☰'}
         </MenuButton>
         <NavLinks>
-          <NavLink to={base || '/'} onClick={scrollToTop}>Home</NavLink>
-          <NavLink to={`${base}/services`}>Services</NavLink>
-          <NavLink to={`${base}/gallery`}>Nail Gallery</NavLink>
+          <NavLink to="/" onClick={scrollToTop}>Home</NavLink>
+          <NavLink to="/services">Services</NavLink>
+          <NavLink to="/gallery">Nail Gallery</NavLink>
           <ScheduleButton
-            to={`${base}/schedule`}
+            to="/schedule"
             onClick={handleScheduleClick}
             aria-label="Schedule an appointment"
           >
@@ -273,11 +290,11 @@ function Header() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <MobileNavLink to={base || '/'} onClick={scrollToTop}>Home</MobileNavLink>
-            <MobileNavLink to={`${base}/services`} onClick={closeMenu}>Services</MobileNavLink>
-            <MobileNavLink to={`${base}/gallery`} onClick={closeMenu}>Nail Gallery</MobileNavLink>
+            <MobileNavLink to="/" onClick={scrollToTop}>Home</MobileNavLink>
+            <MobileNavLink to="/services" onClick={closeMenu}>Services</MobileNavLink>
+            <MobileNavLink to="/gallery" onClick={closeMenu}>Nail Gallery</MobileNavLink>
             <MobileScheduleButton 
-              to={`${base}/schedule`}
+              to="/schedule"
               onClick={handleScheduleClick}
               aria-label="Schedule an appointment"
             >

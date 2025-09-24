@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
@@ -143,42 +143,52 @@ const ClientScheduling = () => {
   const [step, setStep] = useState('date');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchAvailableDates = async () => {
-      try {
-        const response = await fetch(`/api/${instanceId}/availability/dates`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch available dates');
-        }
-        const data = await response.json();
-        setAvailableDates(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    if (instanceId) {
-        fetchAvailableDates();
+  const fetchAvailableDates = useCallback(async () => {
+    if (!instanceId) return;
+    try {
+      const response = await fetch(`/api/${instanceId}/availability/dates`);
+      if (!response.ok) throw new Error('Failed to fetch available dates');
+      const data = await response.json();
+      setAvailableDates(data);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [instanceId]);
+
+  const fetchAvailableSlots = useCallback(async (date) => {
+    if (!instanceId || !date) return;
+    try {
+      const response = await fetch(`/api/${instanceId}/availability/slots/${date}`);
+      if (!response.ok) throw new Error('Failed to fetch available slots');
+      const data = await response.json();
+      setAvailableSlots(data);
+    } catch (error) {
+      console.error(error);
     }
   }, [instanceId]);
 
   useEffect(() => {
-    const fetchAvailableSlots = async (date) => {
-      try {
-        const response = await fetch(`/api/${instanceId}/availability/slots/${date}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch available slots');
+    fetchAvailableDates();
+
+    const ws = new WebSocket('ws://localhost:3001');
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'availability_updated' || message.type === 'appointments_updated') {
+        fetchAvailableDates();
+        if (selectedDate) {
+          fetchAvailableSlots(selectedDate);
         }
-        const data = await response.json();
-        setAvailableSlots(data);
-      } catch (error) {
-        console.error(error);
       }
     };
 
-    if (selectedDate && instanceId) {
+    return () => ws.close();
+  }, [instanceId, fetchAvailableDates, fetchAvailableSlots, selectedDate]);
+
+  useEffect(() => {
+    if (selectedDate) {
       fetchAvailableSlots(selectedDate);
     }
-  }, [selectedDate, instanceId]);
+  }, [selectedDate, fetchAvailableSlots]);
 
   const handleDateSelection = (date) => {
     setSelectedDate(date);
@@ -217,32 +227,19 @@ const ClientScheduling = () => {
                 time: selectedTime,
                 clientName: name,
                 phone: phone,
-                status: 'scheduled',
-                image: image,
-                couponCode: couponCode,
             }),
         });
 
         if (!response.ok) {
-            let errorMessage = 'Failed to create appointment. Please try again.';
-            try {
-                const errorData = await response.json();
-                if (errorData && errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            } catch (e) {
-                console.error("Could not parse error response as JSON", e);
-            }
-            console.error('Error creating appointment:', errorMessage);
-            alert(`Error: ${errorMessage}`);
-            return;
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create appointment');
         }
 
         const newAppointment = await response.json();
         navigate(`/${instanceId}/appointment-confirmation/${newAppointment.id}`);
-    } catch (networkError) {
-        console.error('Network or other error creating appointment:', networkError);
-        alert(`An unexpected error occurred: ${networkError.message}`);
+    } catch (error) {
+        console.error('Error creating appointment:', error);
+        alert(`Error: ${error.message}`);
     }
   };
 

@@ -1,39 +1,10 @@
-GENERAL PURPOSE NAIL SALON PROJECT.-Inspired in SN-. Nails-Now
 
-Develop missing pages:
-/GALLERY
-Try loading an inspirational image and ask to recreate
+> myapp@0.0.0 dev:server
+> nodemon server.cjs
 
-HOW IS THE CLIENT RELATIONSHIP MANAGED?
-CUPONS - MARKETING - DATA GATHERING
-
-clientscheoling view -> WHAT SERVICE DO YOU NEED?
--> SERVICE CUSTOMIZATION STAGE.
-Sellers and customers visually design products, select parts or components, and arrange settings and features in real-time based on their requirements, preset business rules, and product availability data.
-
-
-FOR TEXT ELEMENTS IN GENRAL, DISABLE CURSOR LINE VIEW WHEN
-CLICKING THEM
-
-CTA button hover has to show TEXT
-
-Community - Trends
-Inventory control.
-Appointment summary - Inventory flow.
-Monthly earnings report.
-Multi Language.
-
-ADD LANGUAGE: Spanish/English.
-
-SETUP Mixture Of AGENTS.
-PERPLEXITY
-GROQ
-
-MotionDesign interdevice META WEB HARDWARE CONECTION
-Trends Will redirect to tiktok chann.
-
-fuerte backend y database.
-
-CREATE A GALLERY PAGE, A SERVICE OFFERING PAGE AND LOCATION.
-
-SECURITY AUDIT.
+[33m[nodemon] 3.1.7[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node server.cjs`[39m
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

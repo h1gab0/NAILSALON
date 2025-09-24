@@ -8,7 +8,7 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 
 const app = express();
-const port = 3001;
+const port = 3000;
 
 async function startServer() {
     await initializeDatabase();

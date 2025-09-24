@@ -8,9 +8,9 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "server": "node server.cjs",
-    "dev:server": "nodemon server.cjs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:server\""
+    "server": "node server.js",
+    "dev:server": "nodemon server.js",
+    "dev:all": "concurrently \"vite --host\" \"nodemon server.js\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

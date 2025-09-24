@@ -1,5 +1,11 @@
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import { InstanceProvider } from './context/InstanceContext';
+import GlobalStyles from './styles/GlobalStyles';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -11,62 +17,63 @@ import AdminDashboard from './pages/AdminDashboard';
 import ClientScheduling from './pages/ClientScheduling';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AppointmentConfirmation from './pages/AppointmentConfirmation';
-import CouponPage from './pages/CouponPage';
-import OrderSystem from './pages/OrderSystem';
-import TrendDetails from './pages/TrendDetails';
-import Portfolio from './pages/Portfolio';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import { ThemeContext } from './context/ThemeContext';
-import GlobalStyles from './styles/GlobalStyles';
-import { InstanceProvider } from './context/InstanceContext';
 
-function App() {
-  const { theme } = useContext(ThemeContext);
-
-  return (
-    <StyledThemeProvider theme={theme}>
-      <GlobalStyles />
-      <Router>
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
-
-            <Route path="/:instanceId/*" element={
-              <InstanceProvider>
-                <InstanceRoutes />
-              </InstanceProvider>
-            } />
-
-            <Route path="/" element={<Home />} />
-          </Routes>
-        </main>
-        <Footer />
-      </Router>
-    </StyledThemeProvider>
-  );
+// A layout component to provide consistent structure
+function AppLayout() {
+    const { theme } = useTheme();
+    return (
+        <StyledThemeProvider theme={theme}>
+            <GlobalStyles />
+            <Header />
+            <main>
+                <Outlet />
+            </main>
+            <Footer />
+        </StyledThemeProvider>
+    );
 }
 
 function InstanceRoutes() {
   return (
     <Routes>
       <Route path="schedule" element={<ClientScheduling />} />
-      <Route path="appointment-confirmation/:id" element={<AppointmentConfirmation />} />
       <Route path="login" element={<Login />} />
       <Route path="admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-
+      <Route path="appointment-confirmation/:id" element={<AppointmentConfirmation />} />
       <Route path="/" element={<Home />} />
       <Route path="about" element={<About />} />
       <Route path="services" element={<Services />} />
       <Route path="gallery" element={<Gallery />} />
       <Route path="contact" element={<Contact />} />
-      <Route path="coupons" element={<CouponPage />} />
-      <Route path="order" element={<OrderSystem />} />
-      <Route path="trends/:id" element={<TrendDetails />} />
-      <Route path="portfolio" element={<Portfolio />} />
     </Routes>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <ThemeProvider>
+            <Routes>
+                <Route element={<AppLayout/>}>
+                    <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+                    <Route path="/login/super" element={<Login superAdmin />} />
+
+                    <Route path="/:instanceId/*" element={
+                      <InstanceProvider>
+                        <InstanceRoutes />
+                      </InstanceProvider>
+                    } />
+
+                    {/* Fallback for root could be a landing page or redirect */}
+                    <Route path="/" element={<Home />} />
+                </Route>
+            </Routes>
+        </ThemeProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

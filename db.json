@@ -1,0 +1,22 @@
+{
+  "instances": {
+    "default": {
+      "id": "default",
+      "name": "Default Salon",
+      "admin": {
+        "username": "admin",
+        "passwordHash": "$2b$10$wKo.xs9bhO1w74zBs8WqbuOceVjFcP3RUPySKNsebpzaEp8YNDNsi"
+      },
+      "appointments": [],
+      "availability": {},
+      "coupons": [],
+      "services": [],
+      "inventory": []
+    }
+  },
+  "superAdmins": {
+    "superadmin": {
+      "passwordHash": "$2b$10$wKo.xs9bhO1w74zBs8WqbuOceVjFcP3RUPySKNsebpzaEp8YNDNsi"
+    }
+  }
+}

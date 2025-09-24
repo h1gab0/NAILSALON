@@ -4,13 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "server": "node server.js",
-    "dev:server": "nodemon server.js",
-    "dev:all": "concurrently \"vite --host\" \"nodemon server.js\""
+    "server": "node server.cjs",
+    "dev:server": "nodemon server.cjs",
+    "dev:all": "concurrently \"npm:dev\" \"npm:dev:server\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -21,6 +21,8 @@
     "express-session": "^1.18.1",
     "framer-motion": "^11.3.24",
     "jsonwebtoken": "^9.0.2",
+    "lowdb": "^7.0.1",
+    "nanoid": "^5.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
@@ -28,7 +30,8 @@
     "react-lazy-load-image-component": "^1.6.2",
     "react-router-dom": "^6.26.0",
     "react-time-picker": "^7.0.0",
-    "styled-components": "^6.1.12"
+    "styled-components": "^6.1.12",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

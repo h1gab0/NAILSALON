@@ -1,12 +1,11 @@
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-import bcrypt from 'bcrypt';
+const { Low } = require('lowdb');
+const { JSONFile } = require('lowdb/node');
+const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
 const defaultPassword = 'password';
-const defaultPasswordHash = await bcrypt.hash(defaultPassword, saltRounds);
 
-// Default data structure
+// Default data structure, password hash will be added by initialization
 const defaultData = {
   instances: {
     'default': {
@@ -14,7 +13,7 @@ const defaultData = {
       name: 'Default Salon',
       admin: {
         username: 'admin',
-        passwordHash: defaultPasswordHash
+        passwordHash: null // To be filled in
       },
       appointments: [],
       availability: {},
@@ -25,7 +24,7 @@ const defaultData = {
   },
   superAdmins: {
     'superadmin': {
-      passwordHash: defaultPasswordHash
+      passwordHash: null // To be filled in
     }
   }
 };
@@ -37,18 +36,15 @@ async function initializeDatabase() {
   await db.read();
   db.data = db.data || defaultData;
 
-  // Ensure default instance exists
-  if (!db.data.instances.default) {
-    db.data.instances.default = defaultData.instances.default;
-  }
-  if (!db.data.superAdmins.superadmin) {
-    db.data.superAdmins.superadmin = defaultData.superAdmins.superadmin;
+  // Hash passwords if they are not already hashed
+  if (!db.data.instances.default.admin.passwordHash) {
+    const defaultPasswordHash = await bcrypt.hash(defaultPassword, saltRounds);
+    db.data.instances.default.admin.passwordHash = defaultPasswordHash;
+    db.data.superAdmins.superadmin.passwordHash = defaultPasswordHash;
   }
 
   await db.write();
-  console.log('Database initialized successfully with default data.');
+  console.log('Database initialized successfully.');
 }
 
-initializeDatabase().catch(err => console.error('Failed to initialize database:', err));
-
-export { db };
+module.exports = { db, initializeDatabase };

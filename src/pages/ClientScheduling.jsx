@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { FaCalendarAlt, FaClock, FaUser, FaImage, FaTicketAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { useInstance } from '../context/InstanceContext';
 
 const StepContainer = styled(motion.div)`
   background-color: ${({ theme }) => theme.colors.cardBackground};
@@ -131,7 +130,6 @@ const ImagePreview = styled.img`
 `;
 
 const ClientScheduling = () => {
-  const { instanceId } = useInstance();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [name, setName] = useState('');
@@ -143,52 +141,41 @@ const ClientScheduling = () => {
   const [step, setStep] = useState('date');
   const navigate = useNavigate();
 
-  const fetchAvailableDates = useCallback(async () => {
-    if (!instanceId) return;
+  const fetchAvailableDates = async () => {
     try {
-      const response = await fetch(`/api/${instanceId}/availability/dates`);
-      if (!response.ok) throw new Error('Failed to fetch available dates');
+      const response = await fetch('/api/availability/dates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch available dates');
+      }
       const data = await response.json();
       setAvailableDates(data);
     } catch (error) {
       console.error(error);
     }
-  }, [instanceId]);
+  };
 
-  const fetchAvailableSlots = useCallback(async (date) => {
-    if (!instanceId || !date) return;
+  const fetchAvailableSlots = async (date) => {
     try {
-      const response = await fetch(`/api/${instanceId}/availability/slots/${date}`);
-      if (!response.ok) throw new Error('Failed to fetch available slots');
+      const response = await fetch(`/api/availability/slots/${date}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch available slots');
+      }
       const data = await response.json();
       setAvailableSlots(data);
     } catch (error) {
       console.error(error);
     }
-  }, [instanceId]);
+  };
 
   useEffect(() => {
     fetchAvailableDates();
-
-    const ws = new WebSocket('ws://localhost:3001');
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'availability_updated' || message.type === 'appointments_updated') {
-        fetchAvailableDates();
-        if (selectedDate) {
-          fetchAvailableSlots(selectedDate);
-        }
-      }
-    };
-
-    return () => ws.close();
-  }, [instanceId, fetchAvailableDates, fetchAvailableSlots, selectedDate]);
+  }, []);
 
   useEffect(() => {
     if (selectedDate) {
       fetchAvailableSlots(selectedDate);
     }
-  }, [selectedDate, fetchAvailableSlots]);
+  }, [selectedDate]);
 
   const handleDateSelection = (date) => {
     setSelectedDate(date);
@@ -219,7 +206,7 @@ const ClientScheduling = () => {
     }
 
     try {
-        const response = await fetch(`/api/${instanceId}/appointments`, {
+        const response = await fetch('/api/appointments', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -227,6 +214,9 @@ const ClientScheduling = () => {
                 time: selectedTime,
                 clientName: name,
                 phone: phone,
+                status: 'scheduled',
+                image: image,
+                couponCode: couponCode,
             }),
         });
 
@@ -236,7 +226,7 @@ const ClientScheduling = () => {
         }
 
         const newAppointment = await response.json();
-        navigate(`/${instanceId}/appointment-confirmation/${newAppointment.id}`);
+        navigate(`/appointment-confirmation/${newAppointment.id}`);
     } catch (error) {
         console.error('Error creating appointment:', error);
         alert(`Error: ${error.message}`);

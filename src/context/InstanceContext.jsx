@@ -15,7 +15,7 @@ export const InstanceProvider = ({ children }) => {
   const { instanceId } = useParams();
 
   const value = useMemo(() => ({
-    instanceId: instanceId || 'default', // Fallback to 'default' if no instanceId is in URL
+    instanceId: instanceId || 'default',
   }), [instanceId]);
 
   return (

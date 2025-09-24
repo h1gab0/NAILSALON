@@ -1,140 +1,101 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import styled, { keyframes } from 'styled-components';
-
-const gradientAnimation = keyframes`
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-`;
+import styled from 'styled-components';
+import { AuthContext } from '../context/AuthContext';
+import { useInstance } from '../context/InstanceContext';
 
 const LoginContainer = styled.div`
   max-width: 400px;
   margin: 4rem auto;
-  padding: 3rem;
-  background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d);
-  background-size: 400% 400%;
-  animation: ${gradientAnimation} 15s ease infinite;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 2rem;
+  background: ${({ theme }) => theme.colors.cardBackground};
+  border-radius: 8px;
+  box-shadow: ${({ theme }) => theme.shadows.large};
 `;
 
-const LoginForm = styled.form`
+const Title = styled.h1`
+  text-align: center;
+  margin-bottom: 1.5rem;
+`;
+
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  width: 100%;
 `;
 
 const Input = styled.input`
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  border: none;
-  border-radius: 50px;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-  }
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 4px;
 `;
 
 const Button = styled.button`
-  padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.75rem;
+  background-color: ${({ theme }) => theme.colors.primary};
   color: white;
   border: none;
-  border-radius: 50px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: rgba(255, 255, 255, 0.1);
-    transform: rotate(45deg);
-    pointer-events: none;
-    transition: all 0.5s ease;
-  }
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-    &:before {
-      left: 100%;
-    }
-  }
 `;
 
-const Title = styled.h2`
-  color: white;
-  font-size: 2.5rem;
-  margin-bottom: 2rem;
+const ErrorMessage = styled.p`
+  color: ${({ theme }) => theme.colors.danger};
   text-align: center;
-  font-family: 'Orbitron', sans-serif;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 `;
 
-function Login() {
+const Login = ({ superAdmin = false }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { instanceId } = useInstance();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    const url = superAdmin
+      ? '/api/super-admin/login'
+      : `/api/instances/${instanceId}/login`;
+
+    const payload = { username, password };
+
     try {
-      // Always require authentication
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: 'include'
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      if (!response.ok) {
-        throw new Error('Authentication failed');
-      }
+      if (response.ok) {
+        const user = {
+            username,
+            role: superAdmin ? 'superadmin' : 'admin',
+            instanceId: superAdmin ? null : instanceId
+        };
+        login(user);
 
-      const data = await response.json();
-      login(data);
-      navigate('/admin');
-    } catch (error) {
-      alert('Invalid credentials');
+        if (superAdmin) {
+            navigate('/super-admin');
+        } else {
+            navigate(`/${instanceId}/admin`);
+        }
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
     }
   };
 
   return (
     <LoginContainer>
-      <Title>Administrator Login</Title>
-      <LoginForm onSubmit={handleSubmit}>
+      <Title>{superAdmin ? 'Super Admin Login' : 'Admin Login'}</Title>
+      <Form onSubmit={handleSubmit}>
         <Input
           type="text"
           placeholder="Username"
@@ -150,9 +111,10 @@ function Login() {
           required
         />
         <Button type="submit">Login</Button>
-      </LoginForm>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+      </Form>
     </LoginContainer>
   );
-}
+};
 
 export default Login;

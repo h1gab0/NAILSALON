@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
-import { useInstance } from '../context/InstanceContext';
 import CouponCard from '../components/CouponCard.jsx';
 
 const ConfirmationContainer = styled.div`
@@ -72,7 +71,6 @@ const Error = styled.p`
 
 const AppointmentConfirmation = () => {
   const { id } = useParams();
-  const { instanceId } = useInstance();
   const navigate = useNavigate();
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -80,25 +78,17 @@ const AppointmentConfirmation = () => {
 
   useEffect(() => {
     const fetchAppointment = async () => {
-      if (!instanceId) return;
-      setLoading(true);
       try {
-        const response = await fetch(`/api/${instanceId}/appointments/${id}`);
+        setLoading(true);
+        const response = await fetch(`/api/appointments/${id}`);
         if (!response.ok) {
-            let errorMessage = `Error: ${response.status} ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (e) {
-                // Response was not JSON, use the status text.
-            }
-            throw new Error(errorMessage);
+          throw new Error('Appointment not found');
         }
         const data = await response.json();
         setAppointment(data);
         setError(null);
       } catch (err) {
-        setError(err.message || 'An unexpected error occurred.');
+        setError(err.message);
         setAppointment(null);
       } finally {
         setLoading(false);
@@ -110,7 +100,7 @@ const AppointmentConfirmation = () => {
 
   const handleTrendClick = (e) => {
     e.preventDefault();
-    navigate(`/${instanceId}`, { state: { scrollToTrends: true } });
+    navigate('/', { state: { scrollToTrends: true } });
   };
 
   if (loading) {
@@ -152,6 +142,13 @@ const AppointmentConfirmation = () => {
           <>
             <Details><strong>Design Inspiration:</strong></Details>
             <ImagePreview src={appointment.image} alt="Design Inspiration" />
+          </>
+        )}
+
+        {appointment.coupon && (
+          <>
+            <Title style={{ marginTop: '2rem', fontSize: '1.5rem' }}>Your Promotional Offer!</Title>
+            <CouponCard coupon={appointment.coupon} />
           </>
         )}
 

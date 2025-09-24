@@ -1,104 +1,73 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Outlet, useParams, Navigate } from 'react-router-dom';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
-import { InstanceProvider } from './context/InstanceContext';
-import GlobalStyles from './styles/GlobalStyles';
-import { lightTheme, darkTheme } from './styles/Theme';
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
-import Contact from './pages/Contact';
-import ClientScheduling from './pages/ClientScheduling';
-import AdminDashboard from './pages/AdminDashboard';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import OrderSystem from './pages/OrderSystem';
-import Chat from './components/Chat';
-import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
-import LoginComponent from './components/LoginComponent';
-import ProtectedRoute from './components/ProtectedRoute';
-import AppointmentConfirmation from './pages/AppointmentConfirmation';
-import TrendDetails from './pages/TrendDetails';
-import CouponPage from './pages/CouponPage';
 import Services from './pages/Services';
 import Gallery from './pages/Gallery';
+import Contact from './pages/Contact';
+import AdminDashboard from './pages/AdminDashboard';
+import ClientScheduling from './pages/ClientScheduling';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import AppointmentConfirmation from './pages/AppointmentConfirmation';
+import CouponPage from './pages/CouponPage';
+import OrderSystem from './pages/OrderSystem';
+import TrendDetails from './pages/TrendDetails';
+import Portfolio from './pages/Portfolio';
+import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import { ThemeProvider as StyledThemeProvider } from 'styled-components';
+import { ThemeContext } from './context/ThemeContext';
+import GlobalStyles from './styles/GlobalStyles';
+import { InstanceProvider } from './context/InstanceContext';
 
-const MainContent = styled.main`
-  padding-top: 60px;
-  min-height: calc(100vh - 60px);
-`;
-
-function AppContent() {
-  const { theme, isDarkMode } = useTheme();
-  const location = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+function App() {
+  const { theme } = useContext(ThemeContext);
 
   return (
-    <StyledThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+    <StyledThemeProvider theme={theme}>
       <GlobalStyles />
-      <Header />
-      <MainContent>
-        <Outlet />
-      </MainContent>
-      <Chat />
-      <Footer />
+      <Router>
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+
+            <Route path="/:instanceId/*" element={
+              <InstanceProvider>
+                <InstanceRoutes />
+              </InstanceProvider>
+            } />
+
+            <Route path="/" element={<Home />} />
+          </Routes>
+        </main>
+        <Footer />
+      </Router>
     </StyledThemeProvider>
   );
 }
 
-const InstanceWrapper = ({ children }) => {
-    return (
-        <InstanceProvider>
-            {children}
-        </InstanceProvider>
-    );
-};
-
-export default function App() {
+function InstanceRoutes() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <Routes>
-            <Route element={<InstanceWrapper><AppContent /></InstanceWrapper>}>
-                {/* Super admin routes are top-level and don't have an instanceId */}
-                <Route path="/login" element={<LoginComponent />} />
-                <Route path="/super-admin" element={
-                    <ProtectedRoute>
-                        <SuperAdminDashboard />
-                    </ProtectedRoute>
-                } />
+    <Routes>
+      <Route path="schedule" element={<ClientScheduling />} />
+      <Route path="appointment-confirmation/:id" element={<AppointmentConfirmation />} />
+      <Route path="login" element={<Login />} />
+      <Route path="admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
 
-                {/* Instance routes are nested to inherit the instanceId from the URL */}
-                <Route path="/:instanceId">
-                    <Route index element={<Home />} />
-                    <Route path="about" element={<About />} />
-                    <Route path="contact" element={<Contact />} />
-                    <Route path="schedule" element={<ClientScheduling />} />
-                    <Route path="login" element={<LoginComponent />} />
-                    <Route path="admin" element={
-                        <ProtectedRoute>
-                            <AdminDashboard />
-                        </ProtectedRoute>
-                    } />
-                    <Route path="order" element={<OrderSystem />} />
-                    <Route path="appointment-confirmation/:id" element={<AppointmentConfirmation />} />
-                    <Route path="carousel/:id" element={<TrendDetails />} />
-                    <Route path="coupon" element={<CouponPage />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="gallery" element={<Gallery />} />
-                </Route>
-
-                {/* Redirect root path to the super admin login */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-            </Route>
-          </Routes>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+      <Route path="/" element={<Home />} />
+      <Route path="about" element={<About />} />
+      <Route path="services" element={<Services />} />
+      <Route path="gallery" element={<Gallery />} />
+      <Route path="contact" element={<Contact />} />
+      <Route path="coupons" element={<CouponPage />} />
+      <Route path="order" element={<OrderSystem />} />
+      <Route path="trends/:id" element={<TrendDetails />} />
+      <Route path="portfolio" element={<Portfolio />} />
+    </Routes>
   );
 }
+
+export default App;

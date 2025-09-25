@@ -5,7 +5,7 @@
       "name": "Default Salon",
       "admin": {
         "username": "admin",
-        "passwordHash": "$2b$10$wKo.xs9bhO1w74zBs8WqbuOceVjFcP3RUPySKNsebpzaEp8YNDNsi"
+        "passwordHash": "$2b$10$y0SMMhbW.QXUHAmgC7vuO.MDtXhBZsySvOUKHxJluKvbhnvPlGtKO"
       },
       "appointments": [],
       "availability": {},
@@ -16,7 +16,7 @@
   },
   "superAdmins": {
     "superadmin": {
-      "passwordHash": "$2b$10$wKo.xs9bhO1w74zBs8WqbuOceVjFcP3RUPySKNsebpzaEp8YNDNsi"
+      "passwordHash": "$2b$10$y0SMMhbW.QXUHAmgC7vuO.MDtXhBZsySvOUKHxJluKvbhnvPlGtKO"
     }
   }
 }

@@ -1,10 +1,30 @@
 
-> myapp@0.0.0 dev:server
-> nodemon server.cjs
+> myapp@0.0.0 dev:all
+> concurrently "npm:dev" "npm:dev:server"
 
-[33m[nodemon] 3.1.7[39m
-[33m[nodemon] to restart at any time, enter `rs`[39m
-[33m[nodemon] watching path(s): *.*[39m
-[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
-[32m[nodemon] starting `node server.cjs`[39m
-[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[dev]
+[dev] > myapp@0.0.0 dev
+[dev] > vite --host
+[dev]
+[dev:server]
+[dev:server] > myapp@0.0.0 dev:server
+[dev:server] > nodemon server.cjs
+[dev:server]
+[dev:server] [33m[nodemon] 3.1.7[39m
+[dev:server] [33m[nodemon] to restart at any time, enter `rs`[39m
+[dev:server] [33m[nodemon] watching path(s): *.*[39m
+[dev:server] [33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[dev:server] [32m[nodemon] starting `node server.cjs`[39m
+[dev:server] [32m[nodemon] restarting due to changes...[39m
+[dev:server] [32m[nodemon] restarting due to changes...[39m
+[dev:server] [32m[nodemon] restarting due to changes...[39m
+[dev:server] [32m[nodemon] starting `node server.cjs`[39m
+[dev:server] [32m[nodemon] restarting due to changes...[39m
+[dev] Port 5173 is in use, trying another one...
+[dev] Port 5174 is in use, trying another one...
+[dev]
+[dev]   VITE v5.4.11  ready in 800 ms
+[dev]
+[dev]   ➜  Local:   http://localhost:5175/
+[dev]   ➜  Network: http://192.168.0.2:5175/
+[dev:server] [32m[nodemon] starting `node server.cjs`[39m
